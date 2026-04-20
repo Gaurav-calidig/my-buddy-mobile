@@ -1,8 +1,14 @@
 import 'package:core/core/constants/assets_paths.dart';
 import 'package:core/core/constants/pref_keys.dart';
+import 'package:core/core/dependency_injection/injection_container.dart';
+import 'package:core/core/navigation/app_router.dart';
+import 'package:core/core/navigation/app_routes.dart';
 import 'package:core/core/utils/shared_pref.dart';
+import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:core/features/auth/presentation/bloc/auth_state.dart';
 import 'package:core/features/onboarding/presentation/widgets/onboarding_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 class OnboardingTestScreen extends StatefulWidget {
@@ -137,35 +143,48 @@ class _OnboardingTestScreenState extends State<OnboardingTestScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: <Color>[
-              Color(0xFF061A3B),
-              Color(0xFF05142F),
-              Color(0xFF041127),
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: <Widget>[
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  onPageChanged: (int value) => setState(() => _pageIndex = value),
-                  children: _pages(),
-                ),
+      body: BlocProvider(
+        create: (context) => sl<AuthBloc>(),
+        child: BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+         if(state is AuthSuccess){
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppRouter.router.go(AppRoutes.dashboard);
+    });
+         }
+          },
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: <Color>[
+                  Color(0xFF061A3B),
+                  Color(0xFF05142F),
+                  Color(0xFF041127),
+                ],
               ),
-              OnboardingPagerBar(
-                pageIndex: _pageIndex,
-                totalPages: _totalPages,
-                onSkip: _finish,
-                onNext: _next,
+            ),
+            child: SafeArea(
+              child: Column(
+                children: <Widget>[
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      onPageChanged: (int value) =>
+                          setState(() => _pageIndex = value),
+                      children: _pages(),
+                    ),
+                  ),
+                  OnboardingPagerBar(
+                    pageIndex: _pageIndex,
+                    totalPages: _totalPages,
+                    onSkip: _finish,
+                    onNext: _next,
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),

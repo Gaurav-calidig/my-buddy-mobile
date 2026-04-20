@@ -64,7 +64,7 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
       await FirebaseAuth.instance.signOut();
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      AppRouter.router.go(AppRoutes.login);
+      AppRouter.router.go(AppRoutes.onboardingTest);
     });
   }
 
