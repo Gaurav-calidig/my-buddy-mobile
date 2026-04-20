@@ -1,0 +1,73 @@
+apk:
+fvm flutter build apk --release \
+  --dart-define=ENV=prod \
+  --dart-define=ENABLE_FIREBASE=true \
+  --dart-define=ENABLE_AUTH=true \
+  --dart-define=ENABLE_CART=true \
+  --dart-define=ENABLE_PUSH_NOTIFICATIONS=true \
+  --dart-define=ENABLE_CHAT=true \
+  --dart-define=ENABLE_LOCALIZATION=true \
+  --dart-define=ENABLE_WORKMANAGER=true \
+  --dart-define=ENABLE_GO_ROUTER=true
+
+default run:
+fvm flutter run --flavor template \
+  --dart-define=APP_FLAVOR=template \
+  --dart-define=BRAND_ID=template
+
+default build apk:
+fvm flutter build apk --flavor template --release \
+  --no-tree-shake-icons \
+  --dart-define=APP_FLAVOR=template \
+  --dart-define=BRAND_ID=template
+
+default build ios:
+fvm flutter build ios --flavor template --release --no-codesign \
+  --no-tree-shake-icons \
+  --dart-define=APP_FLAVOR=template \
+  --dart-define=BRAND_ID=template
+
+white-label run:
+fvm flutter run --flavor template \
+  --dart-define=APP_FLAVOR=template \
+  --dart-define=BRAND_ID=template
+
+fvm flutter run --flavor brandA \
+  --dart-define=APP_FLAVOR=brandA \
+  --dart-define=BRAND_ID=brandA
+
+fvm flutter run --flavor brandB \
+  --dart-define=APP_FLAVOR=brandB \
+  --dart-define=BRAND_ID=brandB
+
+white-label build apk:
+fvm flutter build apk --flavor template --release \
+  --no-tree-shake-icons \
+  --dart-define=APP_FLAVOR=template \
+  --dart-define=BRAND_ID=template
+
+fvm flutter build apk --flavor brandA --release \
+  --no-tree-shake-icons \
+  --dart-define=APP_FLAVOR=brandA \
+  --dart-define=BRAND_ID=brandA
+
+fvm flutter build apk --flavor brandB --release \
+  --no-tree-shake-icons \
+  --dart-define=APP_FLAVOR=brandB \
+  --dart-define=BRAND_ID=brandB
+
+white-label build ios:
+fvm flutter build ios --flavor template --release --no-codesign \
+  --no-tree-shake-icons \
+  --dart-define=APP_FLAVOR=template \
+  --dart-define=BRAND_ID=template
+
+fvm flutter build ios --flavor brandA --release --no-codesign \
+  --no-tree-shake-icons \
+  --dart-define=APP_FLAVOR=brandA \
+  --dart-define=BRAND_ID=brandA
+
+fvm flutter build ios --flavor brandB --release --no-codesign \
+  --no-tree-shake-icons \
+  --dart-define=APP_FLAVOR=brandB \
+  --dart-define=BRAND_ID=brandB

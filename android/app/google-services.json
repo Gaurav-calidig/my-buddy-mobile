@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "174480345246",
+    "project_id": "replit-5dbf5",
+    "storage_bucket": "replit-5dbf5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:174480345246:android:444fd0fbda40916c71938f",
+        "android_client_info": {
+          "package_name": "com.calidig.mybuddy"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "174480345246-42sl5jo42utd588f1ck5pp4b4kpbkha4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBn9bG7z3bJiy86ixjOoGP9A-aOvpa2KvA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "174480345246-42sl5jo42utd588f1ck5pp4b4kpbkha4.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "174480345246-s02uhjigedu7cte9vj9j8d31dse95f8f.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.calidig.mybuddy"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

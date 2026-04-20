@@ -1,0 +1,9 @@
+/build/
+/.idea/
+/.dart_tool/
+/test/
+.flutter-plugins-dependencies
+.flutter-plugins-dependencies
+lib/core/notification/push/service-key.json
+.env
+.env.example

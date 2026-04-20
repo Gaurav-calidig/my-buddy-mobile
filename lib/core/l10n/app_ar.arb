@@ -1,0 +1,12 @@
+{
+  "@@locale": "ar",
+  "hello": "مرحبا",
+  "welcome": "مرحبًا بك في تطبيقنا!",
+  "changeLanguage": "تغيير اللغة",
+  "localizationTestTitle": "اختبار الترجمة",
+  "localizationTestDescription": "بدّل اللغة للتأكد من تحديث الترجمات مباشرة.",
+  "currentLocaleLabel": "اللغة الحالية",
+  "toggleToArabic": "التبديل إلى العربية",
+  "toggleToEnglish": "التبديل إلى الإنجليزية"
+}
+

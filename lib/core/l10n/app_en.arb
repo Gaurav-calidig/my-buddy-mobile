@@ -1,0 +1,11 @@
+{
+  "@@locale": "en",
+  "hello": "Hello",
+  "welcome": "Welcome to our app!",
+  "changeLanguage": "Change Language",
+  "localizationTestTitle": "Localization Test",
+  "localizationTestDescription": "Toggle the locale to verify translations update in real time.",
+  "currentLocaleLabel": "Current locale",
+  "toggleToArabic": "Switch to Arabic",
+  "toggleToEnglish": "Switch to English"
+}
