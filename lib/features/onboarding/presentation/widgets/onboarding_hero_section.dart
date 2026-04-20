@@ -127,7 +127,7 @@ class OnboardingHeroSection extends StatelessWidget {
                 child: SizedBox(
                   height: 250,
                   width: 250,
-                  child: Lottie.asset(AssetPaths.heroAnimation, fit: BoxFit.contain),
+                  child: Lottie.asset(AssetPaths.dashboardAnimation, fit: BoxFit.contain),
                 ),
               ),
               const SizedBox(height: 44),

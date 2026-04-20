@@ -1,3 +1,4 @@
+import 'package:core/core/constants/assets_paths.dart';
 import 'package:core/core/constants/pref_keys.dart';
 import 'package:core/core/utils/shared_pref.dart';
 import 'package:core/features/onboarding/presentation/widgets/onboarding_widgets.dart';
@@ -17,7 +18,7 @@ class _OnboardingTestScreenState extends State<OnboardingTestScreen> {
   late final PageController _pageController;
   int _pageIndex = 0;
 
-  static const int _totalPages = 4;
+  static const int _totalPages = 5;
 
   @override
   void initState() {
@@ -85,6 +86,7 @@ class _OnboardingTestScreenState extends State<OnboardingTestScreen> {
                 'Daily work hour tracking & summaries',
                 'Full audit trail of all actions',
               ],
+              animationAssetPath: AssetPaths.teamWorkAnimation,
             ),
             OnboardingFeatureSection(
               title: 'Flexible Task Management',
@@ -96,9 +98,16 @@ class _OnboardingTestScreenState extends State<OnboardingTestScreen> {
                 'Sprint planning & backlog',
                 'Custom columns & priorities',
               ],
+              animationAssetPath: AssetPaths.taskManagementAnimation,
               reversed: true,
             ),
           ],
+        ),
+      ),
+      const OnboardingPageShell(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[OnboardingSecurityControlSection()],
         ),
       ),
       OnboardingPageShell(
@@ -115,6 +124,7 @@ class _OnboardingTestScreenState extends State<OnboardingTestScreen> {
                 'Hours tracking per day',
                 'Sales pipeline management',
               ],
+              animationAssetPath: AssetPaths.heroAnimation,
             ),
             OnboardingBottomCta(onCtaTap: _finish),
             const OnboardingFooter(),

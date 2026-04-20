@@ -23,9 +23,14 @@ class AssetPaths {
   static const String onBoarding2 = 'assets/images/onboarding_2.png';
   static const String onBoarding3 = 'assets/images/onboarding_3.png';
 
-
   static const String heroBackground = 'assets/images/hero-bg.jpg';
+  static const String securityBackground = 'assets/images/security-bg.jpg';
   static const String calidigLogo = 'assets/images/calidig-logo.svg';
   static const String secureOpsLogoText = 'assets/images/secureops-logo-text.png';
+
   static const String heroAnimation = 'assets/animations/analytics.json';
+  static const String dashboardAnimation = 'assets/animations/dashboard.json';
+  static const String securityAnimation = 'assets/animations/security.json';
+  static const String taskManagementAnimation = 'assets/animations/task-management.json';
+  static const String teamWorkAnimation = 'assets/animations/teamwork.json';
 }

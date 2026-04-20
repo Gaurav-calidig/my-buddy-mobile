@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 
 class OnboardingFeatureSection extends StatelessWidget {
   const OnboardingFeatureSection({
@@ -6,12 +7,14 @@ class OnboardingFeatureSection extends StatelessWidget {
     required this.title,
     required this.description,
     required this.bullets,
+    required this.animationAssetPath,
     this.reversed = false,
   });
 
   final String title;
   final String description;
   final List<String> bullets;
+  final String animationAssetPath;
   final bool reversed;
 
   @override
@@ -73,26 +76,11 @@ class OnboardingFeatureSection extends StatelessWidget {
       ),
     );
 
-    final Widget art = Container(
-      margin: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-      height: 120,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        gradient: const LinearGradient(
-          colors: <Color>[Color(0x332A6DFF), Color(0x2214A1C9)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(
-          color: const Color(0xFF35588C).withValues(alpha: 0.35),
-        ),
-      ),
-      child: const Center(
-        child: Icon(
-          Icons.auto_awesome_rounded,
-          color: Color(0xFF67AEFF),
-          size: 36,
-        ),
+    final Widget art = Center(
+      child: SizedBox(
+        height: 250,
+        width: 250,
+        child: Lottie.asset(animationAssetPath, fit: BoxFit.contain),
       ),
     );
 
@@ -100,7 +88,7 @@ class OnboardingFeatureSection extends StatelessWidget {
       margin: const EdgeInsets.only(top: 8),
       color: const Color(0xFF081A3A),
       child: Column(
-        children: reversed ? <Widget>[content, art] : <Widget>[art, content],
+        children: <Widget>[art, content],
       ),
     );
   }
