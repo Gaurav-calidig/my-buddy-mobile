@@ -35,6 +35,7 @@ import 'package:core/features/onboarding/presentation/screens/onboarding_test_sc
 import 'package:core/features/onboarding/presentation/screens/flutter_onboarding_slider_test_screen.dart';
 import 'package:core/features/splash/presentation/screens/splash_screen.dart';
 import 'package:core/features/splash/presentation/screens/update_required_screen.dart';
+import 'package:core/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:core/features/workmanager/screen/workmanager_test_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/features/chat/presentation/bloc/chat_room_cubit.dart';
@@ -57,6 +58,26 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.updateRequired,
         builder: (_, state) => const UpdateRequiredScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.dashboard,
+        builder: (_, state) => const DashboardScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.projects,
+        builder: (_, state) => Scaffold(appBar: AppBar(title: const Text('Projects')), body: const Center(child: Text('Projects Screen'))),
+      ),
+      GoRoute(
+        path: AppRoutes.myDsr,
+        builder: (_, state) => Scaffold(appBar: AppBar(title: const Text('My DSR')), body: const Center(child: Text('My DSR Screen'))),
+      ),
+      GoRoute(
+        path: AppRoutes.capacityPlanner,
+        builder: (_, state) => Scaffold(appBar: AppBar(title: const Text('Capacity Planner')), body: const Center(child: Text('Capacity Planner Screen'))),
+      ),
+      GoRoute(
+        path: AppRoutes.attendance,
+        builder: (_, state) => Scaffold(appBar: AppBar(title: const Text('Attendance')), body: const Center(child: Text('Attendance Screen'))),
       ),
       GoRoute(
         path: AppRoutes.login,

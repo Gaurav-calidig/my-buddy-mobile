@@ -6,7 +6,7 @@ import 'package:core/core/constants/firestore_constants.dart';
 import 'package:core/core/errors/safe_datasource.dart';
 import 'package:core/core/network/api_routes.dart';
 import 'package:core/core/network/api_service.dart';
-import 'package:core/features/auth/data/models/auth_model.dart';
+import 'package:core/features/auth/data/models/user_model.dart';
 import 'package:core/features/auth/domain/entities/user_entity.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -200,9 +200,11 @@ class AuthRemoteDatasource with SafeDatasource {
         throw Exception('Firebase sign-in failed');
       }
 
-      await upsertUserInFirestore(user);
+    final data =  await getUserData();
 
-      return AuthModel(
+      // await upsertUserInFirestore(user);
+
+      return UserModel.fromBasicInfo(
         id: user.uid,
         email: user.email ?? '',
         name: user.displayName ?? '',
@@ -301,4 +303,10 @@ class AuthRemoteDatasource with SafeDatasource {
       return user;
     }, operation: 'AuthRemoteDatasource.verifyOtp');
   }
+
+   Future<Map<String,dynamic>> getUserData()async {
+        final res = await apiService.get(ApiRoutes.getCurrentUser);
+        return res.data;
+     }
+
 }

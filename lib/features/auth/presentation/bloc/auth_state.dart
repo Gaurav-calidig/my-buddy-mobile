@@ -31,7 +31,7 @@ class AuthSuccess extends AuthState {
   List<Object?> get props => [user];
 
   @override
-  String toString() => 'AuthSuccess { user: ${user.name} }';
+  String toString() => 'AuthSuccess { user: ${user.fullName} }';
 }
 
 /// State emitted when the user signs out.

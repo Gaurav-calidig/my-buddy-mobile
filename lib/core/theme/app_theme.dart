@@ -17,13 +17,13 @@ class AppTheme {
     useMaterial3: true,
     primaryColor: primaryColor,
     brightness: Brightness.light,
-    scaffoldBackgroundColor: AppColors.kcSecondaryColorLight,
-    fontFamily: 'Manrope', // Custom font family for consistent typography
+    scaffoldBackgroundColor: AppColors.kcBackgroundColorLight,
+    fontFamily: 'Inter', // Custom font family for consistent typography
     textTheme: AppTypography.lightTextTheme,
 
     // AppBar Theme
     appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.kcSecondaryColorLight,
+      backgroundColor: AppColors.kcBackgroundColorLight,
       foregroundColor: AppColors.kcBlackColor,
       elevation: 0,
       centerTitle: false,
@@ -37,7 +37,7 @@ class AppTheme {
         color: AppColors.kcBlackColor,
         fontSize: 20,
         fontWeight: FontWeight.bold,
-        fontFamily: 'Manrope',
+        fontFamily: 'Outfit',
       ),
     ),
 
@@ -94,7 +94,7 @@ class AppTheme {
     dropdownMenuTheme: DropdownMenuThemeData(
       textStyle: const TextStyle(
         color: AppColors.kcBlackColor,
-        fontFamily: 'Manrope',
+        fontFamily: 'Inter',
       ),
       menuStyle: MenuStyle(
         backgroundColor: WidgetStateProperty.all(
@@ -168,13 +168,13 @@ class AppTheme {
     useMaterial3: true,
     primaryColor: primaryColor,
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: const Color.fromRGBO(18, 18, 18, 1),
-    fontFamily: 'Manrope', // Consistent font family across themes
+    scaffoldBackgroundColor: AppColors.kcBackgroundColorDark,
+    fontFamily: 'Inter', // Consistent font family across themes
     textTheme: AppTypography.darkTextTheme,
 
     // AppBar Theme
     appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.kcSecondaryColorDark,
+      backgroundColor: AppColors.kcBackgroundColorDark,
       foregroundColor: Colors.white,
       elevation: 0,
       centerTitle: true,
@@ -188,7 +188,7 @@ class AppTheme {
         color: Colors.white,
         fontSize: 20,
         fontWeight: FontWeight.bold,
-        fontFamily: 'Manrope',
+        fontFamily: 'Outfit',
       ),
     ),
 
@@ -243,7 +243,7 @@ class AppTheme {
 
     // Dropdown Menu Theme
     dropdownMenuTheme: DropdownMenuThemeData(
-      textStyle: const TextStyle(color: Colors.white, fontFamily: 'Manrope'),
+      textStyle: const TextStyle(color: Colors.white, fontFamily: 'Inter'),
       menuStyle: MenuStyle(
         backgroundColor: WidgetStateProperty.all(
           const Color.fromRGBO(40, 40, 40, 1),

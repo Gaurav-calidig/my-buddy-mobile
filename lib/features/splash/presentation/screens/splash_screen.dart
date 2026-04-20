@@ -8,6 +8,7 @@ import 'package:core/core/navigation/navigation_service.dart';
 import 'package:core/core/utils/shared_pref.dart';
 import 'package:core/features/workmanager/screen/workmanager_test_screen.dart';
 import 'package:core/features/splash/presentation/screens/update_required_screen.dart';
+import 'package:core/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:core/core/notification/bloc/navigation_state.dart';
 import 'package:core/features/splash/presentation/bloc/splash_bloc.dart';
 import 'package:core/features/splash/presentation/bloc/splash_state.dart';
@@ -78,11 +79,11 @@ class SplashScreen extends StatelessWidget {
   void _handleHomeNavigation(BuildContext context) {
 
     if (FeatureFlags.enableGoRouter) {
-      unawaited(_goWithOnboardingGate(context, AppRoutes.typographyTest));
+      context.go(AppRoutes.dashboard);
       return;
     }
 
-    _navigationService.push(WorkmanagerTestScreen());
+    _navigationService.pushReplacement(const DashboardScreen());
   }
 
   void _handleLoginNavigation(BuildContext context) {
@@ -100,16 +101,17 @@ class SplashScreen extends StatelessWidget {
 
     if (FeatureFlags.enableAuth) {
       log('message 1');
-      unawaited(_goWithOnboardingGate(context, AppRoutes.login));
+      context.go(AppRoutes.onboardingLocation(next: AppRoutes.login));
       return;
     }
 
     log('message 2');
     if (FeatureFlags.enableGoRouter) {
-      unawaited(_goWithOnboardingGate(context, AppRoutes.typographyTest));
+      context.go(AppRoutes.onboardingLocation(next: AppRoutes.typographyTest));
       return;
     }
 
+    // fallback when neither go_router nor auth are enabled
     _navigationService.push(WorkmanagerTestScreen());
   }
 

@@ -55,7 +55,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthLoading());
     try {
-      final user = await emailPasswordLoginUseCase.call(
+      final user = await emailPasswordLoginUseCase(
         email: event.username,
         password: event.password,
       );
@@ -71,7 +71,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthLoading());
     try {
-      final user = await googleSignInUseCase.call();
+      final user = await googleSignInUseCase();
       emit(AuthSuccess(user));
     } catch (e) {
       emit(AuthFailure(e.toString()));
@@ -84,7 +84,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthLoading());
     try {
-      final bool isLogout = await googleSignOutUseCase.call();
+      final bool isLogout = await googleSignOutUseCase();
       isLogout
           ? emit(const AuthLogout())
           : emit(const AuthFailure('Logout Failed'));

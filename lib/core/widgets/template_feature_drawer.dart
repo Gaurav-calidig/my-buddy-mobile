@@ -1,15 +1,53 @@
 import 'package:core/core/constants/app_constants.dart';
 import 'package:core/core/theme/app_colors.dart';
+import 'package:core/core/constants/pref_keys.dart';
+import 'package:core/core/utils/shared_pref.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import 'package:core/core/config/feature_flags.dart';
 import 'package:core/core/navigation/app_router.dart';
 import 'package:core/core/navigation/app_routes.dart';
-import 'package:core/core/widgets/app_drawer.dart';
-import 'package:core/core/utils/screenshot_service.dart';
 
-class TemplateFeatureDrawer extends StatelessWidget {
+class TemplateFeatureDrawer extends StatefulWidget {
   const TemplateFeatureDrawer({super.key});
+
+  @override
+  State<TemplateFeatureDrawer> createState() => _TemplateFeatureDrawerState();
+}
+
+class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
+  String userName = 'User Name';
+  String userEmail = 'user@example.com';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    if (FeatureFlags.enableFirebase) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        if (mounted) {
+          setState(() {
+            userName = (user.displayName?.isNotEmpty == true) ? user.displayName! : 'User Name';
+            userEmail = (user.email?.isNotEmpty == true) ? user.email! : 'user@example.com';
+          });
+        }
+        return;
+      }
+    }
+    
+    final email = await SharedPref().read(PrefKeys.user);
+    if (email != null && email.isNotEmpty && mounted) {
+      setState(() {
+        userEmail = email;
+        userName = 'User';
+      });
+    }
+  }
 
   void _open(BuildContext context, String location) {
     Scaffold.of(context).closeDrawer();
@@ -18,206 +56,157 @@ class TemplateFeatureDrawer extends StatelessWidget {
     });
   }
 
-  Widget _menuTile(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text(subtitle),
-      onTap: onTap,
+  Future<void> _logout() async {
+    Scaffold.of(context).closeDrawer();
+    await SharedPref().delete(PrefKeys.user);
+    await SharedPref().delete(PrefKeys.token);
+    if (FeatureFlags.enableFirebase) {
+      await FirebaseAuth.instance.signOut();
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppRouter.router.go(AppRoutes.login);
+    });
+  }
+
+  Widget _buildMenuItem(
+    BuildContext context, 
+    IconData icon, 
+    String title, 
+    String route, 
+    Color hoverColor, 
+    Color textColor, 
+    Color subtitleColor, 
+    String currentRoute
+  ) {
+    final bool isActive = currentRoute == route;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      decoration: BoxDecoration(
+        color: isActive ? hoverColor : Colors.transparent,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: ListTile(
+        leading: Icon(icon, color: isActive ? AppColors.kcPrimaryColor : subtitleColor, size: 20),
+        title: Text(title, style: TextStyle(color: isActive ? textColor : subtitleColor, fontWeight: isActive ? FontWeight.w600 : FontWeight.w500, fontSize: 14)),
+        onTap: () => _open(context, route),
+        minLeadingWidth: 20,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+        dense: true,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return AppDrawer(
-      backgroundColor: AppColors.kcSecondaryColorLight,
-      header: Container(
-        padding: const EdgeInsets.fromLTRB(20, 28, 20, 20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.kcPrimaryColor, AppColors.kcSecondaryColorLight],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9);
+    final hoverColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final subtitleColor = isDark ? Colors.white60 : const Color(0xFF64748B);
+    final currentRoute = AppRouter.router.routeInformationProvider.value.uri.path;
+
+    return Drawer(
+      backgroundColor: bgColor,
+      child: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // BrandLogo(profile: branding, size: 48),
-            const SizedBox(height: 16),
-            Text(
-              AppConstants.appName,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+            // Header component
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.kcPrimaryColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.security, color: Colors.white, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('SecureOps', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text('v1.0.0', style: TextStyle(color: subtitleColor, fontSize: 12)),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: () { Scaffold.of(context).closeDrawer(); },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.first_page, color: subtitleColor, size: 20),
+                          const SizedBox(width: 12),
+                          Text('Collapse', style: TextStyle(color: textColor, fontSize: 14)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              AppConstants.subtitle,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+            const Divider(height: 1),
+            
+            // Nested scrollable navigation
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(12),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8, bottom: 8, top: 8),
+                    child: Text('Navigation', style: TextStyle(color: subtitleColor, fontSize: 12)),
+                  ),
+                  _buildMenuItem(context, Icons.dashboard_outlined, 'Dashboard', AppRoutes.dashboard, hoverColor, textColor, subtitleColor, currentRoute),
+                  _buildMenuItem(context, Icons.folder_outlined, 'Projects', AppRoutes.projects, hoverColor, textColor, subtitleColor, currentRoute),
+                  _buildMenuItem(context, Icons.assignment_outlined, 'My DSR', AppRoutes.myDsr, hoverColor, textColor, subtitleColor, currentRoute),
+                  _buildMenuItem(context, Icons.calendar_today_outlined, 'Capacity Planner', AppRoutes.capacityPlanner, hoverColor, textColor, subtitleColor, currentRoute),
+                  _buildMenuItem(context, Icons.how_to_reg_outlined, 'Attendance', AppRoutes.attendance, hoverColor, textColor, subtitleColor, currentRoute),
+                ],
+              ),
             ),
+            
+            const Divider(height: 1),
+            // Profile footer injected at layout bottom
+            InkWell(
+              onTap: _logout, // Log out tap trigger
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: AppColors.kcPrimaryColor.withValues(alpha: 0.2),
+                      child: Text(
+                        userName.isNotEmpty ? userName[0].toUpperCase() : 'U',
+                        style: const TextStyle(color: AppColors.kcPrimaryColor, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(userName, style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          Text(userEmail, style: TextStyle(color: subtitleColor, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.unfold_more, color: Colors.grey, size: 20),
+                  ],
+                ),
+              ),
+            )
           ],
         ),
       ),
-      menuItems: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          child: Text(
-            'Test Modules',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Colors.black54,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        _menuTile(
-          context,
-          icon: Icons.palette_outlined,
-          title: 'Branding Lab',
-          subtitle: 'Preview white-label colors, logos, and text.',
-          onTap: () => _open(context, AppRoutes.brandingLabLocation()),
-        ),
-        _menuTile(
-          context,
-          icon: Icons.home_outlined,
-          title: 'Login Home',
-          subtitle: 'Return to the auth landing screen.',
-          onTap: () => _open(context, AppRoutes.login),
-        ),
-        _menuTile(
-          context,
-          icon: Icons.share_outlined,
-          title: 'Share Test',
-          subtitle: 'Open the share sample screen.',
-          onTap: () => _open(context, AppRoutes.shareTest),
-        ),
-        _menuTile(
-          context,
-          icon: Icons.calendar_month_outlined,
-          title: 'Custom Calendar',
-          subtitle: 'Open customizable month-view calendar demo.',
-          onTap: () => _open(context, AppRoutes.calendarTest),
-        ),
-        _menuTile(
-          context,
-          icon: Icons.security_outlined,
-          title: 'Screenshot Protection',
-          subtitle: 'Test screenshot blocking + screenshot-detection toast.',
-          onTap: () => _open(context, AppRoutes.screenshotProtectionTest),
-        ),
-        _menuTile(
-          context,
-          icon: Icons.cloud_upload_outlined,
-          title: 'Media Uploader',
-          subtitle: 'Open media uploader test screen.',
-          onTap: () => _open(context, AppRoutes.mediaUploader),
-        ),
-        _menuTile(
-          context,
-          icon: Icons.camera_alt_outlined,
-          title: 'Share Screenshot',
-          subtitle: 'Capture and share the entire screen.',
-          onTap: () async {
-            Scaffold.of(context).closeDrawer();
-            // Wait for drawer to close
-            await Future.delayed(const Duration(milliseconds: 400));
-            await ScreenshotService.captureAndShare(
-              text: 'Check out this screenshot!',
-              subject: 'App Screenshot',
-            );
-          },
-        ),
-        _menuTile(
-          context,
-          icon: Icons.save_alt_outlined,
-          title: 'Save Screenshot',
-          subtitle: 'Save current screen to your gallery.',
-          onTap: () async {
-            Scaffold.of(context).closeDrawer();
-            // Wait for drawer to close
-            await Future.delayed(const Duration(milliseconds: 400));
-            final success = await ScreenshotService.saveToGallery();
-            if (success && context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Screenshot saved to gallery!'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            }
-          },
-        ),
-        _menuTile(
-          context,
-          icon: Icons.rocket_launch_outlined,
-          title: 'Onboarding',
-          subtitle: 'Open onboarding test screen.',
-          onTap: () => _open(context, AppRoutes.onboardingTest),
-        ),
-        _menuTile(
-          context,
-          icon: Icons.slideshow_outlined,
-          title: 'Onboarding Slider',
-          subtitle: 'Open Flutter onboarding slider UI demo.',
-          onTap: () => _open(context, AppRoutes.flutterOnboardingSliderTest),
-        ),
-
-        _menuTile(
-          context,
-          icon: Icons.auto_awesome_outlined,
-          title: 'Showcase Tutorial',
-          subtitle: 'Open guided in-app tutorial demo.',
-          onTap: () => _open(context, AppRoutes.showcaseTest),
-        ),
-
-        _menuTile(
-          context,
-          icon: Icons.video_call_outlined,
-          title: 'Video Call',
-          subtitle: 'Open contacts and start a video call.',
-          onTap: () => _open(context, AppRoutes.videoCallUsers),
-        ),
-        _menuTile(
-          context,
-          icon: Icons.hub_outlined,
-          title: 'Video Call (WebSocket)',
-          subtitle: 'Open WebSocket signaling based video call.',
-          onTap: () => _open(context, AppRoutes.videoCallWsUsers),
-        ),
-        _menuTile(
-          context,
-          icon: Icons.map_outlined,
-          title: 'Location Picker',
-          subtitle: 'Open the Google Maps location picker.',
-          onTap: () => _open(context, AppRoutes.locationPicker),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
-          child: Text(
-            'Deep Link Tests',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Colors.black54,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        _menuTile(
-          context,
-          icon: Icons.image_outlined,
-          title: 'Image Compress',
-          subtitle: 'Test the image compression flow.',
-          onTap: () => _open(context, AppRoutes.imageCompress),
-        ),
-      ],
     );
   }
 }
