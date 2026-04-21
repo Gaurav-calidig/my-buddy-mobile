@@ -44,7 +44,7 @@ class EndPoints {
           fallback: '',
         );
       case AppEnvironment.dev:
-        return dotenv.get('DEV_URL', fallback: '');
+        return dotenv.get('DEV_URL', fallback: AppConstants.devBaseUrl);
     }
   }
 }
@@ -62,6 +62,7 @@ class ApiRoutes {
   static String get signUp => '$base/auth/signup';
   static String get forgotPassword => '$base/auth/forgot-password';
   static String get deleteAccount => '$base/auth/delete-account';
+  static String get getCurrentUser => '$base/api/auth/user';
 
   // Cart
   static String get cartAdd => '$base/cart/add';

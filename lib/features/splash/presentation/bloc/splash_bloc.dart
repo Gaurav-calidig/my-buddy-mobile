@@ -21,13 +21,13 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
     emit(SplashLoading());
 
     // Simulate startup work and keep splash visible briefly.
-    await Future.delayed(const Duration(seconds: 2));
+    // await Future.delayed(const Duration(seconds: 2));
 
-    final bool updateRequired = await _isUpdateRequired();
-    if (updateRequired) {
-      emit(SplashNavigateToUpdate());
-      return;
-    }
+    // final bool updateRequired = await _isUpdateRequired();
+    // if (updateRequired) {
+    //   emit(SplashNavigateToUpdate());
+    //   return;
+    // }
 
     final bool hasSession = await _hasActiveSession();
     if (hasSession) {

@@ -163,11 +163,17 @@ class MyApp extends StatelessWidget {
         listenable: provider,
         builder: (context, _) {
           final String location = provider.value.uri.path;
-          final bool isOnboarding =
-              location == AppRoutes.onboardingTest ||
-              location == AppRoutes.flutterOnboardingSliderTest;
+          final List<String> noDrawerRoutes = [
+            AppRoutes.splash,
+            AppRoutes.login,
+            AppRoutes.onboardingTest,
+            AppRoutes.flutterOnboardingSliderTest,
+            AppRoutes.signUp,
+            AppRoutes.createAccount,
+            AppRoutes.updateRequired,
+          ];
 
-          if (isOnboarding) return child;
+          if (noDrawerRoutes.contains(location)) return child;
 
           return _buildScaffold(context, child);
         },
@@ -248,7 +254,7 @@ class MyApp extends StatelessWidget {
   List<LocalizationsDelegate<dynamic>>? _localizationsDelegates() {
     return FeatureFlags.enableLocalization
         ? <LocalizationsDelegate<dynamic>>[
-            HybridLocalizationsDelegate(sl<ApiService>()),
+            // HybridLocalizationsDelegate(sl<ApiService>()),
             ...AppLocalizations.localizationsDelegates,
           ]
         : null;

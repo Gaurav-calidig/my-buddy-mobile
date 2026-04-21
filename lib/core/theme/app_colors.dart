@@ -6,56 +6,59 @@ import 'dart:ui';
 /// Colors are defined using RGBA values for precise color matching.
 class AppColors {
   /// Primary brand color - Blue used for main actions and branding
-  static const Color kcPrimaryColor = Color.fromRGBO(21, 94, 239, 1);
+  static const Color kcPrimaryColor = Color(0xFF2563EB);
 
   /// Secondary color for light theme - White background
-  static const Color kcSecondaryColorLight = Color.fromRGBO(255, 255, 255, 1);
+  static const Color kcSecondaryColorLight = Color(0xFFF1F5F9);
 
   /// Secondary color for dark theme - Dark grey background
-  static const Color kcSecondaryColorDark = Color.fromRGBO(44, 44, 44, 1);
+  static const Color kcSecondaryColorDark = Color(0xFF1E293B);
+  
+  static const Color kcBackgroundColorLight = Color(0xFFF4F7FB);
+  static const Color kcBackgroundColorDark = Color(0xFF0F172A);
 
   /// Error state color - Red for error messages and warnings
-  static const Color kcErrorColor = Color.fromRGBO(255, 78, 78, 1);
+  static const Color kcErrorColor = Color(0xFFEF4444);
 
   /// Light grey for borders and subtle UI elements
-  static const Color kcLightGreyColor = Color.fromRGBO(227, 226, 226, 1);
+  static const Color kcLightGreyColor = Color(0xFFE2E8F0);
 
   /// Very light grey for background sections and cards
-  static const Color kcVeryLightGreyColor = Color.fromRGBO(245, 245, 245, 1);
+  static const Color kcVeryLightGreyColor = Color(0xFFF8FAFC);
 
   /// Medium grey for secondary text and icons
-  static const Color kcGreyColor = Color.fromRGBO(90, 105, 129, 1);
+  static const Color kcGreyColor = Color(0xFF64748B);
 
   /// Grey color specifically for dialog success messages
-  static const Color kcDialogSuccessMessageColor = Color.fromRGBO(108, 108, 108, 1);
+  static const Color kcDialogSuccessMessageColor = Color(0xFF64748B);
 
   /// Standard label color for form labels and descriptions
-  static const Color kcLabelColor = Color.fromRGBO(125, 125, 125, 1);
+  static const Color kcLabelColor = Color(0xFF64748B);
 
   /// Alternative label color with transparency for subtle text
   static const Color kcLabelColor2 = Color.fromRGBO(0, 0, 0, 0.7);
 
   /// Dark text color for headings and primary content
-  static const Color kcBlackColor = Color.fromRGBO(39, 54, 78, 1);
+  static const Color kcBlackColor = Color(0xFF0F172A);
 
   /// Color for back arrow icons and navigation elements
-  static const Color kcArrowBackColor = Color.fromRGBO(17, 17, 17, 1);
+  static const Color kcArrowBackColor = Color(0xFF0F172A);
 
   /// Border color for dropdown menus and form inputs
-  static const Color kcDropdownBorderColor = Color.fromRGBO(233, 233, 233, 1);
+  static const Color kcDropdownBorderColor = Color(0xFFE2E8F0);
 
   /// Background color for selected list tiles and active states
-  static const Color kcSelectedTileColor = Color.fromRGBO(16, 100, 227, 1);
+  static const Color kcSelectedTileColor = Color(0xFF2563EB);
 
   /// Custom button background color - Slightly different blue variant
-  static const Color kcCustomButtonColor = Color.fromRGBO(30, 88, 241, 1);
+  static const Color kcCustomButtonColor = Color(0xFF2563EB);
 
   /// Background color for list containers and sections
-  static const Color kcListBackgroundColor = Color.fromRGBO(245, 245, 245, 1);
+  static const Color kcListBackgroundColor = Color(0xFFF4F7FB);
 
   /// Text color for light theme
   static const Color textColorLight = kcBlackColor;
 
   /// Text color for dark theme
-  static const Color textColorDark = Color.fromRGBO(255, 255, 255, 1);
+  static const Color textColorDark = Color(0xFFF8FAFC);
 }

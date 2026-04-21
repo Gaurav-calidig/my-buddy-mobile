@@ -1,7 +1,7 @@
 import 'package:core/core/constants/pref_keys.dart';
 import 'package:core/core/utils/shared_pref.dart';
 import 'package:core/features/auth/data/datasources/auth_remote_datasource.dart';
-import 'package:core/features/auth/data/models/auth_model.dart';
+import 'package:core/features/auth/data/models/user_model.dart';
 import 'package:core/features/auth/domain/entities/user_entity.dart';
 import 'package:core/features/auth/domain/repositories/auth_repository.dart';
 
@@ -9,7 +9,7 @@ import 'package:core/features/auth/domain/repositories/auth_repository.dart';
 class FirebaseAuthRepository implements AuthRepository {
   final AuthRemoteDatasource datasource;
 
-  FirebaseAuthRepository({required this.datasource});
+  FirebaseAuthRepository({required this.datasource, });
 
   /// Persists credentials for biometric login fallback.
   Future<void> _storeBiometricLoginCredentials({
@@ -33,7 +33,7 @@ class FirebaseAuthRepository implements AuthRepository {
       throw Exception('Firebase email/password sign-in failed');
     }
 
-    await datasource.upsertUserInFirestore(user);
+    // await datasource.upsertUserInFirestore(user);
 
     final token = await user.getIdToken();
     await SharedPref().write(PrefKeys.user, user.email ?? email);
@@ -43,7 +43,7 @@ class FirebaseAuthRepository implements AuthRepository {
       password: password,
     );
 
-    return AuthModel(
+    return UserModel.fromBasicInfo(
       id: user.uid,
       email: user.email ?? email,
       name: user.displayName ?? '',
@@ -99,7 +99,7 @@ class FirebaseAuthRepository implements AuthRepository {
         password: password,
       );
 
-      return AuthModel(
+      return UserModel.fromBasicInfo(
         id: user.uid,
         email: user.email ?? email,
         name: name,
@@ -142,6 +142,7 @@ class FirebaseAuthRepository implements AuthRepository {
   /// Delegates Google sign-in through the auth datasource and stores tokens.
   Future<UserEntity> signInWithGoogle() async {
     final data = await datasource.signInWithGoogle();
+
     await SharedPref().write(PrefKeys.user, data.email);
     await SharedPref().write(PrefKeys.token, data.token);
     return data;
@@ -157,6 +158,8 @@ class FirebaseAuthRepository implements AuthRepository {
     return isSignedOut;
   }
 
+
+
   @override
   /// Signs in with Apple via Firebase, upserts user metadata, and stores session info.
   Future<UserEntity?> signInWithApple() async {
@@ -169,7 +172,7 @@ class FirebaseAuthRepository implements AuthRepository {
     await SharedPref().write(PrefKeys.user, firebaseUser.email ?? '');
     await SharedPref().write(PrefKeys.token, token);
 
-    return AuthModel(
+    return UserModel.fromBasicInfo(
       id: firebaseUser.uid,
       name: firebaseUser.displayName ?? '',
       email: firebaseUser.email ?? '',
@@ -206,7 +209,7 @@ class FirebaseAuthRepository implements AuthRepository {
 
       final token = await user.getIdToken();
 
-      return AuthModel(
+      return UserModel.fromBasicInfo(
         id: user.uid,
         email: user.phoneNumber ?? '',
         name: user.displayName ?? '',

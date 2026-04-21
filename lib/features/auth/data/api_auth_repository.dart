@@ -1,5 +1,5 @@
 import 'package:core/features/auth/data/datasources/auth_remote_datasource.dart';
-import 'package:core/features/auth/data/models/auth_model.dart';
+import 'package:core/features/auth/data/models/user_model.dart';
 import 'package:core/features/auth/domain/entities/user_entity.dart';
 import 'package:core/features/auth/domain/repositories/auth_repository.dart';
 import 'package:core/core/constants/pref_keys.dart';
@@ -26,7 +26,7 @@ class ApiAuthRepository implements AuthRepository {
   /// Performs login against the remote API and persists user/token locally.
   Future<UserEntity> login(String email, String password) async {
     final data = await datasource.login(email, password);
-    final user = AuthModel.fromJson(data);
+    final user = UserModel.fromJson(data);
     await SharedPref().write(PrefKeys.user, user.email);
     await SharedPref().write(PrefKeys.token, user.token);
     await _storeBiometricLoginCredentials(
@@ -53,7 +53,7 @@ class ApiAuthRepository implements AuthRepository {
     required String name,
   }) async {
     final data = await datasource.signUp(email: email, password: password, name: name);
-    final user = AuthModel.fromJson(data);
+    final user = UserModel.fromJson(data);
     await SharedPref().write(PrefKeys.user, user.email);
     await SharedPref().write(PrefKeys.token, user.token);
     await _storeBiometricLoginCredentials(

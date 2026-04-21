@@ -1,23 +1,57 @@
 /// Entity representing a user in the application.
-/// Contains basic user information and authentication token.
+/// Independent of data/model layer (clean architecture).
 class UserEntity {
   /// Unique identifier of the user
   final String id;
 
-  /// Full name of the user
-  final String name;
+  /// Firebase UID (used for auth mapping)
+  final String firebaseUid;
 
-  /// Email address of the user
+  /// Email address
   final String email;
 
-  /// Authentication token (JWT or similar)
+  /// First name
+  final String firstName;
+
+  /// Last name
+  final String lastName;
+
+  /// Profile image URL
+  final String profileImageUrl;
+
+  /// Role in the system (guest, admin, etc.)
+  final String portalRole;
+
+  /// Whether user is active
+  final bool isActive;
+
+  /// Date of birth (optional)
+  final DateTime? dateOfBirth;
+
+  /// Created timestamp
+  final DateTime createdAt;
+
+  /// Updated timestamp
+  final DateTime updatedAt;
+
+  /// Auth token (kept separate from backend response)
   final String token;
 
-  /// Constructor for creating a [UserEntity]
   UserEntity({
     required this.id,
-    required this.name,
+    required this.firebaseUid,
     required this.email,
+    required this.firstName,
+    required this.lastName,
+    required this.profileImageUrl,
+    required this.portalRole,
+    required this.isActive,
+    this.dateOfBirth,
+    required this.createdAt,
+    required this.updatedAt,
     required this.token,
   });
+
+  /// Convenience getter
+  String get fullName => '$firstName $lastName';
 }

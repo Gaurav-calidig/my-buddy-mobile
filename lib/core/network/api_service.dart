@@ -5,6 +5,7 @@ import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -71,7 +72,8 @@ class ApiService {
             );
           }
 
-          final token = await getToken();
+          // final token = await getToken();
+         final token = await FirebaseAuth.instance.currentUser?.getIdToken();
           if (token != null && token.isNotEmpty) {
             if (options.headers['Authorization'] == null) {
             options.headers['Authorization'] = 'Bearer $token';
