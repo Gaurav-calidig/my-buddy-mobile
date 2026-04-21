@@ -65,19 +65,20 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.projects,
-        builder: (_, state) => Scaffold(appBar: AppBar(title: const Text('Projects')), body: const Center(child: Text('Projects Screen'))),
+        builder: (_, state) => const Center(child: Text('Projects Screen')),
       ),
       GoRoute(
         path: AppRoutes.myDsr,
-        builder: (_, state) => Scaffold(appBar: AppBar(title: const Text('My DSR')), body: const Center(child: Text('My DSR Screen'))),
+        builder: (_, state) => const Center(child: Text('My DSR Screen')),
       ),
       GoRoute(
         path: AppRoutes.capacityPlanner,
-        builder: (_, state) => Scaffold(appBar: AppBar(title: const Text('Capacity Planner')), body: const Center(child: Text('Capacity Planner Screen'))),
+        builder: (_, state) =>
+            const Center(child: Text('Capacity Planner Screen')),
       ),
       GoRoute(
         path: AppRoutes.attendance,
-        builder: (_, state) => Scaffold(appBar: AppBar(title: const Text('Attendance')), body: const Center(child: Text('Attendance Screen'))),
+        builder: (_, state) => const Center(child: Text('Attendance Screen')),
       ),
       GoRoute(
         path: AppRoutes.login,
