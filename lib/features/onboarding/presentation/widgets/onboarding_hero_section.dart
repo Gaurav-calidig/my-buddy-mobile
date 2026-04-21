@@ -1,12 +1,11 @@
 import 'package:core/core/constants/assets_paths.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
 
 class OnboardingHeroSection extends StatelessWidget {
   const OnboardingHeroSection({super.key});
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -34,14 +33,16 @@ class OnboardingHeroSection extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
+          padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  // Image.asset(AssetPaths.calidigLogo, width: 98, fit: BoxFit.contain),
-                  SvgPicture.asset(AssetPaths.calidigLogo),
+                  SizedBox(
+                    width: 92.w,
+                    child: SvgPicture.asset(AssetPaths.calidigLogo),
+                  ),
                   const Spacer(),
                   FilledButton.icon(
                     onPressed: () {},
@@ -49,88 +50,95 @@ class OnboardingHeroSection extends StatelessWidget {
                     style: FilledButton.styleFrom(
                       backgroundColor: const Color(0xFF2D75FF),
                       foregroundColor: Colors.white,
-                      minimumSize: const Size(124, 40),
+                      minimumSize: Size(106.w, 34.h),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(8.r),
                       ),
-                      textStyle: const TextStyle(
-                        fontSize: 15,
+                      textStyle: TextStyle(
+                        fontSize: 13.sp,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     label: const Text('Sign In'),
-                    icon: const Icon(Icons.arrow_forward, size: 16),
+                    icon: Icon(Icons.arrow_forward, size: 14.sp),
                   ),
                 ],
               ),
-              const SizedBox(height: 26),
-              Image.asset(AssetPaths.secureOpsLogoText, width: 122, fit: BoxFit.contain),
-              const SizedBox(height: 16),
-              const Text(
+              SizedBox(height: 18.h),
+              Row(
+                children: [
+                  Icon(Icons.verified_user_outlined , color: Colors.blue,),
+                  SizedBox(width: 5.w,),
+                  Text("SecureOps" , style: TextStyle(fontSize: 16.sp , color: Colors.white , fontWeight: FontWeight.bold),),
+                ],
+              ),
+              
+              SizedBox(height: 10.h),
+              Text(
                 "Your Team's Secure",
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 40,
-                  height: 1.05,
+                  fontSize: 30.sp,
+                  height: 1.06,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const Text(
+              Text(
                 'Operations Hub',
                 style: TextStyle(
-                  color: Color(0xFF2D75FF),
-                  fontSize: 40,
-                  height: 1.05,
+                  color: const Color(0xFF2D75FF),
+                  fontSize: 30.sp,
+                  height: 1.06,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 16),
-              const Text(
+              SizedBox(height: 10.h),
+              Text(
                 'Manage projects, track tasks, secure credentials, log daily work, and run sales operations - all in one role-controlled platform.',
                 style: TextStyle(
-                  color: Color(0xFFDDE8F9),
-                  fontSize: 24,
-                  height: 1.36,
+                  color: const Color(0xFFDDE8F9),
+                  fontSize: 18.sp,
+                  height: 1.35,
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              const SizedBox(height: 18),
+              SizedBox(height: 12.h),
               FilledButton.icon(
                 onPressed: () {},
                 iconAlignment: IconAlignment.end,
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFF2D75FF),
                   foregroundColor: Colors.white,
-                  minimumSize: const Size(168, 46),
+                  minimumSize: Size(142.w, 40.h),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(8.r),
                   ),
-                  textStyle: const TextStyle(
-                    fontSize: 17,
+                  textStyle: TextStyle(
+                    fontSize: 15.sp,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 label: const Text('Get Started'),
-                icon: const Icon(Icons.arrow_forward, size: 16),
+                icon: Icon(Icons.arrow_forward, size: 14.sp),
               ),
-              const SizedBox(height: 14),
-              const Text(
+              SizedBox(height: 10.h),
+              Text(
                 'Sign in with Google to access your workspace',
                 style: TextStyle(
-                  color: Color(0xFFD3E1F8),
-                  fontSize: 17,
+                  color: const Color(0xFFD3E1F8),
+                  fontSize: 14.sp,
                   height: 1.3,
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 20.h),
               Center(
                 child: SizedBox(
-                  height: 250,
-                  width: 250,
+                  height: 200.h,
+                  width: 200.w,
                   child: Lottie.asset(AssetPaths.dashboardAnimation, fit: BoxFit.contain),
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 10.h),
             ],
           ),
         ),
