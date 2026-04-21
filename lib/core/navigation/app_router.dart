@@ -76,19 +76,17 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.projectDetail,
-        builder: (_, state) {
+        pageBuilder: (_, state) {
           final project = state.extra as ProjectEntity?;
           if (project == null) {
-            return const RouteErrorPage(routeName: 'Missing project data');
+            return const NoTransitionPage(
+              child: RouteErrorPage(routeName: 'Missing project data'),
+            );
           }
-          return ProjectDetailScreen(project: project);
+          return NoTransitionPage(
+            child: ProjectDetailScreen(project: project),
+          );
         },
-        pageBuilder: (_, state) => NoTransitionPage<Widget>(
-          child: BlocProvider(
-            create: (_) => sl<DashboardBloc>()..add(const DashboardLoadRequested()),
-            child: const DashboardScreen(),
-          ),
-        ),
       ),
      
       GoRoute(

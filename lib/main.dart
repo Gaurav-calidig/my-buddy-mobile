@@ -22,6 +22,8 @@ import 'package:core/core/widgets/template_feature_drawer.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:core/features/auth/presentation/screens/login_screen.dart';
 import 'package:core/features/auth/presentation/screens/notification_inbox_screen.dart';
+import 'package:core/features/dashboard/presentation/bloc/dashboard_bloc.dart';
+import 'package:core/features/dashboard/presentation/bloc/dashboard_event.dart';
 import 'package:core/features/splash/presentation/bloc/splash_bloc.dart';
 import 'package:core/features/splash/presentation/bloc/splash_event.dart';
 import 'package:core/features/splash/presentation/screens/splash_screen.dart';
@@ -146,6 +148,9 @@ class MyApp extends StatelessWidget {
         create: (context) => SplashBloc()..add(AppStarted()),
       ),
       BlocProvider<NotificationNavigationBloc>.value(value: navigationBloc),
+      BlocProvider<DashboardBloc>(
+        create: (context) => sl<DashboardBloc>()..add(DashboardLoadRequested()),
+      ),
     ];
 
     if (FeatureFlags.enableAuth && sl.isRegistered<AuthBloc>()) {

@@ -114,7 +114,8 @@ class ProjectTableRow extends StatelessWidget {
     const Color line = Color(0x2E5A6E95);
 
     return InkWell(
-      onTap: () => context.push(AppRoutes.projectDetail, extra: project),
+      onTap: () {
+        context.go(AppRoutes.projectDetail, extra: project);},
       child: Container(
       height: 56,
       decoration: const BoxDecoration(
