@@ -1,6 +1,8 @@
+import 'dart:math' as math;
+
 import 'package:core/features/dashboard/domain/entities/dashboard_ams_leave_overview_entity.dart';
 import 'package:core/features/dashboard/domain/entities/dashboard_highlights_entity.dart';
-import 'package:core/features/dashboard/presentation/bloc/dashboard_cubit.dart';
+import 'package:core/features/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'package:core/features/dashboard/presentation/bloc/dashboard_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -21,7 +23,7 @@ class DashboardScreen extends StatelessWidget {
           colors: <Color>[pageTop, pageBottom],
         ),
       ),
-      child: BlocBuilder<DashboardCubit, DashboardState>(
+      child: BlocBuilder<DashboardBloc, DashboardState>(
         builder: (context, state) {
           final highlights = state.highlights;
           final amsOverview = state.amsLeaveOverview;
@@ -71,13 +73,15 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
               if (state.isLoading)
-                const Positioned(
-                  top: 12,
-                  right: 16,
-                  child: SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    alignment: Alignment.center,
+                    child: const SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: CircularProgressIndicator(strokeWidth: 2.4),
+                    ),
                   ),
                 ),
             ],
@@ -170,8 +174,7 @@ class _AttendanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final days = (overview?.days ?? const <DashboardAttendanceDayEntity>[]).take(5).toList();
-
+    final allDays = overview?.days ?? const <DashboardAttendanceDayEntity>[];
     final membersWithLeaves = (overview?.members ?? const <DashboardAttendanceMemberEntity>[])
         .where((member) => member.leaves.isNotEmpty)
         .take(5)
@@ -214,26 +217,39 @@ class _AttendanceCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: const Color(0xFF3A4A6A).withValues(alpha: 0.7)),
               ),
-              child: Column(
-                children: <Widget>[
-                  _AttendanceHeaderRow(days: days),
-                  if (membersWithLeaves.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'No upcoming leaves',
-                          style: TextStyle(
-                            color: Color(0xFF8DA2C9),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  const memberWidth = 86.0;
+                  const dayCellWidth = 30.0;
+                  final available = math.max(0.0, constraints.maxWidth - memberWidth - 6);
+                  final fitCount = available <= 0 ? 1 : (available / dayCellWidth).floor();
+                  final dayCount = allDays.isEmpty ? 0 : fitCount.clamp(1, allDays.length);
+                  final days = allDays.take(dayCount).toList();
+
+                  return Column(
+                    children: <Widget>[
+                      _AttendanceHeaderRow(days: days, memberWidth: memberWidth),
+                      if (membersWithLeaves.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'No upcoming leaves',
+                              style: TextStyle(
+                                color: Color(0xFF8DA2C9),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ),
+                      ...membersWithLeaves.map(
+                        (member) => _AttendanceRow(member: member, days: days, memberWidth: memberWidth),
                       ),
-                    ),
-                  ...membersWithLeaves.map((member) => _AttendanceRow(member: member, days: days)),
-                ],
+                    ],
+                  );
+                },
               ),
             ),
           ],
@@ -244,22 +260,23 @@ class _AttendanceCard extends StatelessWidget {
 }
 
 class _AttendanceHeaderRow extends StatelessWidget {
-  const _AttendanceHeaderRow({required this.days});
+  const _AttendanceHeaderRow({required this.days, required this.memberWidth});
 
   final List<DashboardAttendanceDayEntity> days;
+  final double memberWidth;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+      padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: const Color(0xFF3A4A6A).withValues(alpha: 0.7))),
       ),
       child: Row(
         children: <Widget>[
-          const SizedBox(
-            width: 98,
-            child: Text(
+          SizedBox(
+            width: memberWidth,
+            child: const Text(
               'Member',
               style: TextStyle(
                 color: Color(0xFF8DA2C9),
@@ -278,7 +295,6 @@ class _AttendanceHeaderRow extends StatelessWidget {
                         days[idx].dayLabel,
                         style: const TextStyle(color: Color(0xFF8DA2C9), fontSize: 10),
                       ),
-                      const SizedBox(height: 2),
                       Text(
                         days[idx].dayNum.toString(),
                         style: const TextStyle(
@@ -300,30 +316,31 @@ class _AttendanceHeaderRow extends StatelessWidget {
 }
 
 class _AttendanceRow extends StatelessWidget {
-  const _AttendanceRow({required this.member, required this.days});
+  const _AttendanceRow({required this.member, required this.days, required this.memberWidth});
 
   final DashboardAttendanceMemberEntity member;
   final List<DashboardAttendanceDayEntity> days;
+  final double memberWidth;
 
   @override
   Widget build(BuildContext context) {
     final displayName = '${member.firstName} ${member.lastName}'.trim();
 
     return Container(
-      height: 34,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: const Color(0xFF3A4A6A).withValues(alpha: 0.35))),
       ),
       child: Row(
         children: <Widget>[
           SizedBox(
-            width: 98,
+            width: memberWidth,
             child: Text(
               displayName,
               style: const TextStyle(
                 color: Color(0xFFE2ECFF),
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
               overflow: TextOverflow.ellipsis,
@@ -335,7 +352,7 @@ class _AttendanceRow extends StatelessWidget {
                 final leave = member.leaves[day.date];
                 return Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 5),
                     child: _LeaveCell(leave: leave),
                   ),
                 );
@@ -374,14 +391,14 @@ class _LeaveCell extends StatelessWidget {
       _ => Alignment.center,
     };
 
-    final widthFactor = half == 'full' || half.isEmpty ? 1.0 : 0.52;
+    final widthFactor = half == 'full' || half.isEmpty ? 1.0 : 0.5;
 
     return Container(
       alignment: alignment,
       child: FractionallySizedBox(
         widthFactor: widthFactor,
         child: Container(
-          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
+          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(2.5)),
         ),
       ),
     );
@@ -423,36 +440,17 @@ class _DailyStatusCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: <Widget>[
-                Expanded(
-                  child: _MetricTile(
-                    label: 'Today',
-                    value: '${_formatHours(dsr?.todayHours ?? 0)} hrs',
-                  ),
-                ),
+                Expanded(child: _MetricTile(label: 'Today', value: '${_formatHours(dsr?.todayHours ?? 0)} hrs')),
                 const SizedBox(width: 6),
-                Expanded(
-                  child: _MetricTile(
-                    label: 'This Week',
-                    value: '${_formatHours(dsr?.weekHours ?? 0)} hrs',
-                  ),
-                ),
+                Expanded(child: _MetricTile(label: 'This Week', value: '${_formatHours(dsr?.weekHours ?? 0)} hrs')),
                 const SizedBox(width: 6),
-                Expanded(
-                  child: _MetricTile(
-                    label: 'Blocked',
-                    value: (dsr?.blockedCount ?? 0).toString(),
-                  ),
-                ),
+                Expanded(child: _MetricTile(label: 'Blocked', value: (dsr?.blockedCount ?? 0).toString())),
               ],
             ),
             const SizedBox(height: 8),
             const Text(
               'Recent Entries',
-              style: TextStyle(
-                color: Color(0xFF8DA2C9),
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(color: Color(0xFF8DA2C9), fontSize: 11, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 6),
             Container(
@@ -465,12 +463,7 @@ class _DailyStatusCard extends StatelessWidget {
                 children: <Widget>[
                   const _EntryHeader(),
                   if (recentEntries.isEmpty)
-                    const _EntryRow(
-                      member: '--',
-                      dateTime: '-',
-                      project: 'No entries',
-                      hours: '0 hrs',
-                    ),
+                    const _EntryRow(member: '--', dateTime: '-', project: 'No entries', hours: '0 hrs'),
                   ...recentEntries.take(5).map(
                     (entry) => _EntryRow(
                       member: entry.member,
@@ -489,9 +482,7 @@ class _DailyStatusCard extends StatelessWidget {
   }
 
   String _formatHours(double hours) {
-    if (hours == hours.toInt()) {
-      return hours.toInt().toString();
-    }
+    if (hours == hours.toInt()) return hours.toInt().toString();
     return hours.toStringAsFixed(1);
   }
 }
@@ -514,19 +505,11 @@ class _MetricTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          Text(
-            label,
-            style: const TextStyle(color: Color(0xFF8DA2C9), fontSize: 10),
-          ),
+          Text(label, style: const TextStyle(color: Color(0xFF8DA2C9), fontSize: 10)),
           const SizedBox(height: 3),
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 30,
-              fontWeight: FontWeight.w700,
-              height: 0.95,
-            ),
+            style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w700, height: 0.95),
           ),
         ],
       ),
@@ -539,24 +522,14 @@ class _EntryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 7, 8, 6),
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(8, 7, 8, 6),
       child: Row(
-        children: const <Widget>[
-          SizedBox(
-            width: 78,
-            child: Text('Member', style: _TableHeaderStyle.style),
-          ),
-          Expanded(
-            child: Text('Date & Time', style: _TableHeaderStyle.style),
-          ),
-          Expanded(
-            child: Text('Project', style: _TableHeaderStyle.style),
-          ),
-          SizedBox(
-            width: 40,
-            child: Text('Hours', style: _TableHeaderStyle.style, textAlign: TextAlign.right),
-          ),
+        children: <Widget>[
+          SizedBox(width: 78, child: Text('Member', style: _TableHeaderStyle.style)),
+          Expanded(child: Text('Date & Time', style: _TableHeaderStyle.style)),
+          Expanded(child: Text('Project', style: _TableHeaderStyle.style)),
+          SizedBox(width: 40, child: Text('Hours', style: _TableHeaderStyle.style, textAlign: TextAlign.right)),
         ],
       ),
     );
@@ -564,12 +537,7 @@ class _EntryHeader extends StatelessWidget {
 }
 
 class _EntryRow extends StatelessWidget {
-  const _EntryRow({
-    required this.member,
-    required this.dateTime,
-    required this.project,
-    required this.hours,
-  });
+  const _EntryRow({required this.member, required this.dateTime, required this.project, required this.hours});
 
   final String member;
   final String dateTime;
@@ -585,25 +553,14 @@ class _EntryRow extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          SizedBox(
-            width: 78,
-            child: Text(member, style: _TableRowStyle.style),
-          ),
-          Expanded(
-            child: Text(dateTime, style: _TableRowStyle.style),
-          ),
-          Expanded(
-            child: Text(project, style: _TableRowStyle.style, overflow: TextOverflow.ellipsis),
-          ),
+          SizedBox(width: 78, child: Text(member, style: _TableRowStyle.style)),
+          Expanded(child: Text(dateTime, style: _TableRowStyle.style)),
+          Expanded(child: Text(project, style: _TableRowStyle.style, overflow: TextOverflow.ellipsis)),
           SizedBox(
             width: 40,
             child: Text(
               hours,
-              style: const TextStyle(
-                color: Color(0xFFD9E7FF),
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
+              style: const TextStyle(color: Color(0xFFD9E7FF), fontSize: 11, fontWeight: FontWeight.w700),
               textAlign: TextAlign.right,
             ),
           ),
@@ -614,17 +571,9 @@ class _EntryRow extends StatelessWidget {
 }
 
 class _TableHeaderStyle {
-  static const TextStyle style = TextStyle(
-    color: Color(0xFF8DA2C9),
-    fontSize: 10,
-    fontWeight: FontWeight.w600,
-  );
+  static const TextStyle style = TextStyle(color: Color(0xFF8DA2C9), fontSize: 10, fontWeight: FontWeight.w600);
 }
 
 class _TableRowStyle {
-  static const TextStyle style = TextStyle(
-    color: Color(0xFFC8D8F6),
-    fontSize: 11,
-    fontWeight: FontWeight.w500,
-  );
+  static const TextStyle style = TextStyle(color: Color(0xFFC8D8F6), fontSize: 11, fontWeight: FontWeight.w500);
 }

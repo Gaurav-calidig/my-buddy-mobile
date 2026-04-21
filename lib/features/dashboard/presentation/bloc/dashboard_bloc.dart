@@ -5,20 +5,26 @@ import 'package:core/features/dashboard/domain/usecases/get_dashboard_ams_leave_
 import 'package:core/features/dashboard/domain/usecases/get_dashboard_highlights_usecase.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'dashboard_event.dart';
 import 'dashboard_state.dart';
 
-class DashboardCubit extends Cubit<DashboardState> {
-  DashboardCubit({
+class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
+  DashboardBloc({
     required GetDashboardHighlightsUseCase getDashboardHighlightsUseCase,
     required GetDashboardAmsLeaveOverviewUseCase getDashboardAmsLeaveOverviewUseCase,
   }) : _getDashboardHighlightsUseCase = getDashboardHighlightsUseCase,
        _getDashboardAmsLeaveOverviewUseCase = getDashboardAmsLeaveOverviewUseCase,
-       super(const DashboardState());
+       super(const DashboardState()) {
+    on<DashboardLoadRequested>(_onDashboardLoadRequested);
+  }
 
   final GetDashboardHighlightsUseCase _getDashboardHighlightsUseCase;
   final GetDashboardAmsLeaveOverviewUseCase _getDashboardAmsLeaveOverviewUseCase;
 
-  Future<void> loadDashboard() async {
+  Future<void> _onDashboardLoadRequested(
+    DashboardLoadRequested event,
+    Emitter<DashboardState> emit,
+  ) async {
     emit(state.copyWith(isLoading: true, clearErrorMessage: true));
 
     try {
@@ -28,6 +34,7 @@ class DashboardCubit extends Cubit<DashboardState> {
       ]);
       final highlights = results[0] as DashboardHighlightsEntity;
       final amsLeaveOverview = results[1] as DashboardAmsLeaveOverviewEntity;
+
       emit(
         state.copyWith(
           isLoading: false,

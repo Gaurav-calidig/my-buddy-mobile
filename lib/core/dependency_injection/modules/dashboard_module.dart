@@ -3,7 +3,7 @@ import 'package:core/features/dashboard/data/dashboard_repository_impl.dart';
 import 'package:core/features/dashboard/domain/repositories/dashboard_repository.dart';
 import 'package:core/features/dashboard/domain/usecases/get_dashboard_ams_leave_overview_usecase.dart';
 import 'package:core/features/dashboard/domain/usecases/get_dashboard_highlights_usecase.dart';
-import 'package:core/features/dashboard/presentation/bloc/dashboard_cubit.dart';
+import 'package:core/features/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'package:get_it/get_it.dart';
 
 void registerDashboardModule(GetIt sl) {
@@ -31,9 +31,9 @@ void registerDashboardModule(GetIt sl) {
     );
   }
 
-  if (!sl.isRegistered<DashboardCubit>()) {
+  if (!sl.isRegistered<DashboardBloc>()) {
     sl.registerFactory(
-      () => DashboardCubit(
+      () => DashboardBloc(
         getDashboardHighlightsUseCase: sl(),
         getDashboardAmsLeaveOverviewUseCase: sl(),
       ),

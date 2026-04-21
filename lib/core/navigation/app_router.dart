@@ -36,8 +36,9 @@ import 'package:core/features/onboarding/presentation/screens/flutter_onboarding
 import 'package:core/features/splash/presentation/screens/splash_screen.dart';
 import 'package:core/features/splash/presentation/screens/update_required_screen.dart';
 import 'package:core/features/dashboard/presentation/screens/dashboard_screen.dart';
-import 'package:core/features/dashboard/presentation/screens/my_dsr_screen.dart';
-import 'package:core/features/dashboard/presentation/bloc/dashboard_cubit.dart';
+import 'package:core/features/dsr/presentation/dsr_page.dart';
+import 'package:core/features/dashboard/presentation/bloc/dashboard_bloc.dart';
+import 'package:core/features/dashboard/presentation/bloc/dashboard_event.dart';
 import 'package:core/features/workmanager/screen/workmanager_test_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/features/chat/presentation/bloc/chat_room_cubit.dart';
@@ -65,7 +66,7 @@ class AppRouter {
         path: AppRoutes.dashboard,
         pageBuilder: (_, state) => NoTransitionPage<Widget>(
           child: BlocProvider(
-            create: (_) => sl<DashboardCubit>()..loadDashboard(),
+            create: (_) => sl<DashboardBloc>()..add(const DashboardLoadRequested()),
             child: const DashboardScreen(),
           ),
         ),
@@ -74,7 +75,7 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.myDsr,
         pageBuilder: (_, state) => const NoTransitionPage<Widget>(
-          child: MyDsrScreen(),
+          child: DsrPage(),
         ),
       ),
       GoRoute(
