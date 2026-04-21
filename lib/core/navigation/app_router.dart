@@ -36,6 +36,7 @@ import 'package:core/features/onboarding/presentation/screens/flutter_onboarding
 import 'package:core/features/splash/presentation/screens/splash_screen.dart';
 import 'package:core/features/splash/presentation/screens/update_required_screen.dart';
 import 'package:core/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:core/features/dashboard/presentation/screens/my_dsr_screen.dart';
 import 'package:core/features/projects/presentation/screens/projects_screen.dart';
 import 'package:core/features/workmanager/screen/workmanager_test_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -75,7 +76,7 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.myDsr,
         pageBuilder: (_, state) => const NoTransitionPage<Widget>(
-          child: _DarkPlaceholderScreen(title: 'My DSR Screen'),
+          child: MyDsrScreen(),
         ),
       ),
       GoRoute(
