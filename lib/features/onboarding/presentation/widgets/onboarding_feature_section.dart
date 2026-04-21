@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
 
 class OnboardingFeatureSection extends StatelessWidget {
@@ -26,9 +27,9 @@ class OnboardingFeatureSection extends StatelessWidget {
         children: <Widget>[
           Text(
             title,
-            style: const TextStyle(
+            style:  TextStyle(
               color: Colors.white,
-              fontSize: 42,
+              fontSize: 24.sp,
               height: 1.06,
               fontWeight: FontWeight.w700,
             ),
@@ -36,9 +37,9 @@ class OnboardingFeatureSection extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             description,
-            style: const TextStyle(
+            style:  TextStyle(
               color: Color(0xFFA3BCDB),
-              fontSize: 18,
+              fontSize: 16.sp,
               height: 1.45,
             ),
           ),
@@ -78,17 +79,17 @@ class OnboardingFeatureSection extends StatelessWidget {
 
     final Widget art = Center(
       child: SizedBox(
-        height: 250,
-        width: 250,
+        height: 200.h,
+        width: 200.w,
         child: Lottie.asset(animationAssetPath, fit: BoxFit.contain),
       ),
     );
 
     return Container(
-      margin: const EdgeInsets.only(top: 8),
+     // margin: const EdgeInsets.only(top: 8),
       color: const Color(0xFF081A3A),
       child: Column(
-        children: <Widget>[art, content],
+        children: reversed ? <Widget>[content, art] : <Widget>[content, art],
       ),
     );
   }

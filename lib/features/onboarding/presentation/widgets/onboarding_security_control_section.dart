@@ -1,5 +1,6 @@
 import 'package:core/core/constants/assets_paths.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
 
 class OnboardingSecurityControlSection extends StatelessWidget {
@@ -73,21 +74,21 @@ class OnboardingSecurityControlSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
+               Text(
                 'Built for Security & Control',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 34,
+                  fontSize: 24.sp,
                   height: 1.08,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
+               Text(
                 'Enterprise-grade access control with the flexibility teams need to move fast.',
                 style: TextStyle(
                   color: Color(0xFFD2E1FA),
-                  fontSize: 18,
+                  fontSize: 16.sp,
                   height: 1.38,
                 ),
               ),
@@ -123,11 +124,6 @@ class _SecurityCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0C213F).withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF8DACD6).withValues(alpha: 0.32)),
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -147,18 +143,18 @@ class _SecurityCard extends StatelessWidget {
               children: <Widget>[
                 Text(
                   item.title,
-                  style: const TextStyle(
+                  style:  TextStyle(
                     color: Colors.white,
-                    fontSize: 19,
+                    fontSize: 18.sp,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   item.subtitle,
-                  style: const TextStyle(
+                  style:  TextStyle(
                     color: Color(0xFFCBDCF5),
-                    fontSize: 15,
+                    fontSize: 15.sp,
                     height: 1.3,
                   ),
                 ),

@@ -130,29 +130,6 @@ class OnboardingHeroSection extends StatelessWidget {
                   child: Lottie.asset(AssetPaths.dashboardAnimation, fit: BoxFit.contain),
                 ),
               ),
-              const SizedBox(height: 44),
-              const Center(
-                child: Text(
-                  'Everything Your Team Needs',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 34,
-                    height: 1.1,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Six integrated modules working together to keep your operations secure, transparent, and productive.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color(0xFFCFDCF4),
-                  fontSize: 20,
-                  height: 1.35,
-                ),
-              ),
               const SizedBox(height: 16),
             ],
           ),

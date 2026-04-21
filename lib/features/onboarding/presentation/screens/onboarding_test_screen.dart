@@ -125,6 +125,7 @@ class _OnboardingTestScreenState extends State<OnboardingTestScreen> {
                 'Sales pipeline management',
               ],
               animationAssetPath: AssetPaths.heroAnimation,
+              reversed: true,
             ),
             OnboardingBottomCta(onCtaTap: _finish),
             const OnboardingFooter(),
