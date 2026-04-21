@@ -1,4 +1,3 @@
-import 'package:core/core/constants/app_constants.dart';
 import 'package:core/core/theme/app_colors.dart';
 import 'package:core/core/constants/pref_keys.dart';
 import 'package:core/core/utils/shared_pref.dart';
@@ -99,10 +98,10 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9);
-    final hoverColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
-    final subtitleColor = isDark ? Colors.white60 : const Color(0xFF64748B);
+    final bgColor = isDark ? AppColors.kcBackgroundColorDark : const Color(0xFFF1F5F9);
+    final hoverColor = isDark ? AppColors.kcSecondaryColorDark : const Color(0xFFE2E8F0);
+    final textColor = isDark ? AppColors.textColorDark : const Color(0xFF0F172A);
+    final subtitleColor = isDark ? AppColors.kcGreyColor : const Color(0xFF64748B);
     final currentRoute = AppRouter.router.routeInformationProvider.value.uri.path;
 
     return Drawer(

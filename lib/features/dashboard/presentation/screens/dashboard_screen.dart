@@ -1,15 +1,33 @@
+import 'package:core/core/dependency_injection/injection_container.dart';
+import 'package:core/core/network/api_routes.dart';
+import 'package:core/core/network/api_service.dart';
 import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+
+@override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    sl<ApiService>().get(ApiRoutes.projects);
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? const Color(0xFF1E293B) : Colors.white;
-    final borderColor = isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final cardColor = isDark ? AppColors.kcSecondaryColorDark : Colors.white;
+    final borderColor = isDark ? const Color(0xFF4A5D86).withValues(alpha: 0.7) : const Color(0xFFE2E8F0);
+    final textColor = isDark ? AppColors.textColorDark : const Color(0xFF0F172A);
+
+    
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),

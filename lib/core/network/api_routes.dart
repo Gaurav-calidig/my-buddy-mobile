@@ -63,6 +63,19 @@ class ApiRoutes {
   static String get forgotPassword => '$base/auth/forgot-password';
   static String get deleteAccount => '$base/auth/delete-account';
   static String get getCurrentUser => '$base/api/auth/user';
+  static String get projects => '$base/api/projects';
+  static String projectAssets(int projectId) =>
+      '$base/api/projects/$projectId/assets';
+  static String deletedProjectAssets(int projectId) =>
+      '$base/api/projects/$projectId/assets/deleted';
+  static String projectMembers(int projectId) =>
+      '$base/api/projects/$projectId/members';
+  static String projectTechStacks(int projectId) =>
+      '$base/api/projects/$projectId/tech-stacks';
+  static String projectAssetDetail(int projectId, int assetId) =>
+      '$base/api/projects/$projectId/assets/$assetId';
+  static String restoreProjectAsset(int projectId, int assetId) =>
+      '$base/api/projects/$projectId/assets/$assetId/restore';
 
   // Cart
   static String get cartAdd => '$base/cart/add';

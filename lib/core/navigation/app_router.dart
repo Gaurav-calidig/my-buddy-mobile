@@ -40,6 +40,10 @@ import 'package:core/features/workmanager/screen/workmanager_test_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/features/chat/presentation/bloc/chat_room_cubit.dart';
 import 'package:core/features/chat/presentation/bloc/chat_rooms_cubit.dart';
+import 'package:core/features/projects/presentation/screens/projects_screen.dart';
+import 'package:core/features/projects/presentation/screens/project_detail_screen.dart';
+import 'package:core/features/projects/domain/entities/project_entity.dart';
+
 
 /// Navigator key used by GoRouter to show dialogs outside the current route context.
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -65,7 +69,17 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.projects,
-        builder: (_, state) => Scaffold(appBar: AppBar(title: const Text('Projects')), body: const Center(child: Text('Projects Screen'))),
+        builder: (_, state) => const ProjectsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.projectDetail,
+        builder: (_, state) {
+          final project = state.extra as ProjectEntity?;
+          if (project == null) {
+            return const RouteErrorPage(routeName: 'Missing project data');
+          }
+          return ProjectDetailScreen(project: project);
+        },
       ),
       GoRoute(
         path: AppRoutes.myDsr,

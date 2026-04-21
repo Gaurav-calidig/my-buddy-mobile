@@ -6,16 +6,16 @@ import 'dart:ui';
 /// Colors are defined using RGBA values for precise color matching.
 class AppColors {
   /// Primary brand color - Blue used for main actions and branding
-  static const Color kcPrimaryColor = Color(0xFF2563EB);
+  static const Color kcPrimaryColor = Color(0xFF2D75FF);
 
   /// Secondary color for light theme - White background
   static const Color kcSecondaryColorLight = Color(0xFFF1F5F9);
 
   /// Secondary color for dark theme - Dark grey background
-  static const Color kcSecondaryColorDark = Color(0xFF1E293B);
+  static const Color kcSecondaryColorDark = Color(0xFF4A5D86);
   
   static const Color kcBackgroundColorLight = Color(0xFFF4F7FB);
-  static const Color kcBackgroundColorDark = Color(0xFF0F172A);
+  static const Color kcBackgroundColorDark = Color(0xFF121F3D);
 
   /// Error state color - Red for error messages and warnings
   static const Color kcErrorColor = Color(0xFFEF4444);
@@ -27,7 +27,7 @@ class AppColors {
   static const Color kcVeryLightGreyColor = Color(0xFFF8FAFC);
 
   /// Medium grey for secondary text and icons
-  static const Color kcGreyColor = Color(0xFF64748B);
+  static const Color kcGreyColor = Color(0xFF8EA5CD);
 
   /// Grey color specifically for dialog success messages
   static const Color kcDialogSuccessMessageColor = Color(0xFF64748B);
@@ -51,7 +51,7 @@ class AppColors {
   static const Color kcSelectedTileColor = Color(0xFF2563EB);
 
   /// Custom button background color - Slightly different blue variant
-  static const Color kcCustomButtonColor = Color(0xFF2563EB);
+  static const Color kcCustomButtonColor = Color(0xFF2D75FF);
 
   /// Background color for list containers and sections
   static const Color kcListBackgroundColor = Color(0xFFF4F7FB);
@@ -60,5 +60,5 @@ class AppColors {
   static const Color textColorLight = kcBlackColor;
 
   /// Text color for dark theme
-  static const Color textColorDark = Color(0xFFF8FAFC);
+  static const Color textColorDark = Color(0xFFE9F1FF);
 }

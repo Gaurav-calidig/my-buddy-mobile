@@ -197,7 +197,7 @@ class AppTheme {
 
     // Card Theme
     cardTheme: CardThemeData(
-      color: const Color.fromRGBO(30, 30, 30, 1),
+      color: AppColors.kcSecondaryColorDark,
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -205,7 +205,7 @@ class AppTheme {
 
     // Divider Theme
     dividerTheme: const DividerThemeData(
-      color: Colors.white24,
+      color: Color(0xFF4A5D86),
       thickness: 1,
       space: 1,
     ),
@@ -243,10 +243,10 @@ class AppTheme {
 
     // Dropdown Menu Theme
     dropdownMenuTheme: DropdownMenuThemeData(
-      textStyle: const TextStyle(color: Colors.white, fontFamily: 'Inter'),
+      textStyle: const TextStyle(color: AppColors.textColorDark, fontFamily: 'Inter'),
       menuStyle: MenuStyle(
         backgroundColor: WidgetStateProperty.all(
-          const Color.fromRGBO(40, 40, 40, 1),
+          AppColors.kcSecondaryColorDark,
         ),
         elevation: WidgetStateProperty.all(4),
         shape: WidgetStateProperty.all(
@@ -256,11 +256,11 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.white24),
+          borderSide: const BorderSide(color: Color(0xFF4A5D86)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.white24),
+          borderSide: const BorderSide(color: Color(0xFF4A5D86)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -285,15 +285,15 @@ class AppTheme {
     // Input Decoration Theme
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.white.withValues(alpha: 0.05),
+      fillColor: const Color(0xFF0F1A33),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(color: Color(0xFF4A5D86)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(color: Color(0xFF4A5D86)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -306,8 +306,8 @@ class AppTheme {
         borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(color: AppColors.kcErrorColor, width: 1),
       ),
-      labelStyle: const TextStyle(color: Colors.white70),
-      hintStyle: const TextStyle(color: Colors.white38),
+      labelStyle: const TextStyle(color: Color(0xFFA9BDE1)),
+      hintStyle: const TextStyle(color: Color(0xFF8EA5CD)),
     ),
   );
 }

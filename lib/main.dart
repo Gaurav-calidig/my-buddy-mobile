@@ -14,6 +14,7 @@ import 'package:core/core/network/api_service.dart';
 import 'package:core/core/notification/bloc/navigation_bloc.dart';
 import 'package:core/core/notification/push/push_notification_service.dart';
 import 'package:core/core/services/remote_config.dart';
+import 'package:core/core/theme/app_colors.dart';
 import 'package:core/core/utils/app_initializer.dart';
 import 'package:core/core/utils/firebase_initializer.dart';
 import 'package:core/core/widgets/app_progress_indicator.dart';
@@ -187,6 +188,8 @@ class MyApp extends StatelessWidget {
     return Scaffold(
       drawer: const TemplateFeatureDrawer(),
       appBar: AppBar(
+        backgroundColor: AppColors.kcBackgroundColorDark,
+        foregroundColor: AppColors.kcSecondaryColorLight,
         leading: Builder(
           builder: (context) {
             return IconButton(
@@ -195,8 +198,44 @@ class MyApp extends StatelessWidget {
             );
           },
         ),
-        title: Text(AppConstants.appName),
+        title: Text(
+          AppConstants.appName,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
         centerTitle: false,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Container(
+            color:
+                Theme.of(context).dividerTheme.color ??
+                Colors.grey.withValues(alpha: 0.2),
+            height: 1.0,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none_rounded),
+            onPressed: () {
+              // Notification action
+            },
+          ),
+          const SizedBox(width: 8),
+          CircleAvatar(
+            radius: 15,
+            backgroundColor: Theme.of(
+              context,
+            ).primaryColor.withValues(alpha: 0.15),
+            child: Text(
+              'G', // Placeholder initials
+              style: TextStyle(
+                color: Theme.of(context).primaryColor,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+        ],
       ),
       body: child,
     );

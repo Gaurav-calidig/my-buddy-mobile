@@ -5,6 +5,7 @@ import 'package:core/core/dependency_injection/modules/core_module.dart';
 import 'package:core/core/dependency_injection/modules/firebase_module.dart';
 import 'package:core/core/dependency_injection/modules/payments_module.dart';
 import 'package:get_it/get_it.dart';
+import 'package:core/core/dependency_injection/modules/project_module.dart';
 
 /// Global GetIt instance for resolving core dependencies.
 final sl = GetIt.instance;
@@ -12,6 +13,8 @@ final sl = GetIt.instance;
 /// Initializes dependency graph based on enabled feature flags.
 Future<void> init() async {
   registerCoreModule(sl);
+  registerProjectModule(sl);
+
 
   if (FeatureFlags.enableFirebase) {
     registerFirebaseModule(sl);
