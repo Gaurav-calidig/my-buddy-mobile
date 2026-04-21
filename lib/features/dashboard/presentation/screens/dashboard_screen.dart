@@ -1,4 +1,9 @@
+import 'package:core/features/dashboard/domain/entities/dashboard_ams_leave_overview_entity.dart';
+import 'package:core/features/dashboard/domain/entities/dashboard_highlights_entity.dart';
+import 'package:core/features/dashboard/presentation/bloc/dashboard_cubit.dart';
+import 'package:core/features/dashboard/presentation/bloc/dashboard_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -16,37 +21,68 @@ class DashboardScreen extends StatelessWidget {
           colors: <Color>[pageTop, pageBottom],
         ),
       ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            const SizedBox(height: 6),
-            const Row(
-              children: <Widget>[
-                Expanded(
-                  child: _SummaryCard(
-                    icon: Icons.folder_copy_outlined,
-                    label: 'My Projects',
-                    value: '6',
+      child: BlocBuilder<DashboardCubit, DashboardState>(
+        builder: (context, state) {
+          final highlights = state.highlights;
+          final amsOverview = state.amsLeaveOverview;
+          return Stack(
+            children: [
+              SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: _SummaryCard(
+                            icon: Icons.folder_copy_outlined,
+                            label: 'My Projects',
+                            value: (highlights?.stats.totalProjects ?? 0).toString(),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _SummaryCard(
+                            icon: Icons.lock_outline_rounded,
+                            label: 'My Assets',
+                            value: (highlights?.stats.totalAssets ?? 0).toString(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    _AttendanceCard(overview: amsOverview),
+                    const SizedBox(height: 10),
+                    _DailyStatusCard(highlights: highlights),
+                    if (state.errorMessage != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        state.errorMessage!,
+                        style: const TextStyle(
+                          color: Color(0xFFFFB4AB),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (state.isLoading)
+                const Positioned(
+                  top: 12,
+                  right: 16,
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ),
-                SizedBox(width: 8),
-                Expanded(
-                  child: _SummaryCard(
-                    icon: Icons.lock_outline_rounded,
-                    label: 'My Assets',
-                    value: '59',
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            const _AttendanceCard(),
-            const SizedBox(height: 10),
-            const _DailyStatusCard(),
-          ],
-        ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -128,17 +164,18 @@ class _SummaryCard extends StatelessWidget {
 }
 
 class _AttendanceCard extends StatelessWidget {
-  const _AttendanceCard();
+  const _AttendanceCard({required this.overview});
+
+  final DashboardAmsLeaveOverviewEntity? overview;
 
   @override
   Widget build(BuildContext context) {
-    const List<String> names = <String>[
-      'Adarsh Thakur',
-      'Anshul Singla',
-      'Pulkit Saxena',
-      'Rajit Tripathi',
-      'Vicky Kumar',
-    ];
+    final days = (overview?.days ?? const <DashboardAttendanceDayEntity>[]).take(5).toList();
+
+    final membersWithLeaves = (overview?.members ?? const <DashboardAttendanceMemberEntity>[])
+        .where((member) => member.leaves.isNotEmpty)
+        .take(5)
+        .toList();
 
     return _CardShell(
       child: Padding(
@@ -146,11 +183,11 @@ class _AttendanceCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Row(
+            Row(
               children: <Widget>[
-                Icon(Icons.calendar_today_outlined, size: 14, color: Color(0xFF6E9AF2)),
-                SizedBox(width: 8),
-                Expanded(
+                const Icon(Icons.calendar_today_outlined, size: 14, color: Color(0xFF6E9AF2)),
+                const SizedBox(width: 8),
+                const Expanded(
                   child: Text(
                     'Attendance - Upcoming Leaves',
                     style: TextStyle(
@@ -161,8 +198,8 @@ class _AttendanceCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'View AMS ->',
-                  style: TextStyle(
+                  'Pending ${overview?.pendingApprovalCount ?? 0}',
+                  style: const TextStyle(
                     color: Color(0xFFBCD1F7),
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -179,16 +216,23 @@ class _AttendanceCard extends StatelessWidget {
               ),
               child: Column(
                 children: <Widget>[
-                  const _AttendanceHeaderRow(),
-                  ...List<Widget>.generate(
-                    names.length,
-                    (int i) => _AttendanceRow(
-                      name: names[i],
-                      blueStart: i == 0 ? 1 : i,
-                      blueSpan: i == 2 ? 2 : 1,
-                      yellowStart: i == 0 ? 2 : (i == 4 ? 2 : -1),
+                  _AttendanceHeaderRow(days: days),
+                  if (membersWithLeaves.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'No upcoming leaves',
+                          style: TextStyle(
+                            color: Color(0xFF8DA2C9),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ...membersWithLeaves.map((member) => _AttendanceRow(member: member, days: days)),
                 ],
               ),
             ),
@@ -200,13 +244,12 @@ class _AttendanceCard extends StatelessWidget {
 }
 
 class _AttendanceHeaderRow extends StatelessWidget {
-  const _AttendanceHeaderRow();
+  const _AttendanceHeaderRow({required this.days});
+
+  final List<DashboardAttendanceDayEntity> days;
 
   @override
   Widget build(BuildContext context) {
-    const List<String> days = <String>['W', 'T', 'F', 'M', 'T'];
-    const List<String> dates = <String>['22', '23', '24', '27', '28'];
-
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
       decoration: BoxDecoration(
@@ -232,12 +275,12 @@ class _AttendanceHeaderRow extends StatelessWidget {
                   child: Column(
                     children: <Widget>[
                       Text(
-                        days[idx],
+                        days[idx].dayLabel,
                         style: const TextStyle(color: Color(0xFF8DA2C9), fontSize: 10),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        dates[idx],
+                        days[idx].dayNum.toString(),
                         style: const TextStyle(
                           color: Color(0xFFD5E3FF),
                           fontSize: 12,
@@ -257,20 +300,15 @@ class _AttendanceHeaderRow extends StatelessWidget {
 }
 
 class _AttendanceRow extends StatelessWidget {
-  const _AttendanceRow({
-    required this.name,
-    required this.blueStart,
-    required this.blueSpan,
-    required this.yellowStart,
-  });
+  const _AttendanceRow({required this.member, required this.days});
 
-  final String name;
-  final int blueStart;
-  final int blueSpan;
-  final int yellowStart;
+  final DashboardAttendanceMemberEntity member;
+  final List<DashboardAttendanceDayEntity> days;
 
   @override
   Widget build(BuildContext context) {
+    final displayName = '${member.firstName} ${member.lastName}'.trim();
+
     return Container(
       height: 34,
       padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -282,7 +320,7 @@ class _AttendanceRow extends StatelessWidget {
           SizedBox(
             width: 98,
             child: Text(
-              name,
+              displayName,
               style: const TextStyle(
                 color: Color(0xFFE2ECFF),
                 fontSize: 12,
@@ -292,40 +330,16 @@ class _AttendanceRow extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                final double cell = constraints.maxWidth / 5;
-                return Stack(
-                  children: <Widget>[
-                    if (blueStart >= 0)
-                      Positioned(
-                        left: cell * blueStart,
-                        top: 6,
-                        child: Container(
-                          width: (cell * blueSpan) - 4,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF4E80C8),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                        ),
-                      ),
-                    if (yellowStart >= 0)
-                      Positioned(
-                        left: cell * yellowStart,
-                        top: 6,
-                        child: Container(
-                          width: cell - 4,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF9B7D2D),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                        ),
-                      ),
-                  ],
+            child: Row(
+              children: days.map((day) {
+                final leave = member.leaves[day.date];
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+                    child: _LeaveCell(leave: leave),
+                  ),
                 );
-              },
+              }).toList(),
             ),
           ),
         ],
@@ -334,11 +348,56 @@ class _AttendanceRow extends StatelessWidget {
   }
 }
 
-class _DailyStatusCard extends StatelessWidget {
-  const _DailyStatusCard();
+class _LeaveCell extends StatelessWidget {
+  const _LeaveCell({required this.leave});
+
+  final DashboardLeaveDetailEntity? leave;
 
   @override
   Widget build(BuildContext context) {
+    if (leave == null) {
+      return const SizedBox.shrink();
+    }
+
+    final status = leave!.status.toLowerCase();
+    Color color = const Color(0xFF4E80C8);
+    if (status == 'pending') {
+      color = const Color(0xFF9B7D2D);
+    } else if (status == 'rejected') {
+      color = const Color(0xFFB24A4A);
+    }
+
+    final half = leave!.half.toLowerCase();
+    final alignment = switch (half) {
+      'first' => Alignment.centerLeft,
+      'second' => Alignment.centerRight,
+      _ => Alignment.center,
+    };
+
+    final widthFactor = half == 'full' || half.isEmpty ? 1.0 : 0.52;
+
+    return Container(
+      alignment: alignment,
+      child: FractionallySizedBox(
+        widthFactor: widthFactor,
+        child: Container(
+          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(3)),
+        ),
+      ),
+    );
+  }
+}
+
+class _DailyStatusCard extends StatelessWidget {
+  const _DailyStatusCard({required this.highlights});
+
+  final DashboardHighlightsEntity? highlights;
+
+  @override
+  Widget build(BuildContext context) {
+    final dsr = highlights?.dsr;
+    final recentEntries = dsr?.recentEntries ?? const <DashboardRecentEntryEntity>[];
+
     return _CardShell(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
@@ -359,24 +418,31 @@ class _DailyStatusCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Text(
-                  'View DSR ->',
-                  style: TextStyle(
-                    color: Color(0xFFBCD1F7),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 8),
-            const Row(
+            Row(
               children: <Widget>[
-                Expanded(child: _MetricTile(label: 'Today', value: '0 hrs')),
-                SizedBox(width: 6),
-                Expanded(child: _MetricTile(label: 'This Week', value: '9 hrs')),
-                SizedBox(width: 6),
-                Expanded(child: _MetricTile(label: 'Blocked', value: '0')),
+                Expanded(
+                  child: _MetricTile(
+                    label: 'Today',
+                    value: '${_formatHours(dsr?.todayHours ?? 0)} hrs',
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: _MetricTile(
+                    label: 'This Week',
+                    value: '${_formatHours(dsr?.weekHours ?? 0)} hrs',
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: _MetricTile(
+                    label: 'Blocked',
+                    value: (dsr?.blockedCount ?? 0).toString(),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -395,20 +461,23 @@ class _DailyStatusCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: const Color(0xFF3A4A6A).withValues(alpha: 0.7)),
               ),
-              child: const Column(
+              child: Column(
                 children: <Widget>[
-                  _EntryHeader(),
-                  _EntryRow(
-                    member: '--',
-                    dateTime: '21 Apr, 00:36',
-                    project: 'Flutter Acceleration',
-                    hours: '8h',
-                  ),
-                  _EntryRow(
-                    member: '--',
-                    dateTime: '21 Apr, 00:34',
-                    project: 'TotoFinish',
-                    hours: '1h',
+                  const _EntryHeader(),
+                  if (recentEntries.isEmpty)
+                    const _EntryRow(
+                      member: '--',
+                      dateTime: '-',
+                      project: 'No entries',
+                      hours: '0 hrs',
+                    ),
+                  ...recentEntries.take(5).map(
+                    (entry) => _EntryRow(
+                      member: entry.member,
+                      dateTime: entry.dateTime,
+                      project: entry.project,
+                      hours: entry.hours,
+                    ),
                   ),
                 ],
               ),
@@ -417,6 +486,13 @@ class _DailyStatusCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatHours(double hours) {
+    if (hours == hours.toInt()) {
+      return hours.toInt().toString();
+    }
+    return hours.toStringAsFixed(1);
   }
 }
 
@@ -478,7 +554,7 @@ class _EntryHeader extends StatelessWidget {
             child: Text('Project', style: _TableHeaderStyle.style),
           ),
           SizedBox(
-            width: 32,
+            width: 40,
             child: Text('Hours', style: _TableHeaderStyle.style, textAlign: TextAlign.right),
           ),
         ],
@@ -520,7 +596,7 @@ class _EntryRow extends StatelessWidget {
             child: Text(project, style: _TableRowStyle.style, overflow: TextOverflow.ellipsis),
           ),
           SizedBox(
-            width: 32,
+            width: 40,
             child: Text(
               hours,
               style: const TextStyle(

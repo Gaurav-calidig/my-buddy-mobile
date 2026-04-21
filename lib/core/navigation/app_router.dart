@@ -37,7 +37,7 @@ import 'package:core/features/splash/presentation/screens/splash_screen.dart';
 import 'package:core/features/splash/presentation/screens/update_required_screen.dart';
 import 'package:core/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:core/features/dashboard/presentation/screens/my_dsr_screen.dart';
-import 'package:core/features/projects/presentation/screens/projects_screen.dart';
+import 'package:core/features/dashboard/presentation/bloc/dashboard_cubit.dart';
 import 'package:core/features/workmanager/screen/workmanager_test_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/features/chat/presentation/bloc/chat_room_cubit.dart';
@@ -63,16 +63,14 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.dashboard,
-        pageBuilder: (_, state) => const NoTransitionPage<Widget>(
-          child: DashboardScreen(),
+        pageBuilder: (_, state) => NoTransitionPage<Widget>(
+          child: BlocProvider(
+            create: (_) => sl<DashboardCubit>()..loadDashboard(),
+            child: const DashboardScreen(),
+          ),
         ),
       ),
-      GoRoute(
-        path: AppRoutes.projects,
-        pageBuilder: (_, state) => const NoTransitionPage<Widget>(
-          child: ProjectsScreen(),
-        ),
-      ),
+     
       GoRoute(
         path: AppRoutes.myDsr,
         pageBuilder: (_, state) => const NoTransitionPage<Widget>(
