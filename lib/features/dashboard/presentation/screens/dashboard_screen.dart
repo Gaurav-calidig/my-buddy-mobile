@@ -4,21 +4,8 @@ import 'package:core/features/dashboard/presentation/widgets/dashboard_cards.dar
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class DashboardScreen extends StatefulWidget {
+class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
-
-  @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
-}
-
-class _DashboardScreenState extends State<DashboardScreen> {
-
-@override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    sl<ApiService>().get(ApiRoutes.projects);
-  }
 
   @override
   Widget build(BuildContext context) {
