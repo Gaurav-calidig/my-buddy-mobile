@@ -36,6 +36,9 @@ import 'package:core/features/onboarding/presentation/screens/flutter_onboarding
 import 'package:core/features/splash/presentation/screens/splash_screen.dart';
 import 'package:core/features/splash/presentation/screens/update_required_screen.dart';
 import 'package:core/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:core/features/dsr/presentation/dsr_page.dart';
+import 'package:core/features/dashboard/presentation/bloc/dashboard_bloc.dart';
+import 'package:core/features/dashboard/presentation/bloc/dashboard_event.dart';
 import 'package:core/features/workmanager/screen/workmanager_test_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/features/chat/presentation/bloc/chat_room_cubit.dart';
@@ -80,18 +83,31 @@ class AppRouter {
           }
           return ProjectDetailScreen(project: project);
         },
+        pageBuilder: (_, state) => NoTransitionPage<Widget>(
+          child: BlocProvider(
+            create: (_) => sl<DashboardBloc>()..add(const DashboardLoadRequested()),
+            child: const DashboardScreen(),
+          ),
+        ),
       ),
+     
       GoRoute(
         path: AppRoutes.myDsr,
-        builder: (_, state) => Scaffold(appBar: AppBar(title: const Text('My DSR')), body: const Center(child: Text('My DSR Screen'))),
+        pageBuilder: (_, state) => const NoTransitionPage<Widget>(
+          child: DsrPage(),
+        ),
       ),
       GoRoute(
         path: AppRoutes.capacityPlanner,
-        builder: (_, state) => Scaffold(appBar: AppBar(title: const Text('Capacity Planner')), body: const Center(child: Text('Capacity Planner Screen'))),
+        pageBuilder: (_, state) => const NoTransitionPage<Widget>(
+          child: _DarkPlaceholderScreen(title: 'Capacity Planner Screen'),
+        ),
       ),
       GoRoute(
         path: AppRoutes.attendance,
-        builder: (_, state) => Scaffold(appBar: AppBar(title: const Text('Attendance')), body: const Center(child: Text('Attendance Screen'))),
+        pageBuilder: (_, state) => const NoTransitionPage<Widget>(
+          child: _DarkPlaceholderScreen(title: 'Attendance Screen'),
+        ),
       ),
       GoRoute(
         path: AppRoutes.login,
@@ -386,4 +402,26 @@ class AppRouter {
     ],
     errorBuilder: (_, state) => RouteErrorPage(routeName: state.uri.toString()),
   );
+}
+
+class _DarkPlaceholderScreen extends StatelessWidget {
+  const _DarkPlaceholderScreen({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xFF0E1A34),
+      alignment: Alignment.center,
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Color(0xFFCEDBFA),
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
 }

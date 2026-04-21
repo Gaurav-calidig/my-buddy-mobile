@@ -1,25 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class OnboardingFooter extends StatelessWidget {
   const OnboardingFooter({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(16, 10, 16, 18),
+    return Padding(
+      padding: EdgeInsets.fromLTRB(14.w, 8.h, 14.w, 14.h),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
           Text(
             'SecureOps - Secure operations platform for teams',
-            style: TextStyle(color: Color(0xFF8AA5CA), fontSize: 14),
+            style: TextStyle(color: const Color(0xFF8AA5CA), fontSize: 12.sp),
           ),
-          SizedBox(height: 4),
-          Center(
-            child: Text(
-              'Powered by calidig',
-              style: TextStyle(color: Color(0xFF8AA5CA), fontSize: 14),
-            ),
+          SizedBox(height: 3.h),
+          Text(
+            'Powered by calidig',
+            style: TextStyle(color: const Color(0xFF8AA5CA), fontSize: 12.sp),
           ),
         ],
       ),

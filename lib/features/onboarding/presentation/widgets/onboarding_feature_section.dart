@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
 
 class OnboardingFeatureSection extends StatelessWidget {
@@ -20,50 +21,50 @@ class OnboardingFeatureSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Widget content = Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+      padding: EdgeInsets.fromLTRB(14.w, 8.h, 14.w, 10.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 42,
-              height: 1.06,
+              fontSize: 22.sp,
+              height: 1.08,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 8.h),
           Text(
             description,
-            style: const TextStyle(
-              color: Color(0xFFA3BCDB),
-              fontSize: 18,
-              height: 1.45,
+            style: TextStyle(
+              color: const Color(0xFFA3BCDB),
+              fontSize: 14.5.sp,
+              height: 1.4,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 10.h),
           ...bullets.map(
             (bullet) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: EdgeInsets.only(bottom: 6.h),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  const Padding(
-                    padding: EdgeInsets.only(top: 4),
+                  Padding(
+                    padding: EdgeInsets.only(top: 2.h),
                     child: Icon(
                       Icons.check_circle_outline,
-                      color: Color(0xFF3D8BFF),
-                      size: 18,
+                      color: const Color(0xFF3D8BFF),
+                      size: 16.sp,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8.w),
                   Expanded(
                     child: Text(
                       bullet,
-                      style: const TextStyle(
-                        color: Color(0xFFDCE8FD),
-                        fontSize: 17,
+                      style: TextStyle(
+                        color: const Color(0xFFDCE8FD),
+                        fontSize: 14.sp,
                         height: 1.3,
                       ),
                     ),
@@ -78,17 +79,16 @@ class OnboardingFeatureSection extends StatelessWidget {
 
     final Widget art = Center(
       child: SizedBox(
-        height: 250,
-        width: 250,
+        height: 200.h,
+        width: 200.w,
         child: Lottie.asset(animationAssetPath, fit: BoxFit.contain),
       ),
     );
 
     return Container(
-      margin: const EdgeInsets.only(top: 8),
       color: const Color(0xFF081A3A),
       child: Column(
-        children: <Widget>[art, content],
+        children: reversed ? <Widget>[content, art] : <Widget>[content, art],
       ),
     );
   }

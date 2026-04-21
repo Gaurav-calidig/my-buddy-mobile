@@ -77,6 +77,8 @@ class ApiRoutes {
   static String restoreProjectAsset(int projectId, int assetId) =>
       '$base/api/projects/$projectId/assets/$assetId/restore';
 
+
+
   // Cart
   static String get cartAdd => '$base/cart/add';
   static String get cartRemove => '$base/cart/remove';
@@ -90,4 +92,9 @@ class ApiRoutes {
       '$base/payments/stripe/$paymentIntentId/capture';
   static String stripeCancelPaymentIntent(String paymentIntentId) =>
       '$base/payments/stripe/$paymentIntentId/cancel';
+
+
+  //Dashboard
+  static String get dashHilights => '$base/api/dashboard-highlights';
+  static String get amsLeaveOverview => '$base/api/dashboard/ams-leave-overview';
 }

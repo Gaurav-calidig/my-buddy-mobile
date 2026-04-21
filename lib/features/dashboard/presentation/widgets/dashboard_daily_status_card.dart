@@ -1,0 +1,84 @@
+import 'package:core/features/dashboard/domain/entities/dashboard_highlights_entity.dart';
+import 'package:core/features/dashboard/presentation/widgets/dashboard_card_shell.dart';
+import 'package:core/features/dashboard/presentation/widgets/dashboard_entry_header.dart';
+import 'package:core/features/dashboard/presentation/widgets/dashboard_entry_row.dart';
+import 'package:core/features/dashboard/presentation/widgets/dashboard_metric_tile.dart';
+import 'package:flutter/material.dart';
+
+class DashboardDailyStatusCard extends StatelessWidget {
+  const DashboardDailyStatusCard({required this.highlights, super.key});
+
+  final DashboardHighlightsEntity? highlights;
+
+  @override
+  Widget build(BuildContext context) {
+    final dsr = highlights?.dsr;
+    final recentEntries = dsr?.recentEntries ?? const <DashboardRecentEntryEntity>[];
+
+    return DashboardCardShell(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Row(
+              children: <Widget>[
+                Icon(Icons.assignment_outlined, size: 14, color: Color(0xFF6E9AF2)),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'My Daily Status',
+                    style: TextStyle(color: Color(0xFFE5EDFF), fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: <Widget>[
+                Expanded(child: DashboardMetricTile(label: 'Today', value: '${_formatHours(dsr?.todayHours ?? 0)} hrs')),
+                const SizedBox(width: 6),
+                Expanded(child: DashboardMetricTile(label: 'This Week', value: '${_formatHours(dsr?.weekHours ?? 0)} hrs')),
+                const SizedBox(width: 6),
+                Expanded(child: DashboardMetricTile(label: 'Blocked', value: (dsr?.blockedCount ?? 0).toString())),
+              ],
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Recent Entries',
+              style: TextStyle(color: Color(0xFF8DA2C9), fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF0E1B36),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF3A4A6A).withValues(alpha: 0.7)),
+              ),
+              child: Column(
+                children: <Widget>[
+                  const DashboardEntryHeader(),
+                  if (recentEntries.isEmpty)
+                    const DashboardEntryRow(member: '--', dateTime: '-', project: 'No entries', hours: '0 hrs'),
+                  ...recentEntries.take(5).map(
+                    (entry) => DashboardEntryRow(
+                      member: entry.member,
+                      dateTime: entry.dateTime,
+                      project: entry.project,
+                      hours: entry.hours,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatHours(double hours) {
+    if (hours == hours.toInt()) return hours.toInt().toString();
+    return hours.toStringAsFixed(1);
+  }
+}

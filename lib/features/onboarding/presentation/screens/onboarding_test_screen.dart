@@ -131,6 +131,7 @@ class _OnboardingTestScreenState extends State<OnboardingTestScreen> {
                 'Sales pipeline management',
               ],
               animationAssetPath: AssetPaths.heroAnimation,
+              reversed: true,
             ),
             OnboardingBottomCta(onCtaTap: _finish),
             const OnboardingFooter(),
@@ -142,6 +143,8 @@ class _OnboardingTestScreenState extends State<OnboardingTestScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final MediaQueryData mediaQuery = MediaQuery.of(context);
+
     return Scaffold(
       body: BlocProvider(
         create: (context) => sl<AuthBloc>(),
@@ -153,37 +156,41 @@ class _OnboardingTestScreenState extends State<OnboardingTestScreen> {
     });
          }
           },
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: <Color>[
-                  Color(0xFF061A3B),
-                  Color(0xFF05142F),
-                  Color(0xFF041127),
-                ],
+          child: MediaQuery(
+        data: mediaQuery.copyWith(textScaler: TextScaler.linear(1.0)),
+        child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: <Color>[
+                    Color(0xFF061A3B),
+                    Color(0xFF05142F),
+                    Color(0xFF041127),
+                  ],
+                ),
+              ),
+              child: SafeArea(
+                child: Column(
+                  children: <Widget>[
+                    Expanded(
+                      child: PageView(
+                        controller: _pageController,
+                        onPageChanged: (int value) =>
+                         
+                        setState(() => _pageIndex = value),
+                        children: _pages(),
+                      ),
+                    ),
+                    OnboardingPagerBar(
+                      pageIndex: _pageIndex,
+                      totalPages: _totalPages,
+                      onSkip: _finish,
+                      onNext: _next,
+                    ),
+                  ],
               ),
             ),
-            child: SafeArea(
-              child: Column(
-                children: <Widget>[
-                  Expanded(
-                    child: PageView(
-                      controller: _pageController,
-                      onPageChanged: (int value) =>
-                          setState(() => _pageIndex = value),
-                      children: _pages(),
-                    ),
-                  ),
-                  OnboardingPagerBar(
-                    pageIndex: _pageIndex,
-                    totalPages: _totalPages,
-                    onSkip: _finish,
-                    onNext: _next,
-                  ),
-                ],
-              ),
             ),
           ),
         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class OnboardingModulesSection extends StatelessWidget {
   const OnboardingModulesSection({super.key});
@@ -45,31 +46,31 @@ class OnboardingModulesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 8.h),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          const Text(
+          Text(
             'Everything Your Team Needs',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white,
-              fontSize: 36,
+              fontSize: 30.sp,
               height: 1.08,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 10),
-          const Text(
+          SizedBox(height: 8.h),
+          Text(
             'Six integrated modules working together to keep your projects organized, your assets secure, and your team accountable.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Color(0xFF9EB9DE),
-              fontSize: 17,
-              height: 1.45,
+              color: const Color(0xFF9EB9DE),
+              fontSize: 14.5.sp,
+              height: 1.4,
             ),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 10.h),
           ..._items.map((item) => _ModuleCard(item: item)),
         ],
       ),
@@ -97,11 +98,12 @@ class _ModuleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
+      width: double.infinity,
+      margin: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
         color: const Color(0xFF0D1F43),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12.r),
         border: Border.all(
           color: const Color(0xFF8AA2C7).withValues(alpha: 0.35),
         ),
@@ -109,23 +111,23 @@ class _ModuleCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(item.icon, color: const Color(0xFF3D8BFF), size: 24),
-          const SizedBox(height: 10),
+          Icon(item.icon, color: const Color(0xFF3D8BFF), size: 20.sp),
+          SizedBox(height: 8.h),
           Text(
             item.title,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
-              fontSize: 24,
+              fontSize: 20.sp,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: 4.h),
           Text(
             item.subtitle,
-            style: const TextStyle(
-              color: Color(0xFFAAC0DF),
-              fontSize: 17,
-              height: 1.4,
+            style: TextStyle(
+              color: const Color(0xFFAAC0DF),
+              fontSize: 14.sp,
+              height: 1.35,
             ),
           ),
         ],

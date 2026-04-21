@@ -55,11 +55,11 @@ Future<void> main() async {
 
       await _initializeApplication();
       runApp(
-        // DevicePreview(
-        //   enabled: !kReleaseMode,
-        //   builder: (context) => const MyApp(),
-        // ),
-        MyApp(),
+        DevicePreview(
+          enabled: true,
+          builder: (context) => const MyApp(),
+        ),
+       // MyApp(),
       );
     },
     (error, stack) async {
@@ -176,16 +176,36 @@ class MyApp extends StatelessWidget {
 
           if (noDrawerRoutes.contains(location)) return child;
 
-          return _buildScaffold(context, child);
+          return _buildScaffold(context, child, location);
         },
       );
     }
 
-    return _buildScaffold(context, child);
+    return _buildScaffold(context, child, '');
   }
 
-  Widget _buildScaffold(BuildContext context, Widget child) {
+  String _titleForRoute(String location) {
+    switch (location) {
+      case AppRoutes.dashboard:
+        return 'Dashboard';
+      case AppRoutes.projects:
+        return 'Projects';
+      case AppRoutes.myDsr:
+        return 'My DSR';
+      case AppRoutes.capacityPlanner:
+        return 'Capacity Planner';
+      case AppRoutes.attendance:
+        return 'Attendance';
+      default:
+        return AppConstants.appName;
+    }
+  }
+
+  Widget _buildScaffold(BuildContext context, Widget child, String location) {
+    const Color appChrome = Color(0xFF101C34);
+
     return Scaffold(
+      backgroundColor: appChrome,
       drawer: const TemplateFeatureDrawer(),
       appBar: AppBar(
         backgroundColor: AppColors.kcBackgroundColorDark,
@@ -198,10 +218,7 @@ class MyApp extends StatelessWidget {
             );
           },
         ),
-        title: Text(
-          AppConstants.appName,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+        title: Text(_titleForRoute(location)),
         centerTitle: false,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),

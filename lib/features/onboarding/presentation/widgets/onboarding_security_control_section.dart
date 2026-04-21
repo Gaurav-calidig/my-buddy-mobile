@@ -1,5 +1,6 @@
 import 'package:core/core/constants/assets_paths.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
 
 class OnboardingSecurityControlSection extends StatelessWidget {
@@ -58,40 +59,40 @@ class OnboardingSecurityControlSection extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 18, 16, 20),
+          padding: EdgeInsets.fromLTRB(14.w, 12.h, 14.w, 14.h),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Center(
                 child: SizedBox(
-                  width: 170,
-                  height: 170,
+                  width: 130.w,
+                  height: 130.h,
                   child: Lottie.asset(
                     AssetPaths.securityAnimation,
                     fit: BoxFit.contain,
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
-              const Text(
+              SizedBox(height: 8.h),
+              Text(
                 'Built for Security & Control',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 34,
+                  fontSize: 22.sp,
                   height: 1.08,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 10),
-              const Text(
+              SizedBox(height: 8.h),
+              Text(
                 'Enterprise-grade access control with the flexibility teams need to move fast.',
                 style: TextStyle(
-                  color: Color(0xFFD2E1FA),
-                  fontSize: 18,
-                  height: 1.38,
+                  color: const Color(0xFFD2E1FA),
+                  fontSize: 14.5.sp,
+                  height: 1.35,
                 ),
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 10.h),
               ..._items.map((item) => _SecurityCard(item: item)),
             ],
           ),
@@ -121,44 +122,39 @@ class _SecurityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0C213F).withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF8DACD6).withValues(alpha: 0.32)),
-      ),
+      margin: EdgeInsets.only(bottom: 8.h),
+      padding: EdgeInsets.all(10.w),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Container(
-            width: 32,
-            height: 32,
+            width: 28.w,
+            height: 28.w,
             decoration: BoxDecoration(
               color: const Color(0xFF1C3E72),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(8.r),
             ),
-            child: Icon(item.icon, color: const Color(0xFF69A4FF), size: 18),
+            child: Icon(item.icon, color: const Color(0xFF69A4FF), size: 15.sp),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: 8.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
                   item.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 19,
+                    fontSize: 16.sp,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4.h),
                 Text(
                   item.subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFFCBDCF5),
-                    fontSize: 15,
+                  style: TextStyle(
+                    color: const Color(0xFFCBDCF5),
+                    fontSize: 13.sp,
                     height: 1.3,
                   ),
                 ),

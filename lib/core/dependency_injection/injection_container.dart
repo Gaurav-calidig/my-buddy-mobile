@@ -2,6 +2,7 @@ import 'package:core/core/config/feature_flags.dart';
 import 'package:core/core/dependency_injection/modules/auth_module.dart';
 import 'package:core/core/dependency_injection/modules/chat_module.dart';
 import 'package:core/core/dependency_injection/modules/core_module.dart';
+import 'package:core/core/dependency_injection/modules/dashboard_module.dart';
 import 'package:core/core/dependency_injection/modules/firebase_module.dart';
 import 'package:core/core/dependency_injection/modules/payments_module.dart';
 import 'package:get_it/get_it.dart';
@@ -27,6 +28,8 @@ Future<void> init() async {
   if (FeatureFlags.enablePayments) {
     registerPaymentsModule(sl);
   }
+
+  registerDashboardModule(sl);
 
 
   if (FeatureFlags.enableChat) {
