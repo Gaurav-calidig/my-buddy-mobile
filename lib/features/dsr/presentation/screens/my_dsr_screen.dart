@@ -87,8 +87,17 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     // Keeping current delete action local-only by design until delete API is wired.
   }
 
-  Future<void> _editEntry(DateTime date, int index, DsrEntryEntity current) async {
+  Future<void> _editEntry({
+    required DsrState state,
+    required DateTime date,
+    required int index,
+    required DsrEntryEntity current,
+  }) async {
     final TextEditingController descController = TextEditingController(text: current.description);
+    final List<String> projectNames = state.projects.map((p) => p.name).toList(growable: false);
+    String? selectedProject = projectNames.contains(current.project)
+        ? current.project
+        : (projectNames.isNotEmpty ? projectNames.first : null);
     String selectedStatus = current.status;
     String? selectedHours = '${current.hours.toStringAsFixed(1)}h';
 
@@ -97,33 +106,53 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: AppColors.kcBackgroundColorDark,
-          title: const Text('Edit DSR', style: TextStyle(color: Colors.white)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              DsrDropdownField<String>(
-                value: selectedHours,
-                hintText: 'Select hours',
-                items: _hoursOptions,
-                onChanged: (String? v) => selectedHours = v,
+          title: const Text(
+            'Edit DSR Entry',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          ),
+          content: SingleChildScrollView(
+            child: SizedBox(
+              width: 340,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const DsrLabel('Project'),
+                  DsrDropdownField<String>(
+                    value: selectedProject,
+                    hintText: 'Select project',
+                    items: projectNames,
+                    onChanged: (String? v) => selectedProject = v,
+                  ),
+                  const SizedBox(height: 10),
+                  const DsrLabel('Hours'),
+                  DsrDropdownField<String>(
+                    value: selectedHours,
+                    hintText: 'Select hours',
+                    items: _hoursOptions,
+                    onChanged: (String? v) => selectedHours = v,
+                  ),
+                  const SizedBox(height: 10),
+                  const DsrLabel('Status'),
+                  DsrDropdownField<String>(
+                    value: selectedStatus,
+                    hintText: 'Select status',
+                    items: _statuses,
+                    onChanged: (String? v) {
+                      if (v != null) selectedStatus = v;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  const DsrLabel('Description'),
+                  TextField(
+                    controller: descController,
+                    maxLines: 4,
+                    style: const TextStyle(color: AppColors.kcDarkTextPrimary),
+                    decoration: dsrFieldDecoration('What did you work on?'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              DsrDropdownField<String>(
-                value: selectedStatus,
-                hintText: 'Select status',
-                items: _statuses,
-                onChanged: (String? v) {
-                  if (v != null) selectedStatus = v;
-                },
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: descController,
-                maxLines: 4,
-                style: const TextStyle(color: AppColors.kcDarkTextPrimary),
-                decoration: dsrFieldDecoration('Description'),
-              ),
-            ],
+            ),
           ),
           actions: <Widget>[
             TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
@@ -348,27 +377,174 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        DsrCardShell(
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: entries.isEmpty
-                ? const SizedBox(
-                    height: 110,
-                    child: Center(
-                      child: Text(
-                        'No DSR entries found for selected date.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.kcDarkTextFaint, height: 1.35),
-                      ),
-                    ),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: entries.map((entry) => DsrTodayEntryTile(entry: entry)).toList(),
+        _buildEntriesCard(state: state, date: selectedDate, entries: entries),
+      ],
+    );
+  }
+
+  Widget _buildEntriesCard({
+    required DsrState state,
+    required DateTime date,
+    required List<DsrEntryEntity> entries,
+  }) {
+    return DsrCardShell(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              'Entries for ${_formatDate(date)}',
+              style: const TextStyle(
+                color: AppColors.kcDarkTextPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Divider(color: AppColors.kcDarkBorderSoft, height: 1),
+            const SizedBox(height: 10),
+            _entriesHeaderRow(),
+            const SizedBox(height: 8),
+            if (entries.isEmpty)
+              const SizedBox(
+                height: 90,
+                child: Center(
+                  child: Text(
+                    'No DSR entries found for selected date.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.kcDarkTextFaint, height: 1.35),
                   ),
+                ),
+              )
+            else
+              ...List<Widget>.generate(entries.length, (int index) {
+                final entry = entries[index];
+                return _todayEntryRow(state: state, date: date, index: index, entry: entry);
+              }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _entriesHeaderRow() {
+    return const Row(
+      children: <Widget>[
+        Expanded(
+          child: Text(
+            'Project & Description',
+            style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+        ),
+        SizedBox(
+          width: 130,
+          child: Text(
+            'Hours / Status',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+        ),
+        SizedBox(
+          width: 70,
+          child: Text(
+            'Actions',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ),
       ],
+    );
+  }
+
+  Widget _todayEntryRow({
+    required DsrState state,
+    required DateTime date,
+    required int index,
+    required DsrEntryEntity entry,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+      decoration: BoxDecoration(
+        color: AppColors.kcDarkSurface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.kcDarkBorderStrong),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  entry.project,
+                  style: const TextStyle(
+                    color: AppColors.kcDarkTextPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    height: 1.25,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: AppColors.kcDarkReadOnlyBg,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    entry.description.isEmpty ? 'No description provided.' : entry.description,
+                    style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 12, height: 1.35),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 130,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.kcDarkBorderMid),
+                  ),
+                  child: Text(
+                    '${entry.hours.toStringAsFixed(1)}h',
+                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                DsrStatusPill(status: entry.status),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 70,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                InkWell(
+                  onTap: () => _editEntry(state: state, date: date, index: index, current: entry),
+                  child: const Icon(Icons.edit_outlined, color: AppColors.kcDarkTextPrimary, size: 17),
+                ),
+                const SizedBox(width: 10),
+                InkWell(
+                  onTap: () => _deleteEntry(date, index),
+                  child: const Icon(Icons.delete_outline, color: AppColors.kcDarkTextPrimary, size: 17),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -397,13 +573,14 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
         final bool canMutate = _isSameDate(date, yesterday);
         return Padding(
           padding: const EdgeInsets.only(bottom: 10),
-          child: _historyCard(date: date, entries: entries, total: total, canMutate: canMutate),
+          child: _historyCard(state: state, date: date, entries: entries, total: total, canMutate: canMutate),
         );
       }).toList(),
     );
   }
 
   Widget _historyCard({
+    required DsrState state,
     required DateTime date,
     required List<DsrEntryEntity> entries,
     required double total,
@@ -445,7 +622,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
             const SizedBox(height: 8),
             ...List<Widget>.generate(entries.length, (int index) {
               final DsrEntryEntity entry = entries[index];
-              return _historyEntryRow(date: date, index: index, entry: entry, canMutate: canMutate);
+              return _historyEntryRow(state: state, date: date, index: index, entry: entry, canMutate: canMutate);
             }),
           ],
         ),
@@ -454,6 +631,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
   }
 
   Widget _historyEntryRow({
+    required DsrState state,
     required DateTime date,
     required int index,
     required DsrEntryEntity entry,
@@ -491,7 +669,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
               if (canMutate) ...<Widget>[
                 const SizedBox(width: 8),
                 InkWell(
-                  onTap: () => _editEntry(date, index, entry),
+                  onTap: () => _editEntry(state: state, date: date, index: index, current: entry),
                   child: const Icon(Icons.edit_outlined, color: AppColors.kcDarkTextPrimary, size: 17),
                 ),
                 const SizedBox(width: 10),
