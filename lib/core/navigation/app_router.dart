@@ -37,8 +37,6 @@ import 'package:core/features/splash/presentation/screens/splash_screen.dart';
 import 'package:core/features/splash/presentation/screens/update_required_screen.dart';
 import 'package:core/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:core/features/dsr/presentation/dsr_page.dart';
-import 'package:core/features/dashboard/presentation/bloc/dashboard_bloc.dart';
-import 'package:core/features/dashboard/presentation/bloc/dashboard_event.dart';
 import 'package:core/features/workmanager/screen/workmanager_test_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/features/chat/presentation/bloc/chat_room_cubit.dart';

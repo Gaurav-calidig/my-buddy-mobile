@@ -32,7 +32,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     super.dispose();
   }
 
-  List<String> get _hoursOptions => List<String>.generate(17, (int index) {
+  List<String> get _hoursOptions => List<String>.generate(19, (int index) {
     final double value = index * 0.5;
     return '${value.toStringAsFixed(1)}h';
   });
@@ -142,6 +142,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     return BlocBuilder<DsrBloc, DsrState>(
       builder: (context, state) {
         final DateTime selectedDate = state.selectedDate ?? _todayKey;
+        final bool showTabLoader = state.isLoading;
         final List<String> projectNames = state.projects.map((p) => p.name).toList(growable: false);
         if (_selectedProject == null && projectNames.isNotEmpty) {
           _selectedProject = projectNames.first;
@@ -183,15 +184,15 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                   ),
                   const SizedBox(height: 10),
                 ],
-                if (_activeTab == _DsrTab.add)
+                if (showTabLoader)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 24),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (_activeTab == _DsrTab.add)
                   _buildAddTab(state: state, selectedDate: selectedDate, projectNames: projectNames)
                 else
                   _buildHistoryTab(state),
-                if (state.isLoading)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 12),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
               ],
             ),
           ),
