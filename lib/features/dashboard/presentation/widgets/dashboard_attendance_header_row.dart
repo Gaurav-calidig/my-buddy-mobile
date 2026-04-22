@@ -1,4 +1,5 @@
 import 'package:core/features/dashboard/domain/entities/dashboard_ams_leave_overview_entity.dart';
+import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class DashboardAttendanceHeaderRow extends StatelessWidget {
@@ -16,7 +17,7 @@ class DashboardAttendanceHeaderRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: const Color(0xFF3A4A6A).withValues(alpha: 0.7))),
+        border: Border(bottom: BorderSide(color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.7))),
       ),
       child: Row(
         children: <Widget>[
@@ -25,7 +26,7 @@ class DashboardAttendanceHeaderRow extends StatelessWidget {
             child: const Text(
               'Member',
               style: TextStyle(
-                color: Color(0xFF8DA2C9),
+                color: AppColors.kcDarkTextMuted,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
@@ -37,10 +38,10 @@ class DashboardAttendanceHeaderRow extends StatelessWidget {
                 return Expanded(
                   child: Column(
                     children: <Widget>[
-                      Text(days[idx].dayLabel, style: const TextStyle(color: Color(0xFF8DA2C9), fontSize: 10)),
+                      Text(days[idx].dayLabel, style: const TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 10)),
                       Text(
                         days[idx].dayNum.toString(),
-                        style: const TextStyle(color: Color(0xFFD5E3FF), fontSize: 12, fontWeight: FontWeight.w700),
+                        style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 12, fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),

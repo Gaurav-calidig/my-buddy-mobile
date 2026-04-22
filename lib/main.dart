@@ -201,6 +201,8 @@ class MyApp extends StatelessWidget {
         return 'Capacity Planner';
       case AppRoutes.attendance:
         return 'Attendance';
+      case AppRoutes.settings:
+        return 'Settings';
       default:
         return AppConstants.appName;
     }
@@ -241,21 +243,21 @@ class MyApp extends StatelessWidget {
               // Notification action
             },
           ),
-          const SizedBox(width: 8),
-          CircleAvatar(
-            radius: 15,
-            backgroundColor: Theme.of(
-              context,
-            ).primaryColor.withValues(alpha: 0.15),
-            child: Text(
-              'G', // Placeholder initials
-              style: TextStyle(
-                color: Theme.of(context).primaryColor,
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+          // const SizedBox(width: 8),
+          // CircleAvatar(
+          //   radius: 15,
+          //   backgroundColor: Theme.of(
+          //     context,
+          //   ).primaryColor.withValues(alpha: 0.15),
+          //   child: Text(
+          //     'G', // Placeholder initials
+          //     style: TextStyle(
+          //       color: Theme.of(context).primaryColor,
+          //       fontSize: 13,
+          //       fontWeight: FontWeight.bold,
+          //     ),
+          //   ),
+          // ),
           const SizedBox(width: 16),
         ],
       ),

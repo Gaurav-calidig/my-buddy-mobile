@@ -22,6 +22,7 @@ class AppRoutes {
   static const String chatRooms = '/chat/rooms';
   static const String chatRoom = '/chat/room';
   static const String notificationInbox = '/notification-inbox';
+  static const String settings = '/settings';
   static const String brandingLab = '/branding-lab';
 
   // Payment routes

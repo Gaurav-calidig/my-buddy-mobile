@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:core/core/theme/app_colors.dart';
 
 class DsrStatusPill extends StatelessWidget {
   const DsrStatusPill({required this.status, super.key});
@@ -10,12 +11,12 @@ class DsrStatusPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C67C5),
+        color: AppColors.kcDarkStatusPill,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         status,
-        style: const TextStyle(color: Color(0xFFE9F1FF), fontSize: 10, fontWeight: FontWeight.w700),
+        style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 10, fontWeight: FontWeight.w700),
       ),
     );
   }

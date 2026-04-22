@@ -1,4 +1,5 @@
 import 'package:core/features/dashboard/domain/entities/dashboard_ams_leave_overview_entity.dart';
+import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class DashboardLeaveCell extends StatelessWidget {
@@ -11,11 +12,11 @@ class DashboardLeaveCell extends StatelessWidget {
     if (leave == null) return const SizedBox.shrink();
 
     final status = leave!.status.toLowerCase();
-    Color color = const Color(0xFF4E80C8);
+    Color color = AppColors.kcLeaveApproved;
     if (status == 'pending') {
-      color = const Color(0xFF9B7D2D);
+      color = AppColors.kcLeavePending;
     } else if (status == 'rejected') {
-      color = const Color(0xFFB24A4A);
+      color = AppColors.kcLeaveRejected;
     }
 
     final half = leave!.half.toLowerCase();

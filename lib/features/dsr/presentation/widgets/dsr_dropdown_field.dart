@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:core/core/theme/app_colors.dart';
 
 class DsrDropdownField<T> extends StatelessWidget {
   const DsrDropdownField({
@@ -19,24 +20,24 @@ class DsrDropdownField<T> extends StatelessWidget {
     return DropdownButtonFormField<T>(
       initialValue: value,
       onChanged: onChanged,
-      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF6D85B2)),
-      dropdownColor: const Color(0xFF0D1A34),
-      style: const TextStyle(color: Color(0xFFE4EEFF), fontSize: 14),
+      icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.kcGreyColor),
+      dropdownColor: AppColors.kcDarkInputAlt,
+      style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 14),
       decoration: InputDecoration(
         isDense: true,
         filled: true,
-        fillColor: const Color(0xFF0A1730),
+        fillColor: AppColors.kcDarkInput,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Color(0xFF233A60)),
+          borderSide: const BorderSide(color: AppColors.kcDarkBorderStrong),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Color(0xFF4A74B8)),
+          borderSide: const BorderSide(color: AppColors.kcDarkPrimarySoft),
         ),
       ),
-      hint: Text(hintText, style: const TextStyle(color: Color(0xFF7E95BD))),
+      hint: Text(hintText, style: const TextStyle(color: AppColors.kcGreyColor)),
       items: items
           .map((T item) => DropdownMenuItem<T>(value: item, child: Text('$item')))
           .toList(),

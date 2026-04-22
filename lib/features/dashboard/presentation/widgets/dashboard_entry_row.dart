@@ -1,4 +1,5 @@
 import 'package:core/features/dashboard/presentation/widgets/dashboard_table_styles.dart';
+import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class DashboardEntryRow extends StatelessWidget {
@@ -20,7 +21,7 @@ class DashboardEntryRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: const Color(0xFF3A4A6A).withValues(alpha: 0.45))),
+        border: Border(top: BorderSide(color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.45))),
       ),
       child: Row(
         children: <Widget>[
@@ -31,7 +32,7 @@ class DashboardEntryRow extends StatelessWidget {
             width: 40,
             child: Text(
               hours,
-              style: const TextStyle(color: Color(0xFFD9E7FF), fontSize: 11, fontWeight: FontWeight.w700),
+              style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 11, fontWeight: FontWeight.w700),
               textAlign: TextAlign.right,
             ),
           ),

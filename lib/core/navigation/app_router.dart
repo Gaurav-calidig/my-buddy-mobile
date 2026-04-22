@@ -46,6 +46,7 @@ import 'package:core/features/chat/presentation/bloc/chat_rooms_cubit.dart';
 import 'package:core/features/projects/presentation/screens/projects_screen.dart';
 import 'package:core/features/projects/presentation/screens/project_detail_screen.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
+import 'package:core/features/settings/presentation/screens/settings_screen.dart';
 
 
 /// Navigator key used by GoRouter to show dialogs outside the current route context.
@@ -321,6 +322,10 @@ class AppRouter {
             child: const NotificationInboxScreen(),
           );
         },
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        builder: (_, state) => const SettingsScreen(),
       ),
 
       GoRoute(

@@ -1,5 +1,6 @@
 import 'package:core/features/dsr/presentation/models/dsr_entry.dart';
 import 'package:core/features/dsr/presentation/widgets/dsr_widgets.dart';
+import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class MyDsrScreen extends StatefulWidget {
@@ -169,7 +170,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF121F3C),
+          backgroundColor: AppColors.kcBackgroundColorDark,
           title: const Text('Edit DSR', style: TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -193,7 +194,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
               TextField(
                 controller: descController,
                 maxLines: 4,
-                style: const TextStyle(color: Color(0xFFE6EFFF)),
+                style: const TextStyle(color: AppColors.kcDarkTextPrimary),
                 decoration: dsrFieldDecoration('Description'),
               ),
             ],
@@ -221,15 +222,12 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const Color pageTop = Color(0xFF101C34);
-    const Color pageBottom = Color(0xFF0A1630);
-
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: <Color>[pageTop, pageBottom],
+          colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom],
         ),
       ),
       child: SingleChildScrollView(
@@ -244,7 +242,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
             const SizedBox(height: 2),
             const Text(
               'Log your daily work activity and hours',
-              style: TextStyle(color: Color(0xFF8FA5CE), fontSize: 14),
+              style: TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 14),
             ),
             const SizedBox(height: 10),
             _tabStrip(),
@@ -259,9 +257,9 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
   Widget _tabStrip() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0E1B36),
+        color: AppColors.kcDarkCardSoft,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF2D4166)),
+        border: Border.all(color: AppColors.kcDarkBorderStrong),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -295,21 +293,21 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
             height: 36,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFF0C1730),
+              color: AppColors.kcDarkInput,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFF2E4268)),
+              border: Border.all(color: AppColors.kcDarkBorderSoft),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                const Icon(Icons.calendar_today_outlined, color: Color(0xFF93AADA), size: 14),
+                const Icon(Icons.calendar_today_outlined, color: AppColors.kcDarkTextSecondary, size: 14),
                 const SizedBox(width: 8),
                 Text(
                   'Today (${_formatDate(_selectedDate)})',
-                  style: const TextStyle(color: Color(0xFFDCE8FF), fontWeight: FontWeight.w600),
+                  style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(width: 18),
-                const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF93AADA)),
+                const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.kcDarkTextSecondary),
               ],
             ),
           ),
@@ -318,9 +316,9 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: const Color(0xFF0A162E),
+            color: AppColors.kcDarkInput,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFF46608C)),
+            border: Border.all(color: AppColors.kcDarkBorderMid),
           ),
           child: Text(
             '${totalHours.toStringAsFixed(1)}h logged',
@@ -369,8 +367,8 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                     icon: const Icon(Icons.add, size: 16),
                     label: const Text('Add'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2C5DBD),
-                      foregroundColor: const Color(0xFFE8F0FF),
+                      backgroundColor: AppColors.kcDarkPrimarySoft,
+                      foregroundColor: AppColors.kcDarkTextPrimary,
                       minimumSize: const Size.fromHeight(40),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                     ),
@@ -381,7 +379,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                 TextField(
                   controller: _descriptionController,
                   maxLines: 3,
-                  style: const TextStyle(color: Color(0xFFE6EFFF)),
+                  style: const TextStyle(color: AppColors.kcDarkTextPrimary),
                   decoration: dsrFieldDecoration('What did you work on?'),
                 ),
               ],
@@ -399,7 +397,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                       child: Text(
                         'No entries for this date. Add your first DSR\nentry above.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Color(0xFF9BB0D7), height: 1.35),
+                        style: TextStyle(color: AppColors.kcDarkTextFaint, height: 1.35),
                       ),
                     ),
                   )
@@ -418,7 +416,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
       return const DsrCardShell(
         child: Padding(
           padding: EdgeInsets.all(14),
-          child: Text('No history records found.', style: TextStyle(color: Color(0xFF9BB0D7))),
+          child: Text('No history records found.', style: TextStyle(color: AppColors.kcDarkTextFaint)),
         ),
       );
     }
@@ -459,17 +457,17 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                     margin: const EdgeInsets.only(right: 8),
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1A2947),
+                      color: AppColors.kcDarkReadOnlyBg,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF3E547D)),
+                      border: Border.all(color: AppColors.kcDarkReadOnlyBorder),
                     ),
-                    child: const Text('Read-only', style: TextStyle(color: Color(0xFFADC3EB), fontSize: 10, fontWeight: FontWeight.w600)),
+                    child: const Text('Read-only', style: TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 10, fontWeight: FontWeight.w600)),
                   ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF7389B0)),
+                    border: Border.all(color: AppColors.kcDarkBorderMid),
                   ),
                   child: Text('${total.toStringAsFixed(1)}h', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                 ),
@@ -498,9 +496,9 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F1D39),
+        color: AppColors.kcDarkSurface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF243A5E)),
+        border: Border.all(color: AppColors.kcDarkBorderStrong),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -510,14 +508,14 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
             children: <Widget>[
               Expanded(
                 flex: 3,
-                child: Text(entry.project, style: const TextStyle(color: Color(0xFFE7F1FF), fontSize: 13, fontWeight: FontWeight.w700)),
+                child: Text(entry.project, style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 13, fontWeight: FontWeight.w700)),
               ),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF788CAB)),
+                  border: Border.all(color: AppColors.kcDarkBorderMid),
                 ),
                 child: Text('${entry.hours.toStringAsFixed(1)}h', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
               ),
@@ -527,12 +525,12 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                 const SizedBox(width: 8),
                 InkWell(
                   onTap: () => _editEntry(date, index),
-                  child: const Icon(Icons.edit_outlined, color: Color(0xFFC0D2F2), size: 17),
+                  child: const Icon(Icons.edit_outlined, color: AppColors.kcDarkTextPrimary, size: 17),
                 ),
                 const SizedBox(width: 10),
                 InkWell(
                   onTap: () => _deleteEntry(date, index),
-                  child: const Icon(Icons.delete_outline, color: Color(0xFFC0D2F2), size: 17),
+                  child: const Icon(Icons.delete_outline, color: AppColors.kcDarkTextPrimary, size: 17),
                 ),
               ],
             ],
@@ -541,10 +539,10 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(color: const Color(0xFF142548), borderRadius: BorderRadius.circular(6)),
+            decoration: BoxDecoration(color: AppColors.kcDarkReadOnlyBg, borderRadius: BorderRadius.circular(6)),
             child: Text(
               entry.description.isEmpty ? 'No description provided.' : entry.description,
-              style: const TextStyle(color: Color(0xFFD9E6FF), fontSize: 12, height: 1.35),
+              style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 12, height: 1.35),
             ),
           ),
         ],

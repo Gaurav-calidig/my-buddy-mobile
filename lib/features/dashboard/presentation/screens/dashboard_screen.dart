@@ -1,6 +1,7 @@
 import 'package:core/features/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'package:core/features/dashboard/presentation/bloc/dashboard_state.dart';
 import 'package:core/features/dashboard/presentation/widgets/dashboard_cards.dart';
+import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -9,15 +10,12 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color pageTop = Color(0xFF101C34);
-    const Color pageBottom = Color(0xFF0A1630);
-
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: <Color>[pageTop, pageBottom],
+          colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom],
         ),
       ),
       child: BlocBuilder<DashboardBloc, DashboardState>(
@@ -61,7 +59,7 @@ class DashboardScreen extends StatelessWidget {
                       Text(
                         state.errorMessage!,
                         style: const TextStyle(
-                          color: Color(0xFFFFB4AB),
+                          color: AppColors.kcDarkErrorText,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),

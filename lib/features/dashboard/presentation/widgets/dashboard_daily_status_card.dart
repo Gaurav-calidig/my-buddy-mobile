@@ -3,6 +3,7 @@ import 'package:core/features/dashboard/presentation/widgets/dashboard_card_shel
 import 'package:core/features/dashboard/presentation/widgets/dashboard_entry_header.dart';
 import 'package:core/features/dashboard/presentation/widgets/dashboard_entry_row.dart';
 import 'package:core/features/dashboard/presentation/widgets/dashboard_metric_tile.dart';
+import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class DashboardDailyStatusCard extends StatelessWidget {
@@ -23,12 +24,12 @@ class DashboardDailyStatusCard extends StatelessWidget {
           children: <Widget>[
             const Row(
               children: <Widget>[
-                Icon(Icons.assignment_outlined, size: 14, color: Color(0xFF6E9AF2)),
+                Icon(Icons.assignment_outlined, size: 14, color: AppColors.kcDarkTextAccent),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'My Daily Status',
-                    style: TextStyle(color: Color(0xFFE5EDFF), fontSize: 14, fontWeight: FontWeight.w700),
+                    style: TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                 ),
               ],
@@ -46,14 +47,14 @@ class DashboardDailyStatusCard extends StatelessWidget {
             const SizedBox(height: 8),
             const Text(
               'Recent Entries',
-              style: TextStyle(color: Color(0xFF8DA2C9), fontSize: 11, fontWeight: FontWeight.w600),
+              style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 6),
             Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF0E1B36),
+                color: AppColors.kcDarkCardSoft,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFF3A4A6A).withValues(alpha: 0.7)),
+                border: Border.all(color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.7)),
               ),
               child: Column(
                 children: <Widget>[
