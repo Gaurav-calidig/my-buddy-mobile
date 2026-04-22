@@ -37,9 +37,9 @@ class DashboardDailyStatusCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: <Widget>[
-                Expanded(child: DashboardMetricTile(label: 'Today', value: '${_formatHours(dsr?.todayHours ?? 0)} hrs')),
+                Expanded(child: DashboardMetricTile(label: 'Today', value: '${_formatHours(dsr?.todayHours ?? 0)} h')),
                 const SizedBox(width: 6),
-                Expanded(child: DashboardMetricTile(label: 'This Week', value: '${_formatHours(dsr?.weekHours ?? 0)} hrs')),
+                Expanded(child: DashboardMetricTile(label: 'This Week', value: '${_formatHours(dsr?.weekHours ?? 0)} h')),
                 const SizedBox(width: 6),
                 Expanded(child: DashboardMetricTile(label: 'Blocked', value: (dsr?.blockedCount ?? 0).toString())),
               ],
@@ -60,13 +60,13 @@ class DashboardDailyStatusCard extends StatelessWidget {
                 children: <Widget>[
                   const DashboardEntryHeader(),
                   if (recentEntries.isEmpty)
-                    const DashboardEntryRow(member: '--', dateTime: '-', project: 'No entries', hours: '0 hrs'),
+                    const DashboardEntryRow(member: '--', dateTime: '-', project: 'No entries', hours: '0 h'),
                   ...recentEntries.take(5).map(
                     (entry) => DashboardEntryRow(
                       member: entry.member,
                       dateTime: entry.dateTime,
                       project: entry.project,
-                      hours: entry.hours,
+                      hours: _normalizeHoursUnit(entry.hours),
                     ),
                   ),
                 ],
@@ -81,5 +81,9 @@ class DashboardDailyStatusCard extends StatelessWidget {
   String _formatHours(double hours) {
     if (hours == hours.toInt()) return hours.toInt().toString();
     return hours.toStringAsFixed(1);
+  }
+
+  String _normalizeHoursUnit(String value) {
+    return value.replaceAll(RegExp(r'\bhrs?\b', caseSensitive: false), 'h');
   }
 }
