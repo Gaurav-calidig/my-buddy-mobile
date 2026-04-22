@@ -1,7 +1,11 @@
-import 'package:core/features/dsr/presentation/models/dsr_entry.dart';
-import 'package:core/features/dsr/presentation/widgets/dsr_widgets.dart';
 import 'package:core/core/theme/app_colors.dart';
+import 'package:core/features/dsr/domain/entities/dsr_entry_entity.dart';
+import 'package:core/features/dsr/presentation/bloc/dsr_bloc.dart';
+import 'package:core/features/dsr/presentation/bloc/dsr_event.dart';
+import 'package:core/features/dsr/presentation/bloc/dsr_state.dart';
+import 'package:core/features/dsr/presentation/widgets/dsr_widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MyDsrScreen extends StatefulWidget {
   const MyDsrScreen({super.key});
@@ -13,31 +17,14 @@ class MyDsrScreen extends StatefulWidget {
 enum _DsrTab { add, history }
 
 class _MyDsrScreenState extends State<MyDsrScreen> {
-  static const List<String> _projects = <String>[
-    'FotoFinish',
-    'MyBuddy',
-    'Urbangate',
-    'VGS - Homework app',
-    'Flutter Acceleration',
-    'Rent My Stuff',
-  ];
-
   static const List<String> _statuses = <String>['In Progress', 'Completed', 'Blocked'];
 
   final TextEditingController _descriptionController = TextEditingController();
-  final Map<DateTime, List<DsrEntry>> _entriesByDate = <DateTime, List<DsrEntry>>{};
 
   _DsrTab _activeTab = _DsrTab.add;
   String? _selectedProject;
   String? _selectedHours;
   String _selectedStatus = 'Completed';
-  DateTime _selectedDate = DateTime.now();
-
-  @override
-  void initState() {
-    super.initState();
-    _seedHistoryData();
-  }
 
   @override
   void dispose() {
@@ -52,15 +39,6 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
 
   DateTime get _todayKey => _dayKey(DateTime.now());
 
-  List<MapEntry<DateTime, List<DsrEntry>>> get _historyGroups {
-    final DateTime today = _todayKey;
-    final List<MapEntry<DateTime, List<DsrEntry>>> groups = _entriesByDate.entries
-        .where((MapEntry<DateTime, List<DsrEntry>> e) => !_isSameDate(e.key, today))
-        .toList();
-    groups.sort((a, b) => b.key.compareTo(a.key));
-    return groups;
-  }
-
   DateTime _dayKey(DateTime date) => DateTime(date.year, date.month, date.day);
 
   bool _isSameDate(DateTime a, DateTime b) =>
@@ -73,95 +51,43 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     return '$day/$month/$year';
   }
 
-  void _seedHistoryData() {
-    final DateTime today = _todayKey;
-    final DateTime yesterday = today.subtract(const Duration(days: 1));
-    final DateTime older = today.subtract(const Duration(days: 4));
+  void _addEntry(DsrState state, DateTime selectedDate) {
+    final String projectName = (_selectedProject ?? '').trim();
+    final String selectedHours = (_selectedHours ?? '').trim();
+    if (projectName.isEmpty || selectedHours.isEmpty) {
+      return;
+    }
 
-    _entriesByDate[yesterday] = <DsrEntry>[
-      DsrEntry(
-        project: 'FotoFinish',
-        hours: 1.0,
-        status: 'Completed',
-        description: 'Checked and fixed the site list API issue and created ticket notes.',
-        date: yesterday,
-      ),
-      DsrEntry(
-        project: 'Flutter Acceleration',
-        hours: 8.0,
-        status: 'Completed',
-        description:
-            'Implemented PDF generation with both table and without-table format and worked on onboarding module updates.',
-        date: yesterday,
-      ),
-    ];
+    final int projectIndex = state.projects.indexWhere((p) => p.name == projectName);
+    if (projectIndex == -1) return;
+    final project = state.projects[projectIndex];
 
-    _entriesByDate[older] = <DsrEntry>[
-      DsrEntry(
-        project: 'MyBuddy',
-        hours: 2.5,
-        status: 'Completed',
-        description: 'Integrated Google map markers and polished address selection flow.',
-        date: older,
-      ),
-      DsrEntry(
-        project: 'Rent My Stuff',
-        hours: 6.5,
-        status: 'In Progress',
-        description: 'Started cart summary refactor and API sync for order history.',
-        date: older,
-      ),
-    ];
-  }
+    final String normalizedHours = selectedHours.replaceAll('h', '').trim();
+    final String description = _descriptionController.text.trim();
+    final String status = _selectedStatus.trim().toLowerCase();
 
-  void _addEntry() {
-    if (_selectedProject == null || _selectedHours == null) return;
-
-    final double parsedHours = double.parse(_selectedHours!.replaceAll('h', '').trim());
-    final DateTime dateKey = _dayKey(_selectedDate);
-    final DsrEntry entry = DsrEntry(
-      project: _selectedProject!,
-      hours: parsedHours,
-      status: _selectedStatus,
-      description: _descriptionController.text.trim(),
-      date: dateKey,
+    context.read<DsrBloc>().add(
+      DsrCreateRequested(
+        projectId: project.id,
+        date: selectedDate,
+        description: description,
+        hours: normalizedHours,
+        status: status,
+      ),
     );
 
     setState(() {
-      _entriesByDate.putIfAbsent(dateKey, () => <DsrEntry>[]).add(entry);
-      _descriptionController.clear();
-      _selectedProject = null;
       _selectedHours = null;
       _selectedStatus = 'Completed';
+      _descriptionController.clear();
     });
-  }
-
-  Future<void> _pickDate() async {
-    final DateTime now = DateTime.now();
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(now.year - 2),
-      lastDate: DateTime(now.year + 2),
-    );
-    if (picked == null) return;
-    setState(() => _selectedDate = picked);
   }
 
   void _deleteEntry(DateTime date, int index) {
-    setState(() {
-      final List<DsrEntry>? list = _entriesByDate[date];
-      if (list == null || index >= list.length) return;
-      list.removeAt(index);
-      if (list.isEmpty) _entriesByDate.remove(date);
-    });
+    // Keeping current delete action local-only by design until delete API is wired.
   }
 
-  Future<void> _editEntry(DateTime date, int index) async {
-    final List<DsrEntry>? list = _entriesByDate[date];
-    if (list == null || index >= list.length) return;
-
-    final DsrEntry current = list[index];
+  Future<void> _editEntry(DateTime date, int index, DsrEntryEntity current) async {
     final TextEditingController descController = TextEditingController(text: current.description);
     String selectedStatus = current.status;
     String? selectedHours = '${current.hours.toStringAsFixed(1)}h';
@@ -208,49 +134,69 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     );
 
     if (shouldSave != true || selectedHours == null) return;
-    final double parsedHours = double.parse(selectedHours!.replaceAll('h', '').trim());
-
-    setState(() {
-      list[index] = current.copyWith(
-        hours: parsedHours,
-        status: selectedStatus,
-        description: descController.text.trim(),
-      );
-    });
     descController.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom],
-        ),
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(8, 10, 8, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            const Text(
-              'Daily Status Report',
-              style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w700),
+    return BlocBuilder<DsrBloc, DsrState>(
+      builder: (context, state) {
+        final DateTime selectedDate = state.selectedDate ?? _todayKey;
+        final List<String> projectNames = state.projects.map((p) => p.name).toList(growable: false);
+        if (_selectedProject == null && projectNames.isNotEmpty) {
+          _selectedProject = projectNames.first;
+        }
+
+        return Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom],
             ),
-            const SizedBox(height: 2),
-            const Text(
-              'Log your daily work activity and hours',
-              style: TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 14),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(8, 10, 8, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const Text(
+                  'Daily Status Report',
+                  style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'Log your daily work activity and hours',
+                  style: TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 14),
+                ),
+                const SizedBox(height: 10),
+                _tabStrip(),
+                const SizedBox(height: 10),
+                if (state.errorMessage != null) ...<Widget>[
+                  Text(
+                    state.errorMessage!,
+                    style: const TextStyle(
+                      color: AppColors.kcDarkErrorText,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                if (_activeTab == _DsrTab.add)
+                  _buildAddTab(state: state, selectedDate: selectedDate, projectNames: projectNames)
+                else
+                  _buildHistoryTab(state),
+                if (state.isLoading)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 12),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+              ],
             ),
-            const SizedBox(height: 10),
-            _tabStrip(),
-            const SizedBox(height: 10),
-            if (_activeTab == _DsrTab.add) _buildAddTab() else _buildHistoryTab(),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -272,43 +218,57 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
           DsrTabButton(
             title: 'My DSR History',
             selected: _activeTab == _DsrTab.history,
-            onTap: () => setState(() => _activeTab = _DsrTab.history),
+            onTap: () {
+              setState(() => _activeTab = _DsrTab.history);
+              context.read<DsrBloc>().add(const DsrHistoryLoadRequested());
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAddTab() {
-    final DateTime dateKey = _dayKey(_selectedDate);
-    final List<DsrEntry> entries = _entriesByDate[dateKey] ?? <DsrEntry>[];
-    final double totalHours = entries.fold<double>(0, (double sum, DsrEntry entry) => sum + entry.hours);
+  Widget _buildAddTab({
+    required DsrState state,
+    required DateTime selectedDate,
+    required List<String> projectNames,
+  }) {
+    final DateTime dateKey = _dayKey(selectedDate);
+    final List<DsrEntryEntity> entries = state.entriesByDate[dateKey] ?? <DsrEntryEntity>[];
+    final double totalHours = entries.fold<double>(0, (double sum, DsrEntryEntity entry) => sum + entry.hours);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        GestureDetector(
-          onTap: _pickDate,
-          child: Container(
-            height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: AppColors.kcDarkInput,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.kcDarkBorderSoft),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                const Icon(Icons.calendar_today_outlined, color: AppColors.kcDarkTextSecondary, size: 14),
-                const SizedBox(width: 8),
-                Text(
-                  'Today (${_formatDate(_selectedDate)})',
-                  style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(width: 18),
-                const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.kcDarkTextSecondary),
-              ],
+        Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: AppColors.kcDarkInput,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.kcDarkBorderSoft),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<DateTime>(
+              value: selectedDate,
+              dropdownColor: AppColors.kcBackgroundColorDark,
+              iconEnabledColor: AppColors.kcDarkTextSecondary,
+              style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontWeight: FontWeight.w600),
+              items: <DateTime>[
+                _todayKey,
+                _todayKey.subtract(const Duration(days: 1)),
+              ].map((date) {
+                final bool isToday = _isSameDate(date, _todayKey);
+                final String label = isToday ? 'Today' : 'Yesterday';
+                return DropdownMenuItem<DateTime>(
+                  value: date,
+                  child: Text('$label (${_formatDate(date)})'),
+                );
+              }).toList(growable: false),
+              onChanged: (value) {
+                if (value == null) return;
+                context.read<DsrBloc>().add(DsrDateChangedRequested(value));
+              },
             ),
           ),
         ),
@@ -338,7 +298,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                 DsrDropdownField<String>(
                   value: _selectedProject,
                   hintText: 'Select project',
-                  items: _projects,
+                  items: projectNames,
                   onChanged: (String? value) => setState(() => _selectedProject = value),
                 ),
                 const SizedBox(height: 10),
@@ -363,7 +323,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: _addEntry,
+                    onPressed: () => _addEntry(state, selectedDate),
                     icon: const Icon(Icons.add, size: 16),
                     label: const Text('Add'),
                     style: ElevatedButton.styleFrom(
@@ -395,7 +355,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                     height: 110,
                     child: Center(
                       child: Text(
-                        'No entries for this date. Add your first DSR\nentry above.',
+                        'No DSR entries found for selected date.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: AppColors.kcDarkTextFaint, height: 1.35),
                       ),
@@ -411,8 +371,14 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     );
   }
 
-  Widget _buildHistoryTab() {
-    if (_historyGroups.isEmpty) {
+  Widget _buildHistoryTab(DsrState state) {
+    final DateTime today = _todayKey;
+    final List<MapEntry<DateTime, List<DsrEntryEntity>>> historyGroups = state.entriesByDate.entries
+        .where((MapEntry<DateTime, List<DsrEntryEntity>> e) => !_isSameDate(e.key, today))
+        .toList()
+      ..sort((a, b) => b.key.compareTo(a.key));
+
+    if (historyGroups.isEmpty) {
       return const DsrCardShell(
         child: Padding(
           padding: EdgeInsets.all(14),
@@ -422,10 +388,10 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     }
 
     return Column(
-      children: _historyGroups.map((MapEntry<DateTime, List<DsrEntry>> group) {
+      children: historyGroups.map((MapEntry<DateTime, List<DsrEntryEntity>> group) {
         final DateTime date = group.key;
-        final List<DsrEntry> entries = group.value;
-        final double total = entries.fold<double>(0, (double s, DsrEntry e) => s + e.hours);
+        final List<DsrEntryEntity> entries = group.value;
+        final double total = entries.fold<double>(0, (double s, DsrEntryEntity e) => s + e.hours);
         final DateTime yesterday = _todayKey.subtract(const Duration(days: 1));
         final bool canMutate = _isSameDate(date, yesterday);
         return Padding(
@@ -438,7 +404,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
 
   Widget _historyCard({
     required DateTime date,
-    required List<DsrEntry> entries,
+    required List<DsrEntryEntity> entries,
     required double total,
     required bool canMutate,
   }) {
@@ -477,7 +443,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
             const DsrHistoryHeaderRow(),
             const SizedBox(height: 8),
             ...List<Widget>.generate(entries.length, (int index) {
-              final DsrEntry entry = entries[index];
+              final DsrEntryEntity entry = entries[index];
               return _historyEntryRow(date: date, index: index, entry: entry, canMutate: canMutate);
             }),
           ],
@@ -489,7 +455,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
   Widget _historyEntryRow({
     required DateTime date,
     required int index,
-    required DsrEntry entry,
+    required DsrEntryEntity entry,
     required bool canMutate,
   }) {
     return Container(
@@ -524,7 +490,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
               if (canMutate) ...<Widget>[
                 const SizedBox(width: 8),
                 InkWell(
-                  onTap: () => _editEntry(date, index),
+                  onTap: () => _editEntry(date, index, entry),
                   child: const Icon(Icons.edit_outlined, color: AppColors.kcDarkTextPrimary, size: 17),
                 ),
                 const SizedBox(width: 10),

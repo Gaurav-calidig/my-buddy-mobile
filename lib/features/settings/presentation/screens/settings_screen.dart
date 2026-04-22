@@ -227,7 +227,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       decoration: BoxDecoration(
         color: AppColors.kcDarkCard,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.kcDarkBorderMid),
+        border: Border.all(color: AppColors.kcDarkBorder),
       ),
       child: child,
     );

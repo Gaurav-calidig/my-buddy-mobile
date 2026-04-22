@@ -1,11 +1,11 @@
-import 'package:core/features/dsr/presentation/models/dsr_entry.dart';
+import 'package:core/features/dsr/domain/entities/dsr_entry_entity.dart';
 import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class DsrTodayEntryTile extends StatelessWidget {
   const DsrTodayEntryTile({required this.entry, super.key});
 
-  final DsrEntry entry;
+  final DsrEntryEntity entry;
 
   @override
   Widget build(BuildContext context) {
