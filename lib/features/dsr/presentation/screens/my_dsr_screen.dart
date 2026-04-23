@@ -189,6 +189,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
           }
       
           return Container(
+        height: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
