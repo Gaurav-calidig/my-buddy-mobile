@@ -4,6 +4,7 @@ import 'package:core/core/widgets/template_feature_drawer.dart';
 import 'package:core/features/attendance/presentation/bloc/attendance_bloc.dart';
 import 'package:core/features/attendance/presentation/bloc/attendance_event.dart';
 import 'package:core/features/attendance/presentation/bloc/attendance_state.dart';
+import 'package:core/features/attendance/domain/entities/leave_request_entity.dart';
 import 'package:core/features/attendance/presentation/widgets/ams_calendar.dart';
 import 'package:core/features/attendance/presentation/widgets/ams_comp_off_tab.dart';
 import 'package:core/features/attendance/presentation/widgets/ams_filter_tabs.dart';
@@ -16,6 +17,83 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AttendanceScreen extends StatelessWidget {
   const AttendanceScreen({super.key});
+
+  Future<void> _openEditLeaveDialog(
+    BuildContext context,
+    LeaveRequestEntity leave,
+  ) async {
+    final AttendanceBloc bloc = context.read<AttendanceBloc>();
+    final Map<String, dynamic> prefill = <String, dynamic>{
+      'leaveId': leave.id,
+      'leaveTypeId': leave.leaveTypeId,
+      'startDate': _ymd(leave.startDate),
+      'startHalf': leave.startHalf,
+      'endDate': _ymd(leave.endDate),
+      'endHalf': leave.endHalf,
+      'reason': leave.reason,
+    };
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return BlocProvider<AttendanceBloc>.value(
+          value: bloc,
+          child: BlocListener<AttendanceBloc, AttendanceState>(
+            listenWhen: (AttendanceState previous, AttendanceState current) =>
+                previous.leaveSubmitInProgress && !current.leaveSubmitInProgress,
+            listener: (BuildContext context, AttendanceState state) {
+              if (state.error == null && Navigator.of(dialogContext).canPop()) {
+                Navigator.of(dialogContext).pop();
+              }
+            },
+            child: Dialog(
+              insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+              backgroundColor: Colors.transparent,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: BlocBuilder<AttendanceBloc, AttendanceState>(
+                  builder: (BuildContext context, AttendanceState dialogState) {
+                    return AmsApplyLeaveTab(
+                      leaveTypes: _leaveTypes(dialogState),
+                      isSubmitting: dialogState.leaveSubmitInProgress,
+                      prefill: prefill,
+                      onClose: () {
+                        if (Navigator.of(dialogContext).canPop()) {
+                          Navigator.of(dialogContext).pop();
+                        }
+                      },
+                      onSubmit: ({
+                        int? leaveId,
+                        required int leaveTypeId,
+                        required String startDate,
+                        required String startHalf,
+                        required String endDate,
+                        required String endHalf,
+                        required String reason,
+                      }) {
+                        bloc.add(
+                          AttendanceLeaveSubmitted(
+                            leaveId: leaveId,
+                            leaveTypeId: leaveTypeId,
+                            startDate: startDate,
+                            startHalf: startHalf,
+                            endDate: endDate,
+                            endHalf: endHalf,
+                            reason: reason,
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +162,7 @@ class AttendanceScreen extends StatelessWidget {
                       selectedFiscalYear: state.selectedFiscalYear,
                       onFiscalYearChanged: (String fy) => context.read<AttendanceBloc>().add(AttendanceFiscalYearChanged(fy)),
                       actionInProgressId: state.leaveActionInProgressId,
-                      onEdit: (leave) => context.read<AttendanceBloc>().add(AttendanceLeaveEditRequested(leave)),
+                      onEdit: (LeaveRequestEntity leave) => _openEditLeaveDialog(context, leave),
                       onCancel: (id) => context.read<AttendanceBloc>().add(AttendanceLeaveCancelRequested(id)),
                     )
                   else if (state.selectedFilterIndex == 1)
@@ -179,7 +257,7 @@ class AttendanceScreen extends StatelessWidget {
     };
   }
 
-  String _ymd(DateTime d) {
+  static String _ymd(DateTime d) {
     final String mm = d.month.toString().padLeft(2, '0');
     final String dd = d.day.toString().padLeft(2, '0');
     return '${d.year}-$mm-$dd';

@@ -7,12 +7,14 @@ class AmsApplyLeaveTab extends StatefulWidget {
     required this.isSubmitting,
     required this.onSubmit,
     this.prefill,
+    this.onClose,
     super.key,
   });
 
   final List<Map<String, dynamic>> leaveTypes;
   final bool isSubmitting;
   final Map<String, dynamic>? prefill;
+  final VoidCallback? onClose;
   final void Function({
     int? leaveId,
     required int leaveTypeId,
@@ -36,6 +38,11 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
   int? _leaveTypeId;
   String _startHalf = 'full_day';
   String _endHalf = 'full_day';
+  static const Map<String, String> _halfLabel = <String, String>{
+    'full_day': 'Full Day',
+    'first_half': 'First Half',
+    'second_half': 'Second Half',
+  };
 
   @override
   void initState() {
@@ -137,17 +144,34 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text('Apply for Leave', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20)),
+          Row(
+            children: <Widget>[
+              const Expanded(
+                child: Text(
+                  'Apply for Leave',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20),
+                ),
+              ),
+              if (widget.onClose != null)
+                IconButton(
+                  onPressed: widget.onClose,
+                  icon: const Icon(Icons.close, color: AppColors.kcDarkTextSecondary),
+                  tooltip: 'Cancel',
+                ),
+            ],
+          ),
           const SizedBox(height: 14),
           _label('Leave Type'),
           DropdownButtonFormField<int>(
             initialValue: _leaveTypeId,
             dropdownColor: AppColors.kcBackgroundColorDark,
+            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+            iconEnabledColor: AppColors.kcDarkTextSecondary,
             decoration: _dec('Select leave type'),
             items: widget.leaveTypes
                 .map((Map<String, dynamic> item) => DropdownMenuItem<int>(
                       value: item['id'] as int,
-                      child: Text(item['name'].toString()),
+                      child: Text(item['name'].toString(), style: const TextStyle(color: Colors.white)),
                     ))
                 .toList(growable: false),
             onChanged: (int? v) => setState(() => _leaveTypeId = v),
@@ -179,9 +203,11 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
                     DropdownButtonFormField<String>(
                       initialValue: _startHalf,
                       dropdownColor: AppColors.kcBackgroundColorDark,
+                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                      iconEnabledColor: AppColors.kcDarkTextSecondary,
                       decoration: _dec('Full Day'),
                       items: const <String>['full_day', 'first_half', 'second_half']
-                          .map((String s) => DropdownMenuItem<String>(value: s, child: Text(s.replaceAll('_', ' '))))
+                          .map((String s) => DropdownMenuItem<String>(value: s, child: Text(_halfLabel[s] ?? s, style: const TextStyle(color: Colors.white))))
                           .toList(growable: false),
                       onChanged: (String? v) => setState(() => _startHalf = v ?? 'full_day'),
                     ),
@@ -217,9 +243,11 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
                     DropdownButtonFormField<String>(
                       initialValue: _endHalf,
                       dropdownColor: AppColors.kcBackgroundColorDark,
+                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                      iconEnabledColor: AppColors.kcDarkTextSecondary,
                       decoration: _dec('Full Day'),
                       items: const <String>['full_day', 'first_half', 'second_half']
-                          .map((String s) => DropdownMenuItem<String>(value: s, child: Text(s.replaceAll('_', ' '))))
+                          .map((String s) => DropdownMenuItem<String>(value: s, child: Text(_halfLabel[s] ?? s, style: const TextStyle(color: Colors.white))))
                           .toList(growable: false),
                       onChanged: (String? v) => setState(() => _endHalf = v ?? 'full_day'),
                     ),
@@ -246,6 +274,7 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
                 backgroundColor: AppColors.kcDarkPrimarySoft,
                 foregroundColor: AppColors.kcDarkTextPrimary,
                 minimumSize: const Size.fromHeight(40),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
               ),
               child: widget.isSubmitting
                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))

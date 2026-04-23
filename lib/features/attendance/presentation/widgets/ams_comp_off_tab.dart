@@ -107,9 +107,11 @@ class _AmsCompOffTabState extends State<AmsCompOffTab> {
               DropdownButtonFormField<String>(
                 initialValue: _days,
                 dropdownColor: AppColors.kcBackgroundColorDark,
+                style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                iconEnabledColor: AppColors.kcDarkTextSecondary,
                 decoration: _dec('1 Day'),
-                items: const <String>['1', '0.5']
-                    .map((String d) => DropdownMenuItem<String>(value: d, child: Text('$d Day${d == '1' ? '' : 's'}')))
+                items: const <String>['0.5', '1']
+                    .map((String d) => DropdownMenuItem<String>(value: d, child: Text('$d Day${d == '1' ? '' : 's'}', style: const TextStyle(color: Colors.white))))
                     .toList(growable: false),
                 onChanged: (String? v) => setState(() => _days = v ?? '1'),
               ),
@@ -131,6 +133,7 @@ class _AmsCompOffTabState extends State<AmsCompOffTab> {
                     backgroundColor: AppColors.kcDarkPrimarySoft,
                     foregroundColor: AppColors.kcDarkTextPrimary,
                     minimumSize: const Size.fromHeight(40),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                   ),
                   child: widget.isSubmitting
                       ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))

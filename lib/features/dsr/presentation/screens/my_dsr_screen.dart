@@ -90,12 +90,41 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     });
   }
 
-  void _deleteEntry(DateTime date, int index) {
+  Future<void> _deleteEntry(DateTime date, int index) async {
     final DateTime dateKey = _dayKey(date);
     final List<DsrEntryEntity> entries = context.read<DsrBloc>().state.entriesByDate[dateKey] ?? <DsrEntryEntity>[];
     if (index < 0 || index >= entries.length) return;
     final String dsrId = entries[index].id.trim();
     if (dsrId.isEmpty) return;
+
+    final bool? shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.kcBackgroundColorDark,
+          title: const Text(
+            'Delete DSR Entry',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          ),
+          content: const Text(
+            'Are you sure you want to delete this entry?',
+            style: TextStyle(color: AppColors.kcDarkTextPrimary),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true || !mounted) return;
     context.read<DsrBloc>().add(DsrDeleteRequested(dsrId: dsrId, date: dateKey));
   }
 

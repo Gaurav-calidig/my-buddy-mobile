@@ -31,20 +31,17 @@ class AmsMyLeavesTab extends StatefulWidget {
 }
 
 class _AmsMyLeavesTabState extends State<AmsMyLeavesTab> {
-  late final ScrollController _wideController;
-  late final ScrollController _compactController;
+  late final ScrollController _controller;
 
   @override
   void initState() {
     super.initState();
-    _wideController = ScrollController();
-    _compactController = ScrollController();
+    _controller = ScrollController();
   }
 
   @override
   void dispose() {
-    _wideController.dispose();
-    _compactController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -102,78 +99,41 @@ class _AmsMyLeavesTabState extends State<AmsMyLeavesTab> {
           else if (visible.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 18),
-              child: Center(
-                child: Text('No leave requests found.', style: TextStyle(color: AppColors.kcDarkTextFaint)),
-              ),
+              child: Center(child: Text('No leave requests found.', style: TextStyle(color: AppColors.kcDarkTextFaint))),
             )
           else
             LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
-                final bool compact = constraints.maxWidth < 360;
-                return compact ? _compactTable(visible, constraints.maxWidth) : _wideTable(visible, constraints.maxWidth);
+                return Scrollbar(
+                  controller: _controller,
+                  thumbVisibility: true,
+                  trackVisibility: true,
+                  radius: const Radius.circular(10),
+                  thickness: 4,
+                  child: SingleChildScrollView(
+                    controller: _controller,
+                    scrollDirection: Axis.horizontal,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minWidth: constraints.maxWidth, maxWidth: 760),
+                      child: Column(
+                        children: <Widget>[
+                          const _WideHeader(),
+                          const SizedBox(height: 6),
+                          ...visible.map((LeaveRequestEntity e) => _WideRow(
+                                item: e,
+                                fmtDate: _fmtDate,
+                                onEdit: widget.onEdit,
+                                onCancel: widget.onCancel,
+                                actionInProgressId: widget.actionInProgressId,
+                              )),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
               },
             ),
         ],
-      ),
-    );
-  }
-
-  Widget _wideTable(List<LeaveRequestEntity> visible, double viewportWidth) {
-    return Scrollbar(
-      controller: _wideController,
-      thumbVisibility: true,
-      trackVisibility: true,
-      radius: const Radius.circular(10),
-      thickness: 4,
-      child: SingleChildScrollView(
-        controller: _wideController,
-        scrollDirection: Axis.horizontal,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minWidth: viewportWidth, maxWidth: 700),
-          child: Column(
-            children: <Widget>[
-              const _WideHeader(),
-              const SizedBox(height: 6),
-              ...visible.map((LeaveRequestEntity e) => _WideRow(
-                    item: e,
-                    fmtDate: _fmtDate,
-                    onEdit: widget.onEdit,
-                    onCancel: widget.onCancel,
-                    actionInProgressId: widget.actionInProgressId,
-                  )),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _compactTable(List<LeaveRequestEntity> visible, double viewportWidth) {
-    return Scrollbar(
-      controller: _compactController,
-      thumbVisibility: true,
-      trackVisibility: true,
-      radius: const Radius.circular(10),
-      thickness: 4,
-      child: SingleChildScrollView(
-        controller: _compactController,
-        scrollDirection: Axis.horizontal,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minWidth: viewportWidth, maxWidth: 500),
-          child: Column(
-            children: <Widget>[
-              const _CompactHeader(),
-              const SizedBox(height: 6),
-              ...visible.map((LeaveRequestEntity e) => _CompactRow(
-                    item: e,
-                    fmtDate: _fmtDate,
-                    onEdit: widget.onEdit,
-                    onCancel: widget.onCancel,
-                    actionInProgressId: widget.actionInProgressId,
-                  )),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -190,8 +150,8 @@ class _WideHeader extends StatelessWidget {
         SizedBox(width: 180, child: Text('Dates', style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
         SizedBox(width: 44, child: Text('Days', textAlign: TextAlign.center, style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
         SizedBox(width: 96, child: Text('Status', textAlign: TextAlign.center, style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
-        SizedBox(width: 220, child: Text('Reason', overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
-        SizedBox(width: 64, child: Text('Actions', textAlign: TextAlign.center, style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
+        SizedBox(width: 210, child: Text('Reason', overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
+        SizedBox(width: 74, child: Text('Actions', textAlign: TextAlign.center, style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
       ],
     );
   }
@@ -231,96 +191,13 @@ class _WideRow extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
+          SizedBox(width: 92, child: Text(type, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12))),
+          SizedBox(width: 180, child: Text(_dates(), style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 12))),
+          SizedBox(width: 44, child: Text(item.totalDays.toString(), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12))),
+          SizedBox(width: 96, child: Center(child: AmsStatusPill(status: item.status))),
+          SizedBox(width: 210, child: Text(item.reason, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 12))),
           SizedBox(
-            width: 92,
-            child: Text(type, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
-          ),
-          SizedBox(
-            width: 180,
-            child: Text(_dates(), style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 12)),
-          ),
-          SizedBox(
-            width: 44,
-            child: Text(item.totalDays.toString(), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
-          ),
-          SizedBox(
-            width: 96,
-            child: Center(child: AmsStatusPill(status: item.status)),
-          ),
-          SizedBox(
-            width: 220,
-            child: Text(item.reason, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 12)),
-          ),
-          SizedBox(
-            width: 64,
-            child: _ActionButtons(
-              isPending: item.status.toLowerCase() == 'pending',
-              loading: actionInProgressId == item.id,
-              onEdit: () => onEdit(item),
-              onCancel: () => onCancel(item.id),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CompactHeader extends StatelessWidget {
-  const _CompactHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: <Widget>[
-        SizedBox(width: 86, child: Text('Status', style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
-        SizedBox(width: 220, child: Text('Reason', style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
-        SizedBox(width: 76, child: Text('Applied On', textAlign: TextAlign.center, style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
-        SizedBox(width: 54, child: Text('Actions', textAlign: TextAlign.center, style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
-      ],
-    );
-  }
-}
-
-class _CompactRow extends StatelessWidget {
-  const _CompactRow({
-    required this.item,
-    required this.fmtDate,
-    required this.onEdit,
-    required this.onCancel,
-    required this.actionInProgressId,
-  });
-
-  final LeaveRequestEntity item;
-  final String Function(DateTime d) fmtDate;
-  final ValueChanged<LeaveRequestEntity> onEdit;
-  final ValueChanged<int> onCancel;
-  final int? actionInProgressId;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-      decoration: BoxDecoration(
-        color: AppColors.kcDarkSurface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.kcDarkBorderStrong),
-      ),
-      child: Row(
-        children: <Widget>[
-          SizedBox(width: 86, child: AmsStatusPill(status: item.status)),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 220,
-            child: Text(item.reason, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12)),
-          ),
-          SizedBox(
-            width: 76,
-            child: Text(fmtDate(item.createdAt), textAlign: TextAlign.center, style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 11)),
-          ),
-          SizedBox(
-            width: 54,
+            width: 74,
             child: _ActionButtons(
               isPending: item.status.toLowerCase() == 'pending',
               loading: actionInProgressId == item.id,
@@ -350,27 +227,17 @@ class _ActionButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!isPending) {
-      return const Center(
-        child: Text('-', style: TextStyle(color: AppColors.kcDarkTextMuted)),
-      );
+      return const Center(child: Text('-', style: TextStyle(color: AppColors.kcDarkTextMuted)));
     }
     if (loading) {
-      return const Center(
-        child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.8)),
-      );
+      return const Center(child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.8)));
     }
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        InkWell(
-          onTap: onEdit,
-          child: const Icon(Icons.edit_outlined, size: 15, color: AppColors.kcDarkTextSecondary),
-        ),
+        InkWell(onTap: onEdit, child: const Icon(Icons.edit_outlined, size: 15, color: AppColors.kcDarkTextSecondary)),
         const SizedBox(width: 8),
-        InkWell(
-          onTap: onCancel,
-          child: const Icon(Icons.close, size: 15, color: AppColors.kcDarkTextSecondary),
-        ),
+        InkWell(onTap: onCancel, child: const Icon(Icons.close, size: 15, color: AppColors.kcDarkTextSecondary)),
       ],
     );
   }
