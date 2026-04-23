@@ -109,5 +109,10 @@ class ApiRoutes {
   // Attendance / AMS
   static String get leaveRequests => '$base/api/leave-requests';
   static String leaveRequestById(int id) => '$base/api/leave-requests/$id';
+  static String leaveRequestsCalendar({
+    required String startDate,
+    required String endDate,
+  }) =>
+      '$base/api/leave-requests/calendar?startDate=$startDate&endDate=$endDate';
   static String get compOffRequests => '$base/api/comp-off-requests';
 }

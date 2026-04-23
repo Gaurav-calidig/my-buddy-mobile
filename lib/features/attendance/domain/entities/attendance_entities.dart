@@ -28,11 +28,15 @@ class AmsLeaveSummaryEntity {
 
 class AmsLeaveEventEntity {
   const AmsLeaveEventEntity({
-    required this.title,
+    required this.name,
+    required this.reason,
+    required this.status,
     required this.colorHex,
   });
 
-  final String title;
+  final String name;
+  final String reason;
+  final String status;
   final int colorHex;
 }
 

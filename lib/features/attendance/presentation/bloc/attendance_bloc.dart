@@ -31,6 +31,8 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
   ) async {
     emit(state.copyWith(isLoading: true, clearError: true, clearSuccessMessage: true));
     final DateTime month = DateTime(2026, 4);
+    final List<AmsCalendarDayEntity> days = await _buildMonthDays(month);
+
     emit(
       state.copyWith(
         isLoading: false,
@@ -48,7 +50,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
           casual: '0.5 (2 pending)',
           sick: '1',
         ),
-        days: _buildMonthDays(month),
+        days: days,
       ),
     );
 
@@ -56,12 +58,13 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     add(const AttendanceLeavesRequested());
   }
 
-  void _onMonthChanged(
+  Future<void> _onMonthChanged(
     AttendanceMonthChanged event,
     Emitter<AttendanceState> emit,
-  ) {
+  ) async {
     final DateTime next = DateTime(state.month.year, state.month.month + event.deltaMonths);
-    emit(state.copyWith(month: next, days: _buildMonthDays(next), clearError: true));
+    final List<AmsCalendarDayEntity> days = await _buildMonthDays(next);
+    emit(state.copyWith(month: next, days: days, clearError: true));
   }
 
   void _onFilterChanged(
@@ -227,12 +230,13 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     return '$startYear-$yy';
   }
 
-  List<AmsCalendarDayEntity> _buildMonthDays(DateTime month) {
+  Future<List<AmsCalendarDayEntity>> _buildMonthDays(DateTime month) async {
     final int year = month.year;
     final int m = month.month;
     final DateTime first = DateTime(year, m, 1);
     final int daysInMonth = DateTime(year, m + 1, 0).day;
     final int leading = first.weekday % 7;
+    final Map<DateTime, List<AmsLeaveEventEntity>> eventsByDate = await _calendarEventsForMonth(month);
 
     final List<AmsCalendarDayEntity> cells = <AmsCalendarDayEntity>[];
 
@@ -247,7 +251,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
         AmsCalendarDayEntity(
           date: date,
           isInCurrentMonth: true,
-          events: _eventsForDate(date),
+          events: eventsByDate[date] ?? const <AmsLeaveEventEntity>[],
         ),
       );
     }
@@ -260,23 +264,66 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     return cells;
   }
 
-  List<AmsLeaveEventEntity> _eventsForDate(DateTime date) {
-    final Map<int, List<AmsLeaveEventEntity>> april = <int, List<AmsLeaveEventEntity>>{
-      3: const <AmsLeaveEventEntity>[AmsLeaveEventEntity(title: 'Shivam', colorHex: 0xFF2F65C8)],
-      7: const <AmsLeaveEventEntity>[AmsLeaveEventEntity(title: 'Vicky', colorHex: 0xFF2F65C8)],
-      8: const <AmsLeaveEventEntity>[AmsLeaveEventEntity(title: 'Sandeep', colorHex: 0xFF2F65C8)],
-      9: const <AmsLeaveEventEntity>[AmsLeaveEventEntity(title: 'Kumar', colorHex: 0xFF2F65C8)],
-      10: const <AmsLeaveEventEntity>[AmsLeaveEventEntity(title: 'Harsh', colorHex: 0xFF2F65C8)],
-      14: const <AmsLeaveEventEntity>[AmsLeaveEventEntity(title: 'Ganesh', colorHex: 0xFF2F65C8)],
-      19: const <AmsLeaveEventEntity>[AmsLeaveEventEntity(title: 'Rajat', colorHex: 0xFF2F65C8)],
-      20: const <AmsLeaveEventEntity>[AmsLeaveEventEntity(title: 'Adarsh', colorHex: 0xFF2F65C8)],
-      21: const <AmsLeaveEventEntity>[AmsLeaveEventEntity(title: 'Vicky', colorHex: 0xFF2F65C8)],
-      27: const <AmsLeaveEventEntity>[AmsLeaveEventEntity(title: 'Harsh', colorHex: 0xFFC49C2B)],
-    };
+  Future<Map<DateTime, List<AmsLeaveEventEntity>>> _calendarEventsForMonth(DateTime month) async {
+    final DateTime start = DateTime(month.year, month.month, 1);
+    final DateTime end = DateTime(month.year, month.month + 1, 0);
+    final Map<DateTime, List<AmsLeaveEventEntity>> byDate = <DateTime, List<AmsLeaveEventEntity>>{};
 
-    if (date.year == 2026 && date.month == 4) {
-      return april[date.day] ?? const <AmsLeaveEventEntity>[];
+    try {
+      final String startDate = _ymd(start);
+      final String endDate = _ymd(end);
+      final resp = await _apiService.get(
+        ApiRoutes.leaveRequestsCalendar(startDate: startDate, endDate: endDate),
+      );
+      final dynamic data = resp.data;
+      final List<dynamic> list = data is List
+          ? data
+          : (data is Map && data['data'] is List ? data['data'] as List : <dynamic>[]);
+
+      for (final dynamic raw in list) {
+        if (raw is! Map) continue;
+        final Map<String, dynamic> item = raw.cast<String, dynamic>();
+        final DateTime? leaveStart = DateTime.tryParse((item['startDate'] ?? '').toString());
+        final DateTime? leaveEnd = DateTime.tryParse((item['endDate'] ?? '').toString());
+        if (leaveStart == null || leaveEnd == null) continue;
+
+        final dynamic userRaw = item['user'];
+        final Map<String, dynamic> user = userRaw is Map ? userRaw.cast<String, dynamic>() : const <String, dynamic>{};
+        final String firstName = (user['firstName'] ?? '').toString().trim();
+        final String lastName = (user['lastName'] ?? '').toString().trim();
+        final String fullName = '$firstName $lastName'.trim().isEmpty ? 'Unknown' : '$firstName $lastName'.trim();
+        final String reason = (item['reason'] ?? '').toString().trim();
+        final String status = (item['status'] ?? '').toString().trim().toLowerCase();
+
+        final int color = status == 'pending' ? 0xFFC49C2B : 0xFF2F65C8;
+        final DateTime rangeStart = leaveStart.isBefore(start) ? start : leaveStart;
+        final DateTime rangeEnd = leaveEnd.isAfter(end) ? end : leaveEnd;
+        if (rangeEnd.isBefore(rangeStart)) continue;
+
+        for (DateTime day = rangeStart; !day.isAfter(rangeEnd); day = day.add(const Duration(days: 1))) {
+          final DateTime key = DateTime(day.year, day.month, day.day);
+          final List<AmsLeaveEventEntity> events = byDate[key] ?? <AmsLeaveEventEntity>[];
+          events.add(
+            AmsLeaveEventEntity(
+              name: fullName,
+              reason: reason.isEmpty ? 'No reason provided.' : reason,
+              status: status,
+              colorHex: color,
+            ),
+          );
+          byDate[key] = events;
+        }
+      }
+    } catch (_) {
+      // Keep calendar usable even if API fails.
     }
-    return const <AmsLeaveEventEntity>[];
+
+    return byDate;
+  }
+
+  String _ymd(DateTime d) {
+    final String mm = d.month.toString().padLeft(2, '0');
+    final String dd = d.day.toString().padLeft(2, '0');
+    return '${d.year}-$mm-$dd';
   }
 }

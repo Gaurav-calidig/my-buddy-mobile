@@ -94,6 +94,7 @@ class AmsCalendar extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: row.map((AmsCalendarDayEntity cell) {
+                  final bool showCellContent = cell.isInCurrentMonth;
                   return Expanded(
                     child: Container(
                       height: 74,
@@ -106,18 +107,24 @@ class AmsCalendar extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text(
-                            '${cell.date.day}',
-                            style: TextStyle(color: cell.isInCurrentMonth ? Colors.white : AppColors.kcDarkTextMuted, fontSize: 10, fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 2),
-                          ...cell.events.take(2).map((AmsLeaveEventEntity e) => Container(
-                                width: double.infinity,
-                                margin: const EdgeInsets.only(bottom: 2),
-                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                decoration: BoxDecoration(color: Color(e.colorHex), borderRadius: BorderRadius.circular(10)),
-                                child: Text(e.title, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w600)),
-                              )),
+                          if (showCellContent) ...<Widget>[
+                            Text(
+                              '${cell.date.day}',
+                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                            ),
+                            const SizedBox(height: 2),
+                            ...cell.events.take(2).map((AmsLeaveEventEntity e) => InkWell(
+                                  onTap: () => _showEventDetails(context, e),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    width: double.infinity,
+                                    margin: const EdgeInsets.only(bottom: 2),
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                    decoration: BoxDecoration(color: Color(e.colorHex), borderRadius: BorderRadius.circular(10)),
+                                    child: Text(e.name, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w600)),
+                                  ),
+                                )),
+                          ],
                         ],
                       ),
                     ),
@@ -128,6 +135,38 @@ class AmsCalendar extends StatelessWidget {
           }),
         ],
       ),
+    );
+  }
+
+  Future<void> _showEventDetails(BuildContext context, AmsLeaveEventEntity event) async {
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.kcBackgroundColorDark,
+          title: const Text(
+            'Leave Details',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text('Name: ${event.name}', style: const TextStyle(color: AppColors.kcDarkTextPrimary)),
+              const SizedBox(height: 8),
+              Text('Status: ${event.status.toUpperCase()}', style: const TextStyle(color: AppColors.kcDarkTextPrimary)),
+              const SizedBox(height: 8),
+              Text('Reason: ${event.reason}', style: const TextStyle(color: AppColors.kcDarkTextPrimary)),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
