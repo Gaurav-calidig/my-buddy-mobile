@@ -27,73 +27,77 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom],
+    return Scaffold(
+           drawer: const TemplateFeatureDrawer(),
+      appBar: const CustomAppBar(title: 'Dashboard'),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom],
+          ),
         ),
-      ),
-      child: BlocBuilder<DashboardBloc, DashboardState>(
-        builder: (context, state) {
-          if (state.isLoading) {
-            return const Center(
-              child: SizedBox(
-                width: 28,
-                height: 28,
-                child: CircularProgressIndicator(strokeWidth: 2.4),
-              ),
-            );
-          }
-
-          final highlights = state.highlights;
-          final amsOverview = state.amsLeaveOverview;
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const SizedBox(height: 6),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: DashboardSummaryCard(
-                        icon: Icons.folder_copy_outlined,
-                        label: 'My Projects',
-                        value: (highlights?.stats.totalProjects ?? 0).toString(),
+        child: BlocBuilder<DashboardBloc, DashboardState>(
+          builder: (context, state) {
+            if (state.isLoading) {
+              return const Center(
+                child: SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(strokeWidth: 2.4),
+                ),
+              );
+            }
+      
+            final highlights = state.highlights;
+            final amsOverview = state.amsLeaveOverview;
+      
+            return SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: <Widget>[
+                      Expanded(
+                        child: DashboardSummaryCard(
+                          icon: Icons.folder_copy_outlined,
+                          label: 'My Projects',
+                          value: (highlights?.stats.totalProjects ?? 0).toString(),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: DashboardSummaryCard(
-                        icon: Icons.lock_outline_rounded,
-                        label: 'My Assets',
-                        value: (highlights?.stats.totalAssets ?? 0).toString(),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: DashboardSummaryCard(
+                          icon: Icons.lock_outline_rounded,
+                          label: 'My Assets',
+                          value: (highlights?.stats.totalAssets ?? 0).toString(),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 15),
+                  DashboardAttendanceCard(overview: amsOverview),
+                  const SizedBox(height: 15),
+                  DashboardDailyStatusCard(highlights: highlights),
+                  if (state.errorMessage != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      state.errorMessage!,
+                      style: const TextStyle(
+                        color: AppColors.kcDarkErrorText,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 15),
-                DashboardAttendanceCard(overview: amsOverview),
-                const SizedBox(height: 15),
-                DashboardDailyStatusCard(highlights: highlights),
-                if (state.errorMessage != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    state.errorMessage!,
-                    style: const TextStyle(
-                      color: AppColors.kcDarkErrorText,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
                 ],
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }

@@ -1,4 +1,6 @@
 import 'package:core/core/theme/app_colors.dart';
+import 'package:core/core/widgets/custom_app_bar.dart';
+import 'package:core/core/widgets/template_feature_drawer.dart';
 import 'package:core/features/dsr/domain/entities/dsr_entry_entity.dart';
 import 'package:core/features/dsr/presentation/bloc/dsr_bloc.dart';
 import 'package:core/features/dsr/presentation/bloc/dsr_event.dart';
@@ -174,65 +176,69 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<DsrBloc, DsrState>(
-      builder: (context, state) {
-        final DateTime selectedDate = state.selectedDate ?? _todayKey;
-        final bool showTabLoader = state.isLoading;
-        final List<String> projectNames = state.projects.map((p) => p.name).toList(growable: false);
-        if (_selectedProject == null && projectNames.isNotEmpty) {
-          _selectedProject = projectNames.first;
-        }
-
-        return Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom],
+    return Scaffold(
+           drawer: const TemplateFeatureDrawer(),
+      appBar: const CustomAppBar(title: 'DSR'),
+      body: BlocBuilder<DsrBloc, DsrState>(
+        builder: (context, state) {
+          final DateTime selectedDate = state.selectedDate ?? _todayKey;
+          final bool showTabLoader = state.isLoading;
+          final List<String> projectNames = state.projects.map((p) => p.name).toList(growable: false);
+          if (_selectedProject == null && projectNames.isNotEmpty) {
+            _selectedProject = projectNames.first;
+          }
+      
+          return Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom],
+              ),
             ),
-          ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(8, 10, 8, 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const Text(
-                  'Daily Status Report',
-                  style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 2),
-                const Text(
-                  'Log your daily work activity and hours',
-                  style: TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 14),
-                ),
-                const SizedBox(height: 10),
-                _tabStrip(),
-                const SizedBox(height: 10),
-                if (state.errorMessage != null) ...<Widget>[
-                  Text(
-                    state.errorMessage!,
-                    style: const TextStyle(
-                      color: AppColors.kcDarkErrorText,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(8, 10, 8, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const Text(
+                    'Daily Status Report',
+                    style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Log your daily work activity and hours',
+                    style: TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 14),
                   ),
                   const SizedBox(height: 10),
+                  _tabStrip(),
+                  const SizedBox(height: 10),
+                  if (state.errorMessage != null) ...<Widget>[
+                    Text(
+                      state.errorMessage!,
+                      style: const TextStyle(
+                        color: AppColors.kcDarkErrorText,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  if (showTabLoader)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 24),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  else if (_activeTab == _DsrTab.add)
+                    _buildAddTab(state: state, selectedDate: selectedDate, projectNames: projectNames)
+                  else
+                    _buildHistoryTab(state),
                 ],
-                if (showTabLoader)
-                  const Padding(
-                    padding: EdgeInsets.only(top: 24),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (_activeTab == _DsrTab.add)
-                  _buildAddTab(state: state, selectedDate: selectedDate, projectNames: projectNames)
-                else
-                  _buildHistoryTab(state),
-              ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
