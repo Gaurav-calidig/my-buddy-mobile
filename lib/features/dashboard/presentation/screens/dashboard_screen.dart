@@ -31,6 +31,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
            drawer: const TemplateFeatureDrawer(),
       appBar: const CustomAppBar(title: 'Dashboard'),
       body: Container(
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
