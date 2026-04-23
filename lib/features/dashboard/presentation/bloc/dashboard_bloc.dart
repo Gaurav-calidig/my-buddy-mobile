@@ -25,7 +25,14 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     DashboardLoadRequested event,
     Emitter<DashboardState> emit,
   ) async {
-    emit(state.copyWith(isLoading: true, clearErrorMessage: true));
+    emit(
+      state.copyWith(
+        isLoading: true,
+        clearErrorMessage: true,
+        clearHighlights: true,
+        clearAmsLeaveOverview: true,
+      ),
+    );
 
     try {
       final results = await Future.wait<Object>([

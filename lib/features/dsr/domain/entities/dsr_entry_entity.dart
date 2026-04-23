@@ -1,5 +1,5 @@
-class DsrEntry {
-  const DsrEntry({
+class DsrEntryEntity {
+  const DsrEntryEntity({
     required this.project,
     required this.hours,
     required this.status,
@@ -13,14 +13,14 @@ class DsrEntry {
   final String description;
   final DateTime date;
 
-  DsrEntry copyWith({
+  DsrEntryEntity copyWith({
     String? project,
     double? hours,
     String? status,
     String? description,
     DateTime? date,
   }) {
-    return DsrEntry(
+    return DsrEntryEntity(
       project: project ?? this.project,
       hours: hours ?? this.hours,
       status: status ?? this.status,
@@ -29,3 +29,4 @@ class DsrEntry {
     );
   }
 }
+

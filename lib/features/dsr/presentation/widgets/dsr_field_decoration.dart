@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:core/core/theme/app_colors.dart';
 
 InputDecoration dsrFieldDecoration(String hint) {
   return InputDecoration(
     hintText: hint,
-    hintStyle: const TextStyle(color: Color(0xFF7E95BD)),
+    hintStyle: const TextStyle(color: AppColors.kcGreyColor),
     filled: true,
-    fillColor: const Color(0xFF0A1730),
+    fillColor: AppColors.kcDarkInput,
     contentPadding: const EdgeInsets.all(12),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(6),
-      borderSide: const BorderSide(color: Color(0xFF233A60)),
+      borderSide: const BorderSide(color: AppColors.kcDarkBorderStrong),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(6),
-      borderSide: const BorderSide(color: Color(0xFF4A74B8)),
+      borderSide: const BorderSide(color: AppColors.kcDarkPrimarySoft),
     ),
   );
 }

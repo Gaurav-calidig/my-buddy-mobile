@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:core/core/dependency_injection/injection_container.dart';
 
 import 'bloc/dsr_bloc.dart';
 import 'bloc/dsr_event.dart';
@@ -11,7 +12,7 @@ class DsrPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => DsrBloc()..add(const DsrInitialLoadRequested()),
+      create: (_) => sl<DsrBloc>()..add(const DsrInitialLoadRequested()),
       child: const MyDsrScreen(),
     );
   }

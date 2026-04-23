@@ -1,10 +1,11 @@
-import 'package:core/features/dsr/presentation/models/dsr_entry.dart';
+import 'package:core/features/dsr/domain/entities/dsr_entry_entity.dart';
+import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class DsrTodayEntryTile extends StatelessWidget {
   const DsrTodayEntryTile({required this.entry, super.key});
 
-  final DsrEntry entry;
+  final DsrEntryEntity entry;
 
   @override
   Widget build(BuildContext context) {
@@ -12,9 +13,9 @@ class DsrTodayEntryTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1A34),
+        color: AppColors.kcDarkInputAlt,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF334A71)),
+        border: Border.all(color: AppColors.kcDarkBorderSoft),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,12 +26,12 @@ class DsrTodayEntryTile extends StatelessWidget {
               children: <Widget>[
                 Text(
                   entry.project,
-                  style: const TextStyle(color: Color(0xFFE7F0FF), fontWeight: FontWeight.w700),
+                  style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   entry.description.isEmpty ? 'No description provided.' : entry.description,
-                  style: const TextStyle(color: Color(0xFF9CB1D8), fontSize: 12),
+                  style: const TextStyle(color: AppColors.kcDarkTextFaint, fontSize: 12),
                 ),
               ],
             ),
@@ -47,7 +48,7 @@ class DsrTodayEntryTile extends StatelessWidget {
               Text(
                 entry.status,
                 style: const TextStyle(
-                  color: Color(0xFF8AA5D7),
+                  color: AppColors.kcDarkTextSecondary,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),

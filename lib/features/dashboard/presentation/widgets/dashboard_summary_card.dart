@@ -1,4 +1,5 @@
 import 'package:core/features/dashboard/presentation/widgets/dashboard_card_shell.dart';
+import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class DashboardSummaryCard extends StatelessWidget {
@@ -36,7 +37,7 @@ class DashboardSummaryCard extends StatelessWidget {
                 Text(
                   label,
                   style: const TextStyle(
-                    color: Color(0xFF8FA5CE),
+                    color: AppColors.kcDarkTextSecondary,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),

@@ -39,8 +39,6 @@ import 'package:core/features/splash/presentation/screens/splash_screen.dart';
 import 'package:core/features/splash/presentation/screens/update_required_screen.dart';
 import 'package:core/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:core/features/dsr/presentation/dsr_page.dart';
-import 'package:core/features/dashboard/presentation/bloc/dashboard_bloc.dart';
-import 'package:core/features/dashboard/presentation/bloc/dashboard_event.dart';
 import 'package:core/features/workmanager/screen/workmanager_test_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/features/chat/presentation/bloc/chat_room_cubit.dart';
@@ -48,6 +46,7 @@ import 'package:core/features/chat/presentation/bloc/chat_rooms_cubit.dart';
 import 'package:core/features/projects/presentation/screens/projects_screen.dart';
 import 'package:core/features/projects/presentation/screens/project_detail_screen.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
+import 'package:core/features/settings/presentation/screens/settings_screen.dart';
 
 
 /// Navigator key used by GoRouter to show dialogs outside the current route context.
@@ -322,6 +321,10 @@ class AppRouter {
             child: const NotificationInboxScreen(),
           );
         },
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        builder: (_, state) => const SettingsScreen(),
       ),
 
       GoRoute(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:core/core/theme/app_colors.dart';
 
 class DsrTabButton extends StatelessWidget {
   const DsrTabButton({
@@ -20,14 +21,14 @@ class DsrTabButton extends StatelessWidget {
         height: 34,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFF204D99) : Colors.transparent,
+          color: selected ? AppColors.kcDarkSelectedTab : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         alignment: Alignment.center,
         child: Text(
           title,
           style: TextStyle(
-            color: selected ? Colors.white : const Color(0xFF7D95BE),
+            color: selected ? Colors.white : AppColors.kcGreyColor,
             fontWeight: FontWeight.w600,
           ),
         ),

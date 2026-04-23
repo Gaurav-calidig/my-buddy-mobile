@@ -16,6 +16,7 @@ class TemplateFeatureDrawer extends StatefulWidget {
 class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
   String userName = 'User Name';
   String userEmail = 'user@example.com';
+  bool _showProfileMenu = false;
 
   static const Color _drawerBg = Color(0xFF031234);
   static const Color _divider = Color(0x1FFFFFFF);
@@ -61,6 +62,13 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
     Scaffold.of(context).closeDrawer();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       AppRouter.router.go(location);
+    });
+  }
+
+  void _openSettings() {
+    Scaffold.of(context).closeDrawer();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AppRouter.router.go(AppRoutes.settings);
     });
   }
 
@@ -251,8 +259,102 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                 ),
               ),
               const Divider(height: 1, color: _divider),
+              if (_showProfileMenu)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 10, 8, 0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0E1E40),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: _divider),
+                    ),
+                    child: Column(
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+                          child: Row(
+                            children: <Widget>[
+                              CircleAvatar(
+                                radius: 12,
+                                backgroundColor: const Color(0xFF1C4FA3),
+                                child: Text(
+                                  initials,
+                                  style: const TextStyle(
+                                    color: Color(0xFFCFE0FF),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text(
+                                      userName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: _title,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 1),
+                                    Text(
+                                      userEmail,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        color: _muted,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Divider(height: 1, color: _divider),
+                        ListTile(
+                          dense: true,
+                          minLeadingWidth: 18,
+                          horizontalTitleGap: 10,
+                          leading: const Icon(Icons.settings, color: _title, size: 16),
+                          title: const Text(
+                            'Settings',
+                            style: TextStyle(
+                              color: _title,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          onTap: _openSettings,
+                        ),
+                        ListTile(
+                          dense: true,
+                          minLeadingWidth: 18,
+                          horizontalTitleGap: 10,
+                          leading: const Icon(Icons.logout, color: _title, size: 16),
+                          title: const Text(
+                            'Log out',
+                            style: TextStyle(
+                              color: _title,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          onTap: _logout,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               InkWell(
-                onTap: _logout,
+                onTap: () => setState(() => _showProfileMenu = !_showProfileMenu),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(10, 10, 10, 12),
                   child: Row(

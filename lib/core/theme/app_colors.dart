@@ -61,4 +61,37 @@ class AppColors {
 
   /// Text color for dark theme
   static const Color textColorDark = Color(0xFFE9F1FF);
+
+  // Shared dark module colors (Dashboard, DSR, Settings)
+  static const Color kcDarkGradientTop = Color(0xFF101C34);
+  static const Color kcDarkGradientBottom = Color(0xFF0A1630);
+  static const Color kcDarkPage = Color(0xFF081A3B);
+  static const Color kcDarkCard = Color(0xFF111F3C);
+  static const Color kcDarkCardSoft = Color(0xFF0E1B36);
+  static const Color kcDarkSurface = Color(0xFF0F1D39);
+  static const Color kcDarkInput = Color(0xFF0A1730);
+  static const Color kcDarkInputAlt = Color(0xFF0D1A34);
+  static const Color kcDarkBorder = Color(0xFFF2F6FF);
+  static const Color kcDarkBorderSoft = Color(0xFF3A4A6A);
+  static const Color kcDarkBorderMid = Color(0xFF355486);
+  static const Color kcDarkBorderStrong = Color(0xFF243A5E);
+
+  static const Color kcDarkTitle = Color(0xFFF2F6FF);
+  static const Color kcDarkTextPrimary = Color(0xFFE9F1FF);
+  static const Color kcDarkTextSecondary = Color(0xFF8FA5CE);
+  static const Color kcDarkTextMuted = Color(0xFF8DA2C9);
+  static const Color kcDarkTextFaint = Color(0xFF9CB1D8);
+  static const Color kcDarkTextAccent = Color(0xFF6E9AF2);
+  static const Color kcDarkErrorText = Color(0xFFFFB4AB);
+
+  static const Color kcDarkPrimary = Color(0xFF2D74FF);
+  static const Color kcDarkPrimarySoft = Color(0xFF2C5DBD);
+  static const Color kcDarkSelectedTab = Color(0xFF204D99);
+  static const Color kcDarkStatusPill = Color(0xFF2C67C5);
+  static const Color kcDarkReadOnlyBg = Color(0xFF1A2947);
+  static const Color kcDarkReadOnlyBorder = Color(0xFF3E547D);
+
+  static const Color kcLeaveApproved = Color(0xFF4E80C8);
+  static const Color kcLeavePending = Color(0xFF9B7D2D);
+  static const Color kcLeaveRejected = Color(0xFFB24A4A);
 }

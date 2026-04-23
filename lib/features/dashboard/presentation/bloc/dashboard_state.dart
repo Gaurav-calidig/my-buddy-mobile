@@ -21,11 +21,13 @@ class DashboardState extends Equatable {
     DashboardAmsLeaveOverviewEntity? amsLeaveOverview,
     String? errorMessage,
     bool clearErrorMessage = false,
+    bool clearHighlights = false,
+    bool clearAmsLeaveOverview = false,
   }) {
     return DashboardState(
       isLoading: isLoading ?? this.isLoading,
-      highlights: highlights ?? this.highlights,
-      amsLeaveOverview: amsLeaveOverview ?? this.amsLeaveOverview,
+      highlights: clearHighlights ? null : highlights ?? this.highlights,
+      amsLeaveOverview: clearAmsLeaveOverview ? null : amsLeaveOverview ?? this.amsLeaveOverview,
       errorMessage: clearErrorMessage ? null : errorMessage ?? this.errorMessage,
     );
   }

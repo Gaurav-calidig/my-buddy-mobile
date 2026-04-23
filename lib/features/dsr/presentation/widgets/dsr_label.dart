@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:core/core/theme/app_colors.dart';
 
 class DsrLabel extends StatelessWidget {
   const DsrLabel(this.label, {super.key});
@@ -11,7 +12,7 @@ class DsrLabel extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         label,
-        style: const TextStyle(color: Color(0xFF8FA5CE), fontWeight: FontWeight.w500),
+        style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontWeight: FontWeight.w500),
       ),
     );
   }
