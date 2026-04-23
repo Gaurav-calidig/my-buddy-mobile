@@ -1,4 +1,5 @@
 import 'package:core/features/attendance/domain/entities/attendance_entities.dart';
+import 'package:core/features/attendance/domain/entities/leave_request_entity.dart';
 import 'package:equatable/equatable.dart';
 
 class AttendanceState extends Equatable {
@@ -11,6 +12,16 @@ class AttendanceState extends Equatable {
     required this.summary,
     required this.legend,
     required this.days,
+    required this.leavesLoading,
+    required this.leaveRequests,
+    required this.fiscalYears,
+    required this.selectedFiscalYear,
+    required this.leaveSubmitInProgress,
+    required this.compOffSubmitInProgress,
+    required this.leaveActionInProgressId,
+    required this.compOffHistory,
+    required this.prefillLeave,
+    required this.successMessage,
     this.error,
   });
 
@@ -30,6 +41,16 @@ class AttendanceState extends Equatable {
       ),
       legend: const <String>['Approved', 'Pending'],
       days: const <AmsCalendarDayEntity>[],
+      leavesLoading: false,
+      leaveRequests: const <LeaveRequestEntity>[],
+      fiscalYears: const <String>[],
+      selectedFiscalYear: '',
+      leaveSubmitInProgress: false,
+      compOffSubmitInProgress: false,
+      leaveActionInProgressId: null,
+      compOffHistory: const <Map<String, String>>[],
+      prefillLeave: null,
+      successMessage: null,
     );
   }
 
@@ -41,6 +62,16 @@ class AttendanceState extends Equatable {
   final AmsLeaveSummaryEntity summary;
   final List<String> legend;
   final List<AmsCalendarDayEntity> days;
+  final bool leavesLoading;
+  final List<LeaveRequestEntity> leaveRequests;
+  final List<String> fiscalYears;
+  final String selectedFiscalYear;
+  final bool leaveSubmitInProgress;
+  final bool compOffSubmitInProgress;
+  final int? leaveActionInProgressId;
+  final List<Map<String, String>> compOffHistory;
+  final LeaveRequestEntity? prefillLeave;
+  final String? successMessage;
   final String? error;
 
   AttendanceState copyWith({
@@ -52,7 +83,21 @@ class AttendanceState extends Equatable {
     AmsLeaveSummaryEntity? summary,
     List<String>? legend,
     List<AmsCalendarDayEntity>? days,
+    bool? leavesLoading,
+    List<LeaveRequestEntity>? leaveRequests,
+    List<String>? fiscalYears,
+    String? selectedFiscalYear,
+    bool? leaveSubmitInProgress,
+    bool? compOffSubmitInProgress,
+    int? leaveActionInProgressId,
+    bool clearLeaveActionInProgressId = false,
+    List<Map<String, String>>? compOffHistory,
+    LeaveRequestEntity? prefillLeave,
+    bool clearPrefillLeave = false,
+    String? successMessage,
+    bool clearSuccessMessage = false,
     String? error,
+    bool clearError = false,
   }) {
     return AttendanceState(
       isLoading: isLoading ?? this.isLoading,
@@ -63,7 +108,17 @@ class AttendanceState extends Equatable {
       summary: summary ?? this.summary,
       legend: legend ?? this.legend,
       days: days ?? this.days,
-      error: error,
+      leavesLoading: leavesLoading ?? this.leavesLoading,
+      leaveRequests: leaveRequests ?? this.leaveRequests,
+      fiscalYears: fiscalYears ?? this.fiscalYears,
+      selectedFiscalYear: selectedFiscalYear ?? this.selectedFiscalYear,
+      leaveSubmitInProgress: leaveSubmitInProgress ?? this.leaveSubmitInProgress,
+      compOffSubmitInProgress: compOffSubmitInProgress ?? this.compOffSubmitInProgress,
+      leaveActionInProgressId: clearLeaveActionInProgressId ? null : (leaveActionInProgressId ?? this.leaveActionInProgressId),
+      compOffHistory: compOffHistory ?? this.compOffHistory,
+      prefillLeave: clearPrefillLeave ? null : (prefillLeave ?? this.prefillLeave),
+      successMessage: clearSuccessMessage ? null : (successMessage ?? this.successMessage),
+      error: clearError ? null : (error ?? this.error),
     );
   }
 
@@ -77,6 +132,16 @@ class AttendanceState extends Equatable {
         summary,
         legend,
         days,
+        leavesLoading,
+        leaveRequests,
+        fiscalYears,
+        selectedFiscalYear,
+        leaveSubmitInProgress,
+        compOffSubmitInProgress,
+        leaveActionInProgressId,
+        compOffHistory,
+        prefillLeave,
+        successMessage,
         error,
       ];
 }

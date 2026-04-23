@@ -105,4 +105,9 @@ class ApiRoutes {
   static String dsrById(String dsrId) => '$base/api/dsr/$dsrId';
   static String dsrByDate(String date) => '$base/api/dsr/date/$date';
   static String get myDsr => '$base/api/dsr/my';
+
+  // Attendance / AMS
+  static String get leaveRequests => '$base/api/leave-requests';
+  static String leaveRequestById(int id) => '$base/api/leave-requests/$id';
+  static String get compOffRequests => '$base/api/comp-off-requests';
 }

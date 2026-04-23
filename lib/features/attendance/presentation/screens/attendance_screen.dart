@@ -5,7 +5,10 @@ import 'package:core/features/attendance/presentation/bloc/attendance_bloc.dart'
 import 'package:core/features/attendance/presentation/bloc/attendance_event.dart';
 import 'package:core/features/attendance/presentation/bloc/attendance_state.dart';
 import 'package:core/features/attendance/presentation/widgets/ams_calendar.dart';
+import 'package:core/features/attendance/presentation/widgets/ams_comp_off_tab.dart';
 import 'package:core/features/attendance/presentation/widgets/ams_filter_tabs.dart';
+import 'package:core/features/attendance/presentation/widgets/ams_apply_leave_tab.dart';
+import 'package:core/features/attendance/presentation/widgets/ams_my_leaves_tab.dart';
 import 'package:core/features/attendance/presentation/widgets/ams_stat_card.dart';
 import 'package:core/features/attendance/presentation/widgets/ams_summary_card.dart';
 import 'package:flutter/material.dart';
@@ -63,13 +66,82 @@ class AttendanceScreen extends StatelessWidget {
                     onTap: (int index) => context.read<AttendanceBloc>().add(AttendanceFilterChanged(index)),
                   ),
                   const SizedBox(height: 10),
-                  AmsCalendar(
-                    month: state.month,
-                    days: state.days,
-                    legend: state.legend,
-                    onPrev: () => context.read<AttendanceBloc>().add(const AttendanceMonthChanged(-1)),
-                    onNext: () => context.read<AttendanceBloc>().add(const AttendanceMonthChanged(1)),
-                  ),
+                  if (state.error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(state.error!, style: const TextStyle(color: AppColors.kcDarkErrorText, fontWeight: FontWeight.w600, fontSize: 12)),
+                    ),
+                  if (state.successMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(state.successMessage!, style: const TextStyle(color: Color(0xFF30D48A), fontWeight: FontWeight.w600, fontSize: 12)),
+                    ),
+                  if (state.selectedFilterIndex == 0)
+                    AmsMyLeavesTab(
+                      isLoading: state.leavesLoading,
+                      items: state.leaveRequests,
+                      fiscalYears: state.fiscalYears,
+                      selectedFiscalYear: state.selectedFiscalYear,
+                      onFiscalYearChanged: (String fy) => context.read<AttendanceBloc>().add(AttendanceFiscalYearChanged(fy)),
+                      actionInProgressId: state.leaveActionInProgressId,
+                      onEdit: (leave) => context.read<AttendanceBloc>().add(AttendanceLeaveEditRequested(leave)),
+                      onCancel: (id) => context.read<AttendanceBloc>().add(AttendanceLeaveCancelRequested(id)),
+                    )
+                  else if (state.selectedFilterIndex == 1)
+                    AmsApplyLeaveTab(
+                      leaveTypes: _leaveTypes(state),
+                      isSubmitting: state.leaveSubmitInProgress,
+                      prefill: _leavePrefill(state),
+                      onSubmit: ({
+                        int? leaveId,
+                        required int leaveTypeId,
+                        required String startDate,
+                        required String startHalf,
+                        required String endDate,
+                        required String endHalf,
+                        required String reason,
+                      }) {
+                        context.read<AttendanceBloc>().add(
+                              AttendanceLeaveSubmitted(
+                                leaveId: leaveId,
+                                leaveTypeId: leaveTypeId,
+                                startDate: startDate,
+                                startHalf: startHalf,
+                                endDate: endDate,
+                                endHalf: endHalf,
+                                reason: reason,
+                              ),
+                            );
+                      },
+                    )
+                  else if (state.selectedFilterIndex == 2)
+                    AmsCompOffTab(
+                      isSubmitting: state.compOffSubmitInProgress,
+                      history: state.compOffHistory,
+                      onSubmit: ({
+                        required String workedDate,
+                        required String days,
+                        required String reason,
+                      }) {
+                        context.read<AttendanceBloc>().add(
+                              AttendanceCompOffSubmitted(
+                                workedDate: workedDate,
+                                days: days,
+                                reason: reason,
+                              ),
+                            );
+                      },
+                    )
+                  else if (state.selectedFilterIndex == 3)
+                    AmsCalendar(
+                      month: state.month,
+                      days: state.days,
+                      legend: state.legend,
+                      onPrev: () => context.read<AttendanceBloc>().add(const AttendanceMonthChanged(-1)),
+                      onNext: () => context.read<AttendanceBloc>().add(const AttendanceMonthChanged(1)),
+                    )
+                  else
+                    const SizedBox.shrink(),
                 ],
               ),
             );
@@ -77,5 +149,39 @@ class AttendanceScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  List<Map<String, dynamic>> _leaveTypes(AttendanceState state) {
+    final Map<int, String> byId = <int, String>{};
+    for (final leave in state.leaveRequests) {
+      final leaveType = leave.leaveType;
+      if (leaveType == null) continue;
+      byId[leaveType.id] = leaveType.name;
+    }
+    final List<Map<String, dynamic>> list = byId.entries
+        .map((e) => <String, dynamic>{'id': e.key, 'name': e.value})
+        .toList(growable: false)
+      ..sort((a, b) => a['name'].toString().compareTo(b['name'].toString()));
+    return list;
+  }
+
+  Map<String, dynamic>? _leavePrefill(AttendanceState state) {
+    final leave = state.prefillLeave;
+    if (leave == null) return null;
+    return <String, dynamic>{
+      'leaveId': leave.id,
+      'leaveTypeId': leave.leaveTypeId,
+      'startDate': _ymd(leave.startDate),
+      'startHalf': leave.startHalf,
+      'endDate': _ymd(leave.endDate),
+      'endHalf': leave.endHalf,
+      'reason': leave.reason,
+    };
+  }
+
+  String _ymd(DateTime d) {
+    final String mm = d.month.toString().padLeft(2, '0');
+    final String dd = d.day.toString().padLeft(2, '0');
+    return '${d.year}-$mm-$dd';
   }
 }
