@@ -13,6 +13,10 @@ class ProjectDetailBloc
   final UpdateProjectAssetUseCase updateProjectAssetUseCase;
   final DeleteProjectAssetUseCase deleteProjectAssetUseCase;
   final RestoreProjectAssetUseCase restoreProjectAssetUseCase;
+  final GetAllUsersUseCase getAllUsersUseCase;
+  final AddProjectMemberUseCase addProjectMemberUseCase;
+  final GetAllTechStacksUseCase getAllTechStacksUseCase;
+  final UpdateProjectTechStacksUseCase updateProjectTechStacksUseCase;
 
   ProjectDetailBloc({
     required this.getProjectAssetsUseCase,
@@ -23,7 +27,35 @@ class ProjectDetailBloc
     required this.updateProjectAssetUseCase,
     required this.deleteProjectAssetUseCase,
     required this.restoreProjectAssetUseCase,
+    required this.getAllUsersUseCase,
+    required this.addProjectMemberUseCase,
+    required this.getAllTechStacksUseCase,
+    required this.updateProjectTechStacksUseCase,
   }) : super(ProjectDetailInitial()) {
+    on<FetchUsers>((event, emit) async {
+      if (state is ProjectDetailLoaded) {
+        try {
+          final users = await getAllUsersUseCase();
+          emit((state as ProjectDetailLoaded).copyWith(users: users));
+        } catch (e) {
+          // Non-fatal error for fetching users
+        }
+      }
+    });
+
+    on<AddProjectMember>((event, emit) async {
+      try {
+        await addProjectMemberUseCase(
+          projectId: event.projectId,
+          username: event.username,
+          role: event.role,
+        );
+        add(FetchProjectDetail(event.projectId));
+      } catch (e) {
+        emit(ProjectDetailError(e.toString()));
+      }
+    });
+
     on<AddProjectAsset>((event, emit) async {
       try {
         await createProjectAssetUseCase(
@@ -85,6 +117,7 @@ class ProjectDetailBloc
           getDeletedProjectAssetsUseCase(event.projectId),
           getProjectMembersUseCase(event.projectId),
           getProjectTechStacksUseCase(event.projectId),
+          getAllTechStacksUseCase(),
         ]);
 
         emit(
@@ -93,8 +126,18 @@ class ProjectDetailBloc
             deletedAssets: results[1] as dynamic,
             members: results[2] as dynamic,
             techStacks: results[3] as dynamic,
+            allTechStacks: results[4] as dynamic,
           ),
         );
+      } catch (e) {
+        emit(ProjectDetailError(e.toString()));
+      }
+    });
+
+    on<UpdateProjectTechStacks>((event, emit) async {
+      try {
+        await updateProjectTechStacksUseCase(event.projectId, event.techStackIds);
+        add(FetchProjectDetail(event.projectId));
       } catch (e) {
         emit(ProjectDetailError(e.toString()));
       }

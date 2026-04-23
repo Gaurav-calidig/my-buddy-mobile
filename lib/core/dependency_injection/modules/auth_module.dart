@@ -1,4 +1,4 @@
-﻿import 'package:core/features/auth/data/auth_repository_impl.dart';
+import 'package:core/features/auth/data/auth_repository_impl.dart';
 import 'package:core/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:core/features/auth/domain/repositories/auth_repository.dart';
 import 'package:core/features/auth/domain/usecases/delete_account_usecase.dart';
@@ -9,6 +9,7 @@ import 'package:core/features/auth/domain/usecases/google_sign_out_usecase.dart'
 import 'package:core/features/auth/domain/usecases/login_with_apple_usecase.dart';
 import 'package:core/features/auth/domain/usecases/send_otp_usecase.dart';
 import 'package:core/features/auth/domain/usecases/sign_up_usecase.dart';
+import 'package:core/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:core/features/auth/domain/usecases/verify_otp_usecase.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:core/core/config/auth_method.dart';
@@ -39,7 +40,8 @@ void registerAuthModule(GetIt sl) {
     ..registerLazySingleton(() => ForgotPasswordUseCase(sl<AuthRepository>()))
     ..registerLazySingleton(() => LoginWithAppleUseCase(sl<AuthRepository>()))
     ..registerLazySingleton(() => SendOtpUseCase(sl<AuthRepository>()))
-    ..registerLazySingleton(() => VerifyOtpUseCase(sl<AuthRepository>()));
+    ..registerLazySingleton(() => VerifyOtpUseCase(sl<AuthRepository>()))
+    ..registerLazySingleton(() => GetCurrentUserUseCase(sl<AuthRepository>()));
 
   if (!sl.isRegistered<AuthBloc>()) {
     sl.registerFactory(
@@ -53,6 +55,7 @@ void registerAuthModule(GetIt sl) {
         forgotPasswordUseCase: sl(),
         sendOtpUseCase: sl(),
         verifyOtpUseCase: sl(),
+        getCurrentUserUseCase: sl(),
       ),
     );
   }

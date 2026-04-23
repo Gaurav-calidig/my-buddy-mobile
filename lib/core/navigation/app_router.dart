@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:core/core/widgets/custom_app_bar.dart';
+import 'package:core/core/widgets/template_feature_drawer.dart';
 import 'package:core/core/config/feature_flags.dart';
 import 'package:core/core/dependency_injection/injection_container.dart';
 import 'package:core/core/navigation/app_routes.dart';
@@ -88,7 +90,6 @@ class AppRouter {
           );
         },
       ),
-     
       GoRoute(
         path: AppRoutes.myDsr,
         pageBuilder: (_, state) => const NoTransitionPage<Widget>(
@@ -409,15 +410,19 @@ class _DarkPlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFF0E1A34),
-      alignment: Alignment.center,
-      child: Text(
-        title,
-        style: const TextStyle(
-          color: Color(0xFFCEDBFA),
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
+    return Scaffold(
+      drawer: const TemplateFeatureDrawer(),
+      appBar: CustomAppBar(title: title.replaceAll(' Screen', '')),
+      body: Container(
+        color: const Color(0xFF0E1A34),
+        alignment: Alignment.center,
+        child: Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFFCEDBFA),
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

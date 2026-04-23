@@ -2,12 +2,34 @@ import 'package:core/features/projects/domain/entities/project_asset_entity.dart
 import 'package:core/features/projects/domain/entities/project_member_entity.dart';
 import 'package:core/features/projects/domain/entities/tech_stack_entity.dart';
 import 'package:core/features/projects/domain/repositories/project_repository.dart';
+import 'package:core/features/auth/domain/entities/user_entity.dart';
 
 class GetProjectAssetsUseCase {
   final ProjectRepository repository;
   GetProjectAssetsUseCase(this.repository);
   Future<List<ProjectAssetEntity>> call(int projectId) =>
       repository.getProjectAssets(projectId);
+}
+
+class GetAllUsersUseCase {
+  final ProjectRepository repository;
+  GetAllUsersUseCase(this.repository);
+  Future<List<UserEntity>> call() => repository.getAllUsers();
+}
+
+class AddProjectMemberUseCase {
+  final ProjectRepository repository;
+  AddProjectMemberUseCase(this.repository);
+  Future<void> call({
+    required int projectId,
+    required String username,
+    required String role,
+  }) =>
+      repository.addProjectMember(
+        projectId: projectId,
+        username: username,
+        role: role,
+      );
 }
 
 class GetDeletedProjectAssetsUseCase {
@@ -90,4 +112,17 @@ class RestoreProjectAssetUseCase {
   RestoreProjectAssetUseCase(this.repository);
   Future<void> call(int projectId, int assetId) =>
       repository.restoreProjectAsset(projectId, assetId);
+}
+
+class GetAllTechStacksUseCase {
+  final ProjectRepository repository;
+  GetAllTechStacksUseCase(this.repository);
+  Future<List<TechStackEntity>> call() => repository.getAllTechStacks();
+}
+
+class UpdateProjectTechStacksUseCase {
+  final ProjectRepository repository;
+  UpdateProjectTechStacksUseCase(this.repository);
+  Future<void> call(int projectId, List<int> techStackIds) =>
+      repository.updateProjectTechStacks(projectId, techStackIds);
 }

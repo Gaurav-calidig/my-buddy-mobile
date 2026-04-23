@@ -22,6 +22,8 @@ void registerProjectModule(GetIt sl) {
 
   // Use cases
   sl.registerLazySingleton(() => GetProjectsUseCase(sl()));
+  sl.registerLazySingleton(() => CreateProjectUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateProjectUseCase(sl()));
   sl.registerLazySingleton(() => GetProjectAssetsUseCase(sl()));
   sl.registerLazySingleton(() => GetDeletedProjectAssetsUseCase(sl()));
   sl.registerLazySingleton(() => GetProjectMembersUseCase(sl()));
@@ -30,9 +32,19 @@ void registerProjectModule(GetIt sl) {
   sl.registerLazySingleton(() => UpdateProjectAssetUseCase(sl()));
   sl.registerLazySingleton(() => DeleteProjectAssetUseCase(sl()));
   sl.registerLazySingleton(() => RestoreProjectAssetUseCase(sl()));
+  sl.registerLazySingleton(() => AddProjectMemberUseCase(sl()));
+  sl.registerLazySingleton(() => GetAllUsersUseCase(sl()));
+  sl.registerLazySingleton(() => GetAllTechStacksUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateProjectTechStacksUseCase(sl()));
 
   // Blocs
-  sl.registerFactory(() => ProjectBloc(getProjectsUseCase: sl()));
+  sl.registerFactory(
+    () => ProjectBloc(
+      getProjectsUseCase: sl(),
+      createProjectUseCase: sl(),
+      updateProjectUseCase: sl(),
+    ),
+  );
   sl.registerFactory(
     () => ProjectDetailBloc(
       getProjectAssetsUseCase: sl(),
@@ -43,6 +55,10 @@ void registerProjectModule(GetIt sl) {
       updateProjectAssetUseCase: sl(),
       deleteProjectAssetUseCase: sl(),
       restoreProjectAssetUseCase: sl(),
+      addProjectMemberUseCase: sl(),
+      getAllUsersUseCase: sl(),
+      getAllTechStacksUseCase: sl(),
+      updateProjectTechStacksUseCase: sl(),
     ),
   );
 }

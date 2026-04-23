@@ -1,4 +1,4 @@
-﻿import 'package:equatable/equatable.dart';
+import 'package:equatable/equatable.dart';
 
 /// Base class for all authentication events.
 abstract class AuthEvent extends Equatable {
@@ -89,4 +89,9 @@ class VerifyOtpRequested extends AuthEvent {
 
   @override
   List<Object?> get props => [verificationId, smsCode];
+}
+
+/// Event to check current auth status (e.g. on app start).
+class AuthStatusChecked extends AuthEvent {
+  const AuthStatusChecked();
 }

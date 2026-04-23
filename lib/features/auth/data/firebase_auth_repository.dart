@@ -219,4 +219,10 @@ class FirebaseAuthRepository implements AuthRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<UserEntity> getCurrentUser() async {
+    final data = await datasource.getUserData();
+    return UserModel.fromJson(data);
+  }
 }

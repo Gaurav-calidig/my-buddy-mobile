@@ -102,3 +102,35 @@ class RestoreProjectAsset extends ProjectDetailEvent {
   @override
   List<Object?> get props => [projectId, assetId];
 }
+
+class AddProjectMember extends ProjectDetailEvent {
+  final int projectId;
+  final String username;
+  final String role;
+
+  const AddProjectMember({
+    required this.projectId,
+    required this.username,
+    required this.role,
+  });
+
+  @override
+  List<Object?> get props => [projectId, username, role];
+}
+
+class FetchUsers extends ProjectDetailEvent {
+  const FetchUsers();
+}
+
+class UpdateProjectTechStacks extends ProjectDetailEvent {
+  final int projectId;
+  final List<int> techStackIds;
+
+  const UpdateProjectTechStacks({
+    required this.projectId,
+    required this.techStackIds,
+  });
+
+  @override
+  List<Object?> get props => [projectId, techStackIds];
+}

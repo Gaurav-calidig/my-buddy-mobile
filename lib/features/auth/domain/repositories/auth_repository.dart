@@ -26,4 +26,7 @@ abstract class AuthRepository {
     required String verificationId,
     required String smsCode,
   });
+
+  /// Fetches the currently authenticated user's data from the backend.
+  Future<UserEntity> getCurrentUser();
 }

@@ -20,6 +20,7 @@ import 'package:core/core/utils/firebase_initializer.dart';
 import 'package:core/core/widgets/app_progress_indicator.dart';
 import 'package:core/core/widgets/template_feature_drawer.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:core/features/auth/presentation/bloc/auth_event.dart';
 import 'package:core/features/auth/presentation/screens/login_screen.dart';
 import 'package:core/features/auth/presentation/screens/notification_inbox_screen.dart';
 import 'package:core/features/dashboard/presentation/bloc/dashboard_bloc.dart';
@@ -154,7 +155,11 @@ class MyApp extends StatelessWidget {
     ];
 
     if (FeatureFlags.enableAuth && sl.isRegistered<AuthBloc>()) {
-      providers.add(BlocProvider<AuthBloc>(create: (_) => sl<AuthBloc>()));
+      providers.add(
+        BlocProvider<AuthBloc>(
+          create: (_) => sl<AuthBloc>()..add(const AuthStatusChecked()),
+        ),
+      );
     }
 
     return providers;
@@ -189,78 +194,10 @@ class MyApp extends StatelessWidget {
     return _buildScaffold(context, child, '');
   }
 
-  String _titleForRoute(String location) {
-    switch (location) {
-      case AppRoutes.dashboard:
-        return 'Dashboard';
-      case AppRoutes.projects:
-        return 'Projects';
-      case AppRoutes.myDsr:
-        return 'My DSR';
-      case AppRoutes.capacityPlanner:
-        return 'Capacity Planner';
-      case AppRoutes.attendance:
-        return 'Attendance';
-      default:
-        return AppConstants.appName;
-    }
-  }
-
   Widget _buildScaffold(BuildContext context, Widget child, String location) {
     const Color appChrome = Color(0xFF101C34);
 
-    return Scaffold(
-      backgroundColor: appChrome,
-      drawer: const TemplateFeatureDrawer(),
-      appBar: AppBar(
-        backgroundColor: AppColors.kcBackgroundColorDark,
-        foregroundColor: AppColors.kcSecondaryColorLight,
-        leading: Builder(
-          builder: (context) {
-            return IconButton(
-              icon: const Icon(Icons.menu_rounded),
-              onPressed: () => Scaffold.of(context).openDrawer(),
-            );
-          },
-        ),
-        title: Text(_titleForRoute(location)),
-        centerTitle: false,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1.0),
-          child: Container(
-            color:
-                Theme.of(context).dividerTheme.color ??
-                Colors.grey.withValues(alpha: 0.2),
-            height: 1.0,
-          ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none_rounded),
-            onPressed: () {
-              // Notification action
-            },
-          ),
-          const SizedBox(width: 8),
-          CircleAvatar(
-            radius: 15,
-            backgroundColor: Theme.of(
-              context,
-            ).primaryColor.withValues(alpha: 0.15),
-            child: Text(
-              'G', // Placeholder initials
-              style: TextStyle(
-                color: Theme.of(context).primaryColor,
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-        ],
-      ),
-      body: child,
-    );
+    return Scaffold(backgroundColor: appChrome, body: child);
   }
 
   Widget _buildWithGoRouter(BuildContext context) {

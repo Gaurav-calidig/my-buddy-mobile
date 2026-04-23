@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:core/features/projects/domain/entities/project_asset_entity.dart';
 import 'package:core/features/projects/domain/entities/project_member_entity.dart';
 import 'package:core/features/projects/domain/entities/tech_stack_entity.dart';
+import 'package:core/features/auth/domain/entities/user_entity.dart';
 
 abstract class ProjectDetailState extends Equatable {
   const ProjectDetailState();
@@ -18,16 +19,39 @@ class ProjectDetailLoaded extends ProjectDetailState {
   final List<ProjectAssetEntity> deletedAssets;
   final List<ProjectMemberEntity> members;
   final List<ProjectTechStackEntity> techStacks;
+  final List<UserEntity> users;
+  final List<TechStackEntity> allTechStacks;
 
   const ProjectDetailLoaded({
     required this.assets,
     required this.deletedAssets,
     required this.members,
     required this.techStacks,
+    this.users = const [],
+    this.allTechStacks = const [],
   });
 
+  ProjectDetailLoaded copyWith({
+    List<ProjectAssetEntity>? assets,
+    List<ProjectAssetEntity>? deletedAssets,
+    List<ProjectMemberEntity>? members,
+    List<ProjectTechStackEntity>? techStacks,
+    List<UserEntity>? users,
+    List<TechStackEntity>? allTechStacks,
+  }) {
+    return ProjectDetailLoaded(
+      assets: assets ?? this.assets,
+      deletedAssets: deletedAssets ?? this.deletedAssets,
+      members: members ?? this.members,
+      techStacks: techStacks ?? this.techStacks,
+      users: users ?? this.users,
+      allTechStacks: allTechStacks ?? this.allTechStacks,
+    );
+  }
+
   @override
-  List<Object?> get props => [assets, deletedAssets, members, techStacks];
+  List<Object?> get props =>
+      [assets, deletedAssets, members, techStacks, users, allTechStacks];
 }
 
 class ProjectDetailError extends ProjectDetailState {

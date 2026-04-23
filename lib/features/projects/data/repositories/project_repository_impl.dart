@@ -4,6 +4,7 @@ import 'package:core/features/projects/domain/entities/project_member_entity.dar
 import 'package:core/features/projects/domain/entities/tech_stack_entity.dart';
 import 'package:core/features/projects/domain/repositories/project_repository.dart';
 import 'package:core/features/projects/data/datasources/project_remote_data_source.dart';
+import 'package:core/features/auth/domain/entities/user_entity.dart';
 
 class ProjectRepositoryImpl implements ProjectRepository {
   final ProjectRemoteDataSource remoteDataSource;
@@ -37,6 +38,24 @@ class ProjectRepositoryImpl implements ProjectRepository {
     int projectId,
   ) async {
     return await remoteDataSource.getProjectTechStacks(projectId);
+  }
+
+  @override
+  Future<List<UserEntity>> getAllUsers() async {
+    return await remoteDataSource.getAllUsers();
+  }
+
+  @override
+  Future<void> addProjectMember({
+    required int projectId,
+    required String username,
+    required String role,
+  }) async {
+    return await remoteDataSource.addProjectMember(
+      projectId: projectId,
+      username: username,
+      role: role,
+    );
   }
 
   @override
@@ -91,6 +110,44 @@ class ProjectRepositoryImpl implements ProjectRepository {
   @override
   Future<void> restoreProjectAsset(int projectId, int assetId) async {
     return await remoteDataSource.restoreProjectAsset(projectId, assetId);
+  }
+
+  @override
+  Future<List<TechStackEntity>> getAllTechStacks() async {
+    return await remoteDataSource.getAllTechStacks();
+  }
+
+  @override
+  Future<void> updateProjectTechStacks(int projectId, List<int> techStackIds) async {
+    return await remoteDataSource.updateProjectTechStacks(projectId, techStackIds);
+  }
+
+  @override
+  Future<ProjectEntity> createProject({
+    required String name,
+    required String description,
+    required bool isBillable,
+  }) async {
+    return await remoteDataSource.createProject(
+      name: name,
+      description: description,
+      isBillable: isBillable,
+    );
+  }
+
+  @override
+  Future<ProjectEntity> updateProject({
+    required int projectId,
+    required String name,
+    required String description,
+    required bool isBillable,
+  }) async {
+    return await remoteDataSource.updateProject(
+      projectId: projectId,
+      name: name,
+      description: description,
+      isBillable: isBillable,
+    );
   }
 }
 

@@ -73,4 +73,7 @@ class AuthRepositoryImpl implements AuthRepository {
     verificationId: verificationId,
     smsCode: smsCode,
   );
+
+  @override
+  Future<UserEntity> getCurrentUser() => _repository.getCurrentUser();
 }

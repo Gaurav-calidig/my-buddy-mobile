@@ -1,6 +1,12 @@
 import 'package:core/core/navigation/app_routes.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
+import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:core/features/auth/presentation/bloc/auth_state.dart';
+import 'package:core/features/projects/presentation/bloc/project_bloc.dart';
+import 'package:core/features/projects/presentation/bloc/project_event.dart';
+import 'package:core/features/projects/presentation/widgets/project_modal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 class ProjectsTable extends StatelessWidget {
@@ -30,7 +36,7 @@ class ProjectsTable extends StatelessWidget {
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: SizedBox(
-              width: 720,
+              width: 760,
               child: Scrollbar(
                 thumbVisibility: true,
                 child: SingleChildScrollView(
@@ -54,7 +60,7 @@ class ProjectsTable extends StatelessWidget {
                             _HeadCell(width: 100, label: 'Members'),
                             _HeadCell(width: 90, label: 'Assets'),
                             _HeadCell(width: 70, label: 'Tags'),
-                            _HeadCell(width: 72, label: 'Action'),
+                            _HeadCell(width: 110, label: 'Action'),
                           ],
                         ),
                       ),
@@ -115,7 +121,7 @@ class ProjectTableRow extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        context.go(AppRoutes.projectDetail, extra: project);},
+        context.push(AppRoutes.projectDetail, extra: project);},
       child: Container(
       height: 56,
       decoration: const BoxDecoration(
@@ -214,21 +220,56 @@ class ProjectTableRow extends StatelessWidget {
               style: TextStyle(color: Color(0xFFB5C7E8), fontSize: 15),
             ),
           ),
-          const SizedBox(
-            width: 72,
-            child: Row(
-              children: <Widget>[
-                Text(
-                  'View',
-                  style: TextStyle(
-                    color: Color(0xFFD9E7FF),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(width: 6),
-                Icon(Icons.arrow_forward, size: 15, color: Color(0xFFBED2F7)),
-              ],
+          SizedBox(
+            width: 110,
+            child: BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, authState) {
+                final isSuperAdmin = authState is AuthSuccess &&
+                    authState.user.portalRole == 'super_admin';
+
+                return Row(
+                  children: <Widget>[
+                    if (isSuperAdmin) ...[
+                      IconButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (innerContext) => ProjectModal(
+                              project: project,
+                              onSave: (name, description, isBillable) {
+                                context.read<ProjectBloc>().add(
+                                      UpdateProject(
+                                        projectId: project.id,
+                                        name: name,
+                                        description: description,
+                                        isBillable: isBillable,
+                                      ),
+                                    );
+                              },
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.edit_outlined,
+                            size: 16, color: Color(0xFFD9E7FF)),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    const Text(
+                      'View',
+                      style: TextStyle(
+                        color: Color(0xFFD9E7FF),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(Icons.arrow_forward,
+                        size: 15, color: Color(0xFFBED2F7)),
+                  ],
+                );
+              },
             ),
           ),
         ],

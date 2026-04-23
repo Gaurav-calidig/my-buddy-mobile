@@ -64,6 +64,7 @@ class ApiRoutes {
   static String get deleteAccount => '$base/auth/delete-account';
   static String get getCurrentUser => '$base/api/auth/user';
   static String get projects => '$base/api/projects';
+  static String projectDetail(int projectId) => '$base/api/projects/$projectId';
   static String projectAssets(int projectId) =>
       '$base/api/projects/$projectId/assets';
   static String deletedProjectAssets(int projectId) =>
@@ -76,6 +77,9 @@ class ApiRoutes {
       '$base/api/projects/$projectId/assets/$assetId';
   static String restoreProjectAsset(int projectId, int assetId) =>
       '$base/api/projects/$projectId/assets/$assetId/restore';
+
+  static String get users => '$base/api/users';
+  static String get techStacks => '$base/api/tech-stacks';
 
 
 

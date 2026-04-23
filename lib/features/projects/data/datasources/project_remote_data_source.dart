@@ -4,6 +4,8 @@ import 'package:core/features/projects/data/models/project_model.dart';
 import 'package:core/features/projects/data/models/project_asset_model.dart';
 import 'package:core/features/projects/data/models/project_member_model.dart';
 import 'package:core/features/projects/data/models/project_tech_stack_model.dart';
+import 'package:core/features/auth/data/models/user_model.dart';
+import 'package:core/features/projects/domain/entities/tech_stack_entity.dart';
 import 'package:logger/logger.dart';
 
 abstract class ProjectRemoteDataSource {
@@ -12,6 +14,12 @@ abstract class ProjectRemoteDataSource {
   Future<List<ProjectAssetModel>> getDeletedProjectAssets(int projectId);
   Future<List<ProjectMemberModel>> getProjectMembers(int projectId);
   Future<List<ProjectTechStackModel>> getProjectTechStacks(int projectId);
+  Future<List<UserModel>> getAllUsers();
+  Future<void> addProjectMember({
+    required int projectId,
+    required String username,
+    required String role,
+  });
   Future<ProjectAssetModel> createProjectAsset({
     required int projectId,
     required String name,
@@ -33,6 +41,19 @@ abstract class ProjectRemoteDataSource {
   });
   Future<void> deleteProjectAsset(int projectId, int assetId);
   Future<void> restoreProjectAsset(int projectId, int assetId);
+  Future<List<TechStackModel>> getAllTechStacks();
+  Future<void> updateProjectTechStacks(int projectId, List<int> techStackIds);
+  Future<ProjectModel> createProject({
+    required String name,
+    required String description,
+    required bool isBillable,
+  });
+  Future<ProjectModel> updateProject({
+    required int projectId,
+    required String name,
+    required String description,
+    required bool isBillable,
+  });
 }
 
 class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
@@ -131,6 +152,41 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
   }
 
   @override
+  Future<List<UserModel>> getAllUsers() async {
+    try {
+      final response = await apiService.get(ApiRoutes.users);
+      if (response.data != null && response.data is List) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => UserModel.fromJson(json)).toList();
+      }
+      throw Exception('Failed to parse users');
+    } catch (e) {
+      logger.e('Error fetching users', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> addProjectMember({
+    required int projectId,
+    required String username,
+    required String role,
+  }) async {
+    try {
+      await apiService.post(
+        ApiRoutes.projectMembers(projectId),
+        {
+          'username': username,
+          'role': role,
+        },
+      );
+    } catch (e) {
+      logger.e('Error adding project member', error: e);
+      rethrow;
+    }
+  }
+
+  @override
   Future<ProjectAssetModel> createProjectAsset({
     required int projectId,
     required String name,
@@ -220,6 +276,79 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
       );
     } catch (e) {
       logger.e('Error restoring project asset', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<TechStackModel>> getAllTechStacks() async {
+    try {
+      final response = await apiService.get(ApiRoutes.techStacks);
+      if (response.data != null && response.data is List) {
+        final List<dynamic> data = response.data;
+        return data.map((json) => TechStackModel.fromJson(json)).toList();
+      }
+      throw Exception('Failed to parse tech stacks');
+    } catch (e) {
+      logger.e('Error fetching tech stacks', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> updateProjectTechStacks(int projectId, List<int> techStackIds) async {
+    try {
+      await apiService.put(
+        ApiRoutes.projectTechStacks(projectId),
+        {'techStackIds': techStackIds},
+      );
+    } catch (e) {
+      logger.e('Error updating project tech stacks', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<ProjectModel> createProject({
+    required String name,
+    required String description,
+    required bool isBillable,
+  }) async {
+    try {
+      final response = await apiService.post(ApiRoutes.projects, {
+        'name': name,
+        'description': description,
+        'isBillable': isBillable,
+      });
+      if (response.data != null && response.data is Map<String, dynamic>) {
+        return ProjectModel.fromJson(response.data as Map<String, dynamic>);
+      }
+      throw Exception('Failed to create project');
+    } catch (e) {
+      logger.e('Error creating project', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<ProjectModel> updateProject({
+    required int projectId,
+    required String name,
+    required String description,
+    required bool isBillable,
+  }) async {
+    try {
+      final response = await apiService.patch(ApiRoutes.projectDetail(projectId), {
+        'name': name,
+        'description': description,
+        'isBillable': isBillable,
+      });
+      if (response.data != null && response.data is Map<String, dynamic>) {
+        return ProjectModel.fromJson(response.data as Map<String, dynamic>);
+      }
+      throw Exception('Failed to update project');
+    } catch (e) {
+      logger.e('Error updating project', error: e);
       rethrow;
     }
   }

@@ -1,9 +1,14 @@
+import 'package:core/core/widgets/custom_app_bar.dart';
+import 'package:core/core/widgets/template_feature_drawer.dart';
 import 'package:core/core/dependency_injection/injection_container.dart';
 import 'package:core/core/theme/app_colors.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
 import 'package:core/features/projects/presentation/bloc/project_bloc.dart';
 import 'package:core/features/projects/presentation/bloc/project_event.dart';
 import 'package:core/features/projects/presentation/bloc/project_state.dart';
+import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:core/features/auth/presentation/bloc/auth_state.dart';
+import 'package:core/features/projects/presentation/widgets/project_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -30,14 +35,12 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
   List<ProjectEntity> _filterProjects(List<ProjectEntity> allProjects) {
     final String query = _searchController.text.trim().toLowerCase();
-    return allProjects
-        .where((project) {
-          if (!_showArchived && project.isArchived) return false;
-          if (query.isEmpty) return true;
-          return project.name.toLowerCase().contains(query) ||
-              project.description.toLowerCase().contains(query);
-        })
-        .toList(growable: false);
+    return allProjects.where((project) {
+      if (!_showArchived && project.isArchived) return false;
+      if (query.isEmpty) return true;
+      return project.name.toLowerCase().contains(query) ||
+          project.description.toLowerCase().contains(query);
+    }).toList(growable: false);
   }
 
   @override
@@ -46,17 +49,21 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       create: (context) => sl<ProjectBloc>()..add(FetchProjects()),
       child: BlocBuilder<ProjectBloc, ProjectState>(
         builder: (context, state) {
-          return Container(
-            color: const Color(0xFF0E1A34),
-            child: ProjectsView(
-              searchController: _searchController,
-              showArchived: _showArchived,
-              isListView: _isListView,
-              onSearchChanged: (_) => setState(() {}),
-              onArchivedChanged: (val) => setState(() => _showArchived = val),
-              onViewChanged: (isList) => setState(() => _isListView = isList),
-              state: state,
-              filterProjects: _filterProjects,
+          return Scaffold(
+            drawer: const TemplateFeatureDrawer(),
+            appBar: const CustomAppBar(title: 'Projects'),
+            body: Container(
+              color: const Color(0xFF0E1A34),
+              child: ProjectsView(
+                searchController: _searchController,
+                showArchived: _showArchived,
+                isListView: _isListView,
+                onSearchChanged: (_) => setState(() {}),
+                onArchivedChanged: (val) => setState(() => _showArchived = val),
+                onViewChanged: (isList) => setState(() => _isListView = isList),
+                state: state,
+                filterProjects: _filterProjects,
+              ),
             ),
           );
         },
@@ -116,7 +123,7 @@ class ProjectsView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _buildControlsRow(border),
+          _buildControlsRow(context, border),
           const SizedBox(height: 16),
           Expanded(child: _buildContent(panel, border)),
         ],
@@ -124,71 +131,115 @@ class ProjectsView extends StatelessWidget {
     );
   }
 
-  Widget _buildControlsRow(Color border) {
-    return Row(
-      children: <Widget>[
-        Expanded(
-          child: Container(
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F1A33),
-              border: Border.all(color: border.withValues(alpha: 0.65)),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: TextField(
-              controller: searchController,
-              onChanged: onSearchChanged,
-              style: const TextStyle(color: Color(0xFFDCE8FF), fontSize: 15),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 18,
-                  color: Color(0xFF7F95BE),
+  Widget _buildControlsRow(BuildContext context, Color border) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        final isSuperAdmin =
+            authState is AuthSuccess && authState.user.portalRole == 'super_admin';
+
+        return Row(
+          children: <Widget>[
+            Expanded(
+              child: Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F1A33),
+                  border: Border.all(color: border.withValues(alpha: 0.65)),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                hintText: 'Search projects...',
-                hintStyle: TextStyle(color: Color(0xFF8EA5CD), fontSize: 15),
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 8,
+                child: TextField(
+                  controller: searchController,
+                  onChanged: onSearchChanged,
+                  style: const TextStyle(color: Color(0xFFDCE8FF), fontSize: 15),
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    prefixIcon: Icon(
+                      Icons.search,
+                      size: 18,
+                      color: Color(0xFF7F95BE),
+                    ),
+                    hintText: 'Search projects...',
+                    hintStyle: TextStyle(color: Color(0xFF8EA5CD), fontSize: 15),
+                    contentPadding: EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 8,
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        SizedBox(
-          width: 18,
-          height: 18,
-          child: Checkbox(
-            value: showArchived,
-            onChanged: (bool? value) {
-              onArchivedChanged(value ?? false);
-            },
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
+            if (isSuperAdmin) ...[
+              const SizedBox(width: 16),
+              ElevatedButton.icon(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (innerContext) => ProjectModal(
+                      onSave: (name, description, isBillable) {
+                        context.read<ProjectBloc>().add(
+                              CreateProject(
+                                name: name,
+                                description: description,
+                                isBillable: isBillable,
+                              ),
+                            );
+                      },
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                label: const Text(
+                  'Create Project',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2D75FF),
+                  minimumSize: const Size(0, 40),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(width: 16),
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: Checkbox(
+                value: showArchived,
+                onChanged: (bool? value) {
+                  onArchivedChanged(value ?? false);
+                },
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                side: const BorderSide(color: Color(0xFF5F82C7), width: 1.2),
+              ),
             ),
-            side: const BorderSide(color: Color(0xFF5F82C7), width: 1.2),
-          ),
-        ),
-        const SizedBox(width: 8),
-        const Text(
-          'Show\nArchived',
-          style: TextStyle(color: Color(0xFFB7C8E8), fontSize: 12, height: 1.0),
-        ),
-        const SizedBox(width: 16),
-        _viewToggle(
-          icon: Icons.grid_view_rounded,
-          active: !isListView,
-          onTap: () => onViewChanged(false),
-        ),
-        const SizedBox(width: 6),
-        _viewToggle(
-          icon: Icons.menu,
-          active: isListView,
-          onTap: () => onViewChanged(true),
-        ),
-      ],
+            const SizedBox(width: 8),
+            const Text(
+              'Show\nArchived',
+              style: TextStyle(color: Color(0xFFB7C8E8), fontSize: 12, height: 1.0),
+            ),
+            const SizedBox(width: 16),
+            _viewToggle(
+              icon: Icons.grid_view_rounded,
+              active: !isListView,
+              onTap: () => onViewChanged(false),
+            ),
+            const SizedBox(width: 6),
+            _viewToggle(
+              icon: Icons.menu,
+              active: isListView,
+              onTap: () => onViewChanged(true),
+            ),
+          ],
+        );
+      },
     );
   }
 

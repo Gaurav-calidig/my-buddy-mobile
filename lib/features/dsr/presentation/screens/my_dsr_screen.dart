@@ -1,3 +1,5 @@
+import 'package:core/core/widgets/custom_app_bar.dart';
+import 'package:core/core/widgets/template_feature_drawer.dart';
 import 'package:core/features/dsr/presentation/models/dsr_entry.dart';
 import 'package:core/features/dsr/presentation/widgets/dsr_widgets.dart';
 import 'package:flutter/material.dart';
@@ -21,10 +23,15 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     'Rent My Stuff',
   ];
 
-  static const List<String> _statuses = <String>['In Progress', 'Completed', 'Blocked'];
+  static const List<String> _statuses = <String>[
+    'In Progress',
+    'Completed',
+    'Blocked',
+  ];
 
   final TextEditingController _descriptionController = TextEditingController();
-  final Map<DateTime, List<DsrEntry>> _entriesByDate = <DateTime, List<DsrEntry>>{};
+  final Map<DateTime, List<DsrEntry>> _entriesByDate =
+      <DateTime, List<DsrEntry>>{};
 
   _DsrTab _activeTab = _DsrTab.add;
   String? _selectedProject;
@@ -53,8 +60,12 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
 
   List<MapEntry<DateTime, List<DsrEntry>>> get _historyGroups {
     final DateTime today = _todayKey;
-    final List<MapEntry<DateTime, List<DsrEntry>>> groups = _entriesByDate.entries
-        .where((MapEntry<DateTime, List<DsrEntry>> e) => !_isSameDate(e.key, today))
+    final List<MapEntry<DateTime, List<DsrEntry>>> groups = _entriesByDate
+        .entries
+        .where(
+          (MapEntry<DateTime, List<DsrEntry>> e) =>
+              !_isSameDate(e.key, today),
+        )
         .toList();
     groups.sort((a, b) => b.key.compareTo(a.key));
     return groups;
@@ -82,7 +93,8 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
         project: 'FotoFinish',
         hours: 1.0,
         status: 'Completed',
-        description: 'Checked and fixed the site list API issue and created ticket notes.',
+        description:
+            'Checked and fixed the site list API issue and created ticket notes.',
         date: yesterday,
       ),
       DsrEntry(
@@ -100,14 +112,16 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
         project: 'MyBuddy',
         hours: 2.5,
         status: 'Completed',
-        description: 'Integrated Google map markers and polished address selection flow.',
+        description:
+            'Integrated Google map markers and polished address selection flow.',
         date: older,
       ),
       DsrEntry(
         project: 'Rent My Stuff',
         hours: 6.5,
         status: 'In Progress',
-        description: 'Started cart summary refactor and API sync for order history.',
+        description:
+            'Started cart summary refactor and API sync for order history.',
         date: older,
       ),
     ];
@@ -116,7 +130,9 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
   void _addEntry() {
     if (_selectedProject == null || _selectedHours == null) return;
 
-    final double parsedHours = double.parse(_selectedHours!.replaceAll('h', '').trim());
+    final double parsedHours = double.parse(
+      _selectedHours!.replaceAll('h', '').trim(),
+    );
     final DateTime dateKey = _dayKey(_selectedDate);
     final DsrEntry entry = DsrEntry(
       project: _selectedProject!,
@@ -161,7 +177,9 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     if (list == null || index >= list.length) return;
 
     final DsrEntry current = list[index];
-    final TextEditingController descController = TextEditingController(text: current.description);
+    final TextEditingController descController = TextEditingController(
+      text: current.description,
+    );
     String selectedStatus = current.status;
     String? selectedHours = '${current.hours.toStringAsFixed(1)}h';
 
@@ -199,15 +217,23 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
             ],
           ),
           actions: <Widget>[
-            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-            TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Save')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Save'),
+            ),
           ],
         );
       },
     );
 
     if (shouldSave != true || selectedHours == null) return;
-    final double parsedHours = double.parse(selectedHours!.replaceAll('h', '').trim());
+    final double parsedHours = double.parse(
+      selectedHours!.replaceAll('h', '').trim(),
+    );
 
     setState(() {
       list[index] = current.copyWith(
@@ -224,33 +250,44 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     const Color pageTop = Color(0xFF101C34);
     const Color pageBottom = Color(0xFF0A1630);
 
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: <Color>[pageTop, pageBottom],
+    return Scaffold(
+      drawer: const TemplateFeatureDrawer(),
+      appBar: const CustomAppBar(title: 'My DSR'),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: <Color>[pageTop, pageBottom],
+          ),
         ),
-      ),
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(8, 10, 8, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            const Text(
-              'Daily Status Report',
-              style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 2),
-            const Text(
-              'Log your daily work activity and hours',
-              style: TextStyle(color: Color(0xFF8FA5CE), fontSize: 14),
-            ),
-            const SizedBox(height: 10),
-            _tabStrip(),
-            const SizedBox(height: 10),
-            if (_activeTab == _DsrTab.add) _buildAddTab() else _buildHistoryTab(),
-          ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(8, 10, 8, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              const Text(
+                'Daily Status Report',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 34,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Log your daily work activity and hours',
+                style: TextStyle(color: Color(0xFF8FA5CE), fontSize: 14),
+              ),
+              const SizedBox(height: 10),
+              _tabStrip(),
+              const SizedBox(height: 10),
+              if (_activeTab == _DsrTab.add)
+                _buildAddTab()
+              else
+                _buildHistoryTab(),
+            ],
+          ),
         ),
       ),
     );
@@ -284,7 +321,10 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
   Widget _buildAddTab() {
     final DateTime dateKey = _dayKey(_selectedDate);
     final List<DsrEntry> entries = _entriesByDate[dateKey] ?? <DsrEntry>[];
-    final double totalHours = entries.fold<double>(0, (double sum, DsrEntry entry) => sum + entry.hours);
+    final double totalHours = entries.fold<double>(
+      0,
+      (double sum, DsrEntry entry) => sum + entry.hours,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,14 +342,24 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                const Icon(Icons.calendar_today_outlined, color: Color(0xFF93AADA), size: 14),
+                const Icon(
+                  Icons.calendar_today_outlined,
+                  color: Color(0xFF93AADA),
+                  size: 14,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Today (${_formatDate(_selectedDate)})',
-                  style: const TextStyle(color: Color(0xFFDCE8FF), fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    color: Color(0xFFDCE8FF),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(width: 18),
-                const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF93AADA)),
+                const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  color: Color(0xFF93AADA),
+                ),
               ],
             ),
           ),
@@ -324,7 +374,10 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
           ),
           child: Text(
             '${totalHours.toStringAsFixed(1)}h logged',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -334,14 +387,22 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text('Add Entry', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+                const Text(
+                  'Add Entry',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 14),
                 const DsrLabel('Project'),
                 DsrDropdownField<String>(
                   value: _selectedProject,
                   hintText: 'Select project',
                   items: _projects,
-                  onChanged: (String? value) => setState(() => _selectedProject = value),
+                  onChanged: (String? value) =>
+                      setState(() => _selectedProject = value),
                 ),
                 const SizedBox(height: 10),
                 const DsrLabel('Hours'),
@@ -349,7 +410,8 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                   value: _selectedHours,
                   hintText: 'Select hours',
                   items: _hoursOptions,
-                  onChanged: (String? value) => setState(() => _selectedHours = value),
+                  onChanged: (String? value) =>
+                      setState(() => _selectedHours = value),
                 ),
                 const SizedBox(height: 10),
                 const DsrLabel('Status'),
@@ -372,7 +434,9 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                       backgroundColor: const Color(0xFF2C5DBD),
                       foregroundColor: const Color(0xFFE8F0FF),
                       minimumSize: const Size.fromHeight(40),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
                     ),
                   ),
                 ),
@@ -392,21 +456,28 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
         DsrCardShell(
           child: Padding(
             padding: const EdgeInsets.all(14),
-            child: entries.isEmpty
-                ? const SizedBox(
-                    height: 110,
-                    child: Center(
-                      child: Text(
-                        'No entries for this date. Add your first DSR\nentry above.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Color(0xFF9BB0D7), height: 1.35),
+            child:
+                entries.isEmpty
+                    ? const SizedBox(
+                      height: 110,
+                      child: Center(
+                        child: Text(
+                          'No entries for this date. Add your first DSR\nentry above.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF9BB0D7),
+                            height: 1.35,
+                          ),
+                        ),
                       ),
+                    )
+                    : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children:
+                          entries
+                              .map((entry) => DsrTodayEntryTile(entry: entry))
+                              .toList(),
                     ),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: entries.map((entry) => DsrTodayEntryTile(entry: entry)).toList(),
-                  ),
           ),
         ),
       ],
@@ -418,23 +489,37 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
       return const DsrCardShell(
         child: Padding(
           padding: EdgeInsets.all(14),
-          child: Text('No history records found.', style: TextStyle(color: Color(0xFF9BB0D7))),
+          child: Text(
+            'No history records found.',
+            style: TextStyle(color: Color(0xFF9BB0D7)),
+          ),
         ),
       );
     }
 
     return Column(
-      children: _historyGroups.map((MapEntry<DateTime, List<DsrEntry>> group) {
-        final DateTime date = group.key;
-        final List<DsrEntry> entries = group.value;
-        final double total = entries.fold<double>(0, (double s, DsrEntry e) => s + e.hours);
-        final DateTime yesterday = _todayKey.subtract(const Duration(days: 1));
-        final bool canMutate = _isSameDate(date, yesterday);
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: _historyCard(date: date, entries: entries, total: total, canMutate: canMutate),
-        );
-      }).toList(),
+      children:
+          _historyGroups.map((MapEntry<DateTime, List<DsrEntry>> group) {
+            final DateTime date = group.key;
+            final List<DsrEntry> entries = group.value;
+            final double total = entries.fold<double>(
+              0,
+              (double s, DsrEntry e) => s + e.hours,
+            );
+            final DateTime yesterday = _todayKey.subtract(
+              const Duration(days: 1),
+            );
+            final bool canMutate = _isSameDate(date, yesterday);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _historyCard(
+                date: date,
+                entries: entries,
+                total: total,
+                canMutate: canMutate,
+              ),
+            );
+          }).toList(),
     );
   }
 
@@ -452,26 +537,53 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
           children: <Widget>[
             Row(
               children: <Widget>[
-                Text(_formatDate(date), style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
+                Text(
+                  _formatDate(date),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const Spacer(),
                 if (!canMutate)
                   Container(
                     margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF1A2947),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: const Color(0xFF3E547D)),
                     ),
-                    child: const Text('Read-only', style: TextStyle(color: Color(0xFFADC3EB), fontSize: 10, fontWeight: FontWeight.w600)),
+                    child: const Text(
+                      'Read-only',
+                      style: TextStyle(
+                        color: Color(0xFFADC3EB),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFF7389B0)),
                   ),
-                  child: Text('${total.toStringAsFixed(1)}h', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                  child: Text(
+                    '${total.toStringAsFixed(1)}h',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -480,7 +592,12 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
             const SizedBox(height: 8),
             ...List<Widget>.generate(entries.length, (int index) {
               final DsrEntry entry = entries[index];
-              return _historyEntryRow(date: date, index: index, entry: entry, canMutate: canMutate);
+              return _historyEntryRow(
+                date: date,
+                index: index,
+                entry: entry,
+                canMutate: canMutate,
+              );
             }),
           ],
         ),
@@ -510,7 +627,14 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
             children: <Widget>[
               Expanded(
                 flex: 3,
-                child: Text(entry.project, style: const TextStyle(color: Color(0xFFE7F1FF), fontSize: 13, fontWeight: FontWeight.w700)),
+                child: Text(
+                  entry.project,
+                  style: const TextStyle(
+                    color: Color(0xFFE7F1FF),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
               const SizedBox(width: 8),
               Container(
@@ -519,7 +643,14 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFF788CAB)),
                 ),
-                child: Text('${entry.hours.toStringAsFixed(1)}h', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                child: Text(
+                  '${entry.hours.toStringAsFixed(1)}h',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
               const SizedBox(width: 8),
               DsrStatusPill(status: entry.status),
@@ -527,12 +658,20 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                 const SizedBox(width: 8),
                 InkWell(
                   onTap: () => _editEntry(date, index),
-                  child: const Icon(Icons.edit_outlined, color: Color(0xFFC0D2F2), size: 17),
+                  child: const Icon(
+                    Icons.edit_outlined,
+                    color: Color(0xFFC0D2F2),
+                    size: 17,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 InkWell(
                   onTap: () => _deleteEntry(date, index),
-                  child: const Icon(Icons.delete_outline, color: Color(0xFFC0D2F2), size: 17),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: Color(0xFFC0D2F2),
+                    size: 17,
+                  ),
                 ),
               ],
             ],
@@ -541,10 +680,19 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(color: const Color(0xFF142548), borderRadius: BorderRadius.circular(6)),
+            decoration: BoxDecoration(
+              color: const Color(0xFF142548),
+              borderRadius: BorderRadius.circular(6),
+            ),
             child: Text(
-              entry.description.isEmpty ? 'No description provided.' : entry.description,
-              style: const TextStyle(color: Color(0xFFD9E6FF), fontSize: 12, height: 1.35),
+              entry.description.isEmpty
+                  ? 'No description provided.'
+                  : entry.description,
+              style: const TextStyle(
+                color: Color(0xFFD9E6FF),
+                fontSize: 12,
+                height: 1.35,
+              ),
             ),
           ),
         ],

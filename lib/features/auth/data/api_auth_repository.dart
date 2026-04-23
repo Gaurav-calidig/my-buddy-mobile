@@ -117,4 +117,10 @@ class ApiAuthRepository implements AuthRepository {
   }) {
     throw UnimplementedError('OTP flow is not implemented in this template.');
   }
+
+  @override
+  Future<UserEntity> getCurrentUser() async {
+    final data = await datasource.getUserData();
+    return UserModel.fromJson(data);
+  }
 }

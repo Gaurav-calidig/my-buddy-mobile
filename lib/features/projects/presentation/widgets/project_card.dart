@@ -1,6 +1,12 @@
 import 'package:core/core/navigation/app_routes.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
+import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:core/features/auth/presentation/bloc/auth_state.dart';
+import 'package:core/features/projects/presentation/bloc/project_bloc.dart';
+import 'package:core/features/projects/presentation/bloc/project_event.dart';
+import 'package:core/features/projects/presentation/widgets/project_modal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 class ProjectsCards extends StatelessWidget {
@@ -107,19 +113,58 @@ class ProjectCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: <Widget>[
-              const Text(
-                'View Details',
-                style: TextStyle(
-                  color: Color(0xFFE0ECFF),
-                  fontWeight: FontWeight.w700,
-                ),
+              BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, authState) {
+                  final isSuperAdmin = authState is AuthSuccess &&
+                      authState.user.portalRole == 'super_admin';
+
+                  return Row(
+                    children: [
+                      const Text(
+                        'View Details',
+                        style: TextStyle(
+                          color: Color(0xFFE0ECFF),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.arrow_forward,
+                        size: 16,
+                        color: Color(0xFFC2D5FB),
+                      ),
+                      if (isSuperAdmin) ...[
+                        const SizedBox(width: 12),
+                        IconButton(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (innerContext) => ProjectModal(
+                                project: project,
+                                onSave: (name, description, isBillable) {
+                                  context.read<ProjectBloc>().add(
+                                        UpdateProject(
+                                          projectId: project.id,
+                                          name: name,
+                                          description: description,
+                                          isBillable: isBillable,
+                                        ),
+                                      );
+                                },
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.edit_outlined,
+                              size: 16, color: Color(0xFFD9E7FF)),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ],
+                  );
+                },
               ),
               const Spacer(),
-              const Icon(
-                Icons.arrow_forward,
-                size: 16,
-                color: Color(0xFFC2D5FB),
-              ),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(

@@ -1,9 +1,12 @@
-﻿import 'dart:async';
+import 'dart:async';
 
+import 'package:core/core/constants/pref_keys.dart';
 import 'package:core/core/errors/error_handler.dart';
+import 'package:core/core/utils/shared_pref.dart';
 import 'package:core/features/auth/domain/usecases/delete_account_usecase.dart';
 import 'package:core/features/auth/domain/usecases/email_password_login_usecase.dart';
 import 'package:core/features/auth/domain/usecases/forgot_password_usecase.dart';
+import 'package:core/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:core/features/auth/domain/usecases/google_sign_in_usecase.dart';
 import 'package:core/features/auth/domain/usecases/google_sign_out_usecase.dart';
 import 'package:core/features/auth/domain/usecases/send_otp_usecase.dart';
@@ -26,6 +29,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final ForgotPasswordUseCase forgotPasswordUseCase;
   final SendOtpUseCase sendOtpUseCase;
   final VerifyOtpUseCase verifyOtpUseCase;
+  final GetCurrentUserUseCase getCurrentUserUseCase;
 
   AuthBloc({
     required this.emailPasswordLoginUseCase,
@@ -37,6 +41,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.forgotPasswordUseCase,
     required this.sendOtpUseCase,
     required this.verifyOtpUseCase,
+    required this.getCurrentUserUseCase,
   }) : super(const AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
     on<SignUpRequested>(_onSignUpRequested);
@@ -47,6 +52,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<ForgotPasswordRequested>(_onForgotPasswordRequested);
     on<SendOtpRequested>(_onSendOtpRequested);
     on<VerifyOtpRequested>(_onVerifyOtpRequested);
+    on<AuthStatusChecked>(_onAuthStatusChecked);
+  }
+
+  Future<void> _onAuthStatusChecked(
+    AuthStatusChecked event,
+    Emitter<AuthState> emit,
+  ) async {
+    final token = await SharedPref().read(PrefKeys.token);
+    if (token == null || token.isEmpty) {
+      emit(const AuthInitial());
+      return;
+    }
+
+    emit(const AuthLoading());
+    try {
+      final user = await getCurrentUserUseCase();
+      emit(AuthSuccess(user));
+    } catch (e) {
+      // If fetching user data fails, we might have an invalid token
+      emit(AuthFailure(e.toString()));
+      // Optionally emit AuthLogout() or AuthInitial() here depending on requirements
+    }
   }
 
   Future<void> _onLoginRequested(
