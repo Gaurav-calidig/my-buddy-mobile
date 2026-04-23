@@ -42,7 +42,7 @@ class DsrEntryModel extends DsrEntryEntity {
   }
 
   static String _normalizeStatus(String value) {
-    final cleaned = value.trim().toLowerCase();
+    final cleaned = value.trim().toLowerCase().replaceAll('_', ' ');
     if (cleaned.isEmpty) return 'Completed';
     return cleaned.split(RegExp(r'\s+')).map((word) {
       if (word.isEmpty) return word;

@@ -53,6 +53,16 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     return '$day/$month/$year';
   }
 
+  String _toDisplayStatus(String raw) {
+    final String normalized = raw.trim().replaceAll('_', ' ').toLowerCase();
+    if (normalized.isEmpty) return 'Completed';
+    return normalized
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .map((word) => '${word[0].toUpperCase()}${word.substring(1)}')
+        .join(' ');
+  }
+
   void _addEntry(DsrState state, DateTime selectedDate) {
     final String projectName = (_selectedProject ?? '').trim();
     final String selectedHours = (_selectedHours ?? '').trim();
@@ -66,7 +76,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
 
     final String normalizedHours = selectedHours.replaceAll('h', '').trim();
     final String description = _descriptionController.text.trim();
-    final String status = _selectedStatus.trim().toLowerCase();
+    final String status = _selectedStatus.trim().toLowerCase().replaceAll(' ', '_');
 
     context.read<DsrBloc>().add(
       DsrCreateRequested(
@@ -105,110 +115,113 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     required int index,
     required DsrEntryEntity current,
   }) async {
-    final TextEditingController descController = TextEditingController(text: current.description);
     final List<String> projectNames = state.projects.map((p) => p.name).toList(growable: false);
     String? selectedProject = projectNames.contains(current.project)
         ? current.project
         : (projectNames.isNotEmpty ? projectNames.first : null);
+    final String currentStatusLabel = _toDisplayStatus(current.status);
     String selectedStatus = _statuses.firstWhere(
-      (item) => item.toLowerCase() == current.status.trim().toLowerCase(),
-      orElse: () => current.status,
+      (item) => item.toLowerCase() == currentStatusLabel.toLowerCase(),
+      orElse: () => 'Completed',
     );
     String? selectedHours = '${current.hours.toStringAsFixed(1)}h';
+    String description = current.description;
 
     final bool? shouldSave = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: AppColors.kcBackgroundColorDark,
-          title: const Text(
-            'Edit DSR Entry',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-          ),
-          content: SingleChildScrollView(
-            child: SizedBox(
-              width: 340,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  const DsrLabel('Project'),
-                  DsrDropdownField<String>(
-                    value: selectedProject,
-                    hintText: 'Select project',
-                    items: projectNames,
-                    onChanged: (String? v) => selectedProject = v,
-                  ),
-                  const SizedBox(height: 10),
-                  const DsrLabel('Hours'),
-                  DsrDropdownField<String>(
-                    value: selectedHours,
-                    hintText: 'Select hours',
-                    items: _hoursOptions,
-                    onChanged: (String? v) => selectedHours = v,
-                  ),
-                  const SizedBox(height: 10),
-                  const DsrLabel('Status'),
-                  DsrDropdownField<String>(
-                    value: selectedStatus,
-                    hintText: 'Select status',
-                    items: _statuses,
-                    onChanged: (String? v) {
-                      if (v != null) selectedStatus = v;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  const DsrLabel('Description'),
-                  TextField(
-                    controller: descController,
-                    maxLines: 4,
-                    style: const TextStyle(color: AppColors.kcDarkTextPrimary),
-                    decoration: dsrFieldDecoration('What did you work on?'),
-                  ),
-                ],
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, void Function(void Function()) setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.kcBackgroundColorDark,
+              title: const Text(
+                'Edit DSR Entry',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
               ),
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Save'),
-            ),
-          ],
+              content: SingleChildScrollView(
+                child: SizedBox(
+                  width: 340,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      const DsrLabel('Project'),
+                      DsrDropdownField<String>(
+                        value: selectedProject,
+                        hintText: 'Select project',
+                        items: projectNames,
+                        onChanged: (String? v) => setDialogState(() => selectedProject = v),
+                      ),
+                      const SizedBox(height: 10),
+                      const DsrLabel('Hours'),
+                      DsrDropdownField<String>(
+                        value: selectedHours,
+                        hintText: 'Select hours',
+                        items: _hoursOptions,
+                        onChanged: (String? v) => setDialogState(() => selectedHours = v),
+                      ),
+                      const SizedBox(height: 10),
+                      const DsrLabel('Status'),
+                      DsrDropdownField<String>(
+                        value: selectedStatus,
+                        hintText: 'Select status',
+                        items: _statuses,
+                        onChanged: (String? v) {
+                          if (v == null) return;
+                          setDialogState(() => selectedStatus = v);
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      const DsrLabel('Description'),
+                      TextFormField(
+                        initialValue: description,
+                        maxLines: 4,
+                        style: const TextStyle(color: AppColors.kcDarkTextPrimary),
+                        decoration: dsrFieldDecoration('What did you work on?'),
+                        onChanged: (String value) => description = value,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
 
     if (shouldSave != true || selectedHours == null) {
-      descController.dispose();
       return;
     }
     final String dsrId = current.id.trim();
     if (dsrId.isEmpty) {
-      descController.dispose();
       return;
     }
     if (!mounted) {
-      descController.dispose();
       return;
     }
     final String normalizedHours = selectedHours!.replaceAll('h', '').trim();
-    final String description = descController.text.trim();
+    final String normalizedDescription = description.trim();
     final String normalizedStatus = selectedStatus.trim().toLowerCase().replaceAll(' ', '_');
     context.read<DsrBloc>().add(
       DsrUpdateRequested(
         dsrId: dsrId,
-        date: date,
-        description: description,
+        date: _dayKey(date),
+        description: normalizedDescription,
         hours: normalizedHours,
         status: normalizedStatus,
       ),
     );
-    descController.dispose();
   }
 
   @override
@@ -618,7 +631,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
         .toList()
       ..sort((a, b) => b.key.compareTo(a.key));
 
-    if (historyGroups.isEmpty) {
+    if (historyGroups.isNotEmpty) {
       return const DsrCardShell(
         child: Padding(
           padding: EdgeInsets.all(14),

@@ -47,27 +47,27 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: actions ??
           [
-            IconButton(
-              icon: const Icon(Icons.notifications_none_rounded),
-              onPressed: () {
-                // Notification action
-              },
-            ),
-            const SizedBox(width: 8),
-            CircleAvatar(
-              radius: 15,
-              backgroundColor:
-                  Theme.of(context).primaryColor.withValues(alpha: 0.15),
-              child: Text(
-                'G', // Placeholder initials
-                style: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
+            // IconButton(
+            //   icon: const Icon(Icons.notifications_none_rounded),
+            //   onPressed: () {
+            //     // Notification action
+            //   },
+            // ),
+            // const SizedBox(width: 8),
+            // CircleAvatar(
+            //   radius: 15,
+            //   backgroundColor:
+            //       Theme.of(context).primaryColor.withValues(alpha: 0.15),
+            //   child: Text(
+            //     'G', // Placeholder initials
+            //     style: TextStyle(
+            //       color: Theme.of(context).primaryColor,
+            //       fontSize: 13,
+            //       fontWeight: FontWeight.bold,
+            //     ),
+            //   ),
+            // ),
+            // const SizedBox(width: 16),
           ],
     );
   }

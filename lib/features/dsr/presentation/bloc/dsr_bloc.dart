@@ -160,18 +160,25 @@ class DsrBloc extends Bloc<DsrEvent, DsrState> {
         status: event.status,
       );
 
-      final Map<DateTime, List<DsrEntryEntity>> updated = Map<DateTime, List<DsrEntryEntity>>.from(
-        state.entriesByDate,
-      );
-      final List<DsrEntryEntity> existing = List<DsrEntryEntity>.from(
-        updated[selected] ?? <DsrEntryEntity>[],
-        growable: true,
-      );
-      final int index = existing.indexWhere((entry) => entry.id == event.dsrId);
-      if (index != -1) {
-        existing[index] = updatedEntry;
+      final Map<DateTime, List<DsrEntryEntity>> updated = <DateTime, List<DsrEntryEntity>>{};
+      bool replaced = false;
+      for (final entry in state.entriesByDate.entries) {
+        final List<DsrEntryEntity> next = List<DsrEntryEntity>.from(entry.value, growable: true);
+        final int idx = next.indexWhere((item) => item.id == event.dsrId);
+        if (idx != -1) {
+          next[idx] = updatedEntry;
+          replaced = true;
+        }
+        updated[entry.key] = next;
       }
-      updated[selected] = existing;
+      if (!replaced) {
+        final List<DsrEntryEntity> fallback = List<DsrEntryEntity>.from(
+          updated[selected] ?? <DsrEntryEntity>[],
+          growable: true,
+        );
+        fallback.add(updatedEntry);
+        updated[selected] = fallback;
+      }
 
       emit(
         state.copyWith(
@@ -193,15 +200,12 @@ class DsrBloc extends Bloc<DsrEvent, DsrState> {
     emit(state.copyWith(isLoading: true, clearError: true));
     try {
       await deleteDsrUseCase(event.dsrId);
-      final Map<DateTime, List<DsrEntryEntity>> updated = Map<DateTime, List<DsrEntryEntity>>.from(
-        state.entriesByDate,
-      );
-      final List<DsrEntryEntity> existing = List<DsrEntryEntity>.from(
-        updated[selected] ?? <DsrEntryEntity>[],
-        growable: true,
-      );
-      existing.removeWhere((entry) => entry.id == event.dsrId);
-      updated[selected] = existing;
+      final Map<DateTime, List<DsrEntryEntity>> updated = <DateTime, List<DsrEntryEntity>>{};
+      for (final entry in state.entriesByDate.entries) {
+        final List<DsrEntryEntity> next = List<DsrEntryEntity>.from(entry.value, growable: true);
+        next.removeWhere((item) => item.id == event.dsrId);
+        updated[entry.key] = next;
+      }
 
       emit(
         state.copyWith(

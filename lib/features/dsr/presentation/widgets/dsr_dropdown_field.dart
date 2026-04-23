@@ -17,8 +17,9 @@ class DsrDropdownField<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final T? safeValue = items.contains(value) ? value : null;
     return DropdownButtonFormField<T>(
-      initialValue: value,
+      initialValue: safeValue,
       onChanged: onChanged,
       icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.kcGreyColor),
       dropdownColor: AppColors.kcDarkInputAlt,
