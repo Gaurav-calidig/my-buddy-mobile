@@ -181,32 +181,23 @@ class _WideRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String type = item.leaveType?.name ?? 'Leave';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-      decoration: BoxDecoration(
-        color: AppColors.kcDarkSurface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.kcDarkBorderStrong),
-      ),
-      child: Row(
-        children: <Widget>[
-          SizedBox(width: 92, child: Text(type, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12))),
-          SizedBox(width: 180, child: Text(_dates(), style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 12))),
-          SizedBox(width: 44, child: Text(item.totalDays.toString(), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12))),
-          SizedBox(width: 96, child: Center(child: AmsStatusPill(status: item.status))),
-          SizedBox(width: 210, child: Text(item.reason, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 12))),
-          SizedBox(
-            width: 74,
-            child: _ActionButtons(
-              isPending: item.status.toLowerCase() == 'pending',
-              loading: actionInProgressId == item.id,
-              onEdit: () => onEdit(item),
-              onCancel: () => onCancel(item.id),
-            ),
+    return Row(
+      children: <Widget>[
+        SizedBox(width: 92, child: Text(type, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12))),
+        SizedBox(width: 180, child: Text(_dates(), style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 12))),
+        SizedBox(width: 44, child: Text(item.totalDays.toString(), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12))),
+        SizedBox(width: 96, child: Center(child: AmsStatusPill(status: item.status))),
+        SizedBox(width: 210, child: Text(item.reason, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 12))),
+        SizedBox(
+          width: 74,
+          child: _ActionButtons(
+            isPending: item.status.toLowerCase() == 'pending',
+            loading: actionInProgressId == item.id,
+            onEdit: () => onEdit(item),
+            onCancel: () => onCancel(item.id),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
