@@ -86,7 +86,17 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
   }
 
   void _deleteEntry(DateTime date, int index) {
-    // Keeping current delete action local-only by design until delete API is wired.
+    final DateTime dateKey = _dayKey(date);
+    final List<DsrEntryEntity> entries = context.read<DsrBloc>().state.entriesByDate[dateKey] ?? <DsrEntryEntity>[];
+    if (index < 0 || index >= entries.length) return;
+    final String dsrId = entries[index].id.trim();
+    if (dsrId.isEmpty) return;
+    context.read<DsrBloc>().add(
+      DsrDeleteRequested(
+        dsrId: dsrId,
+        date: dateKey,
+      ),
+    );
   }
 
   Future<void> _editEntry({
@@ -100,7 +110,10 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     String? selectedProject = projectNames.contains(current.project)
         ? current.project
         : (projectNames.isNotEmpty ? projectNames.first : null);
-    String selectedStatus = current.status;
+    String selectedStatus = _statuses.firstWhere(
+      (item) => item.toLowerCase() == current.status.trim().toLowerCase(),
+      orElse: () => current.status,
+    );
     String? selectedHours = '${current.hours.toStringAsFixed(1)}h';
 
     final bool? shouldSave = await showDialog<bool>(
@@ -170,7 +183,31 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
       },
     );
 
-    if (shouldSave != true || selectedHours == null) return;
+    if (shouldSave != true || selectedHours == null) {
+      descController.dispose();
+      return;
+    }
+    final String dsrId = current.id.trim();
+    if (dsrId.isEmpty) {
+      descController.dispose();
+      return;
+    }
+    if (!mounted) {
+      descController.dispose();
+      return;
+    }
+    final String normalizedHours = selectedHours!.replaceAll('h', '').trim();
+    final String description = descController.text.trim();
+    final String normalizedStatus = selectedStatus.trim().toLowerCase().replaceAll(' ', '_');
+    context.read<DsrBloc>().add(
+      DsrUpdateRequested(
+        dsrId: dsrId,
+        date: date,
+        description: description,
+        hours: normalizedHours,
+        status: normalizedStatus,
+      ),
+    );
     descController.dispose();
   }
 
@@ -664,7 +701,7 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            const DsrHistoryHeaderRow(),
+            DsrHistoryHeaderRow(showAction: canMutate),
             const SizedBox(height: 8),
             ...List<Widget>.generate(entries.length, (int index) {
               final DsrEntryEntity entry = entries[index];

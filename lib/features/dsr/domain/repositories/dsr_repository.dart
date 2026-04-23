@@ -10,4 +10,13 @@ abstract class DsrRepository {
   Future<List<DsrEntryEntity>> getMyDsr();
 
   Future<DsrEntryEntity> createDsr(DsrCreateRequestEntity request);
+
+  Future<DsrEntryEntity> updateDsr({
+    required String dsrId,
+    required String description,
+    required String hours,
+    required String status,
+  });
+
+  Future<void> deleteDsr(String dsrId);
 }

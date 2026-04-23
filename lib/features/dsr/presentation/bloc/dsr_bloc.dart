@@ -2,9 +2,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/features/dsr/domain/entities/dsr_create_request_entity.dart';
 import 'package:core/features/dsr/domain/entities/dsr_entry_entity.dart';
 import 'package:core/features/dsr/domain/usecases/create_dsr_usecase.dart';
+import 'package:core/features/dsr/domain/usecases/delete_dsr_usecase.dart';
 import 'package:core/features/dsr/domain/usecases/get_dsr_by_date_usecase.dart';
 import 'package:core/features/dsr/domain/usecases/get_dsr_projects_usecase.dart';
 import 'package:core/features/dsr/domain/usecases/get_my_dsr_usecase.dart';
+import 'package:core/features/dsr/domain/usecases/update_dsr_usecase.dart';
 
 import 'dsr_event.dart';
 import 'dsr_state.dart';
@@ -15,17 +17,23 @@ class DsrBloc extends Bloc<DsrEvent, DsrState> {
     required this.getDsrByDateUseCase,
     required this.getMyDsrUseCase,
     required this.createDsrUseCase,
+    required this.updateDsrUseCase,
+    required this.deleteDsrUseCase,
   }) : super(const DsrState()) {
     on<DsrInitialLoadRequested>(_onInitialLoad);
     on<DsrDateChangedRequested>(_onDateChanged);
     on<DsrHistoryLoadRequested>(_onHistoryLoadRequested);
     on<DsrCreateRequested>(_onCreateRequested);
+    on<DsrUpdateRequested>(_onUpdateRequested);
+    on<DsrDeleteRequested>(_onDeleteRequested);
   }
 
   final GetDsrProjectsUseCase getDsrProjectsUseCase;
   final GetDsrByDateUseCase getDsrByDateUseCase;
   final GetMyDsrUseCase getMyDsrUseCase;
   final CreateDsrUseCase createDsrUseCase;
+  final UpdateDsrUseCase updateDsrUseCase;
+  final DeleteDsrUseCase deleteDsrUseCase;
 
   Future<void> _onInitialLoad(
     DsrInitialLoadRequested event,
@@ -124,6 +132,75 @@ class DsrBloc extends Bloc<DsrEvent, DsrState> {
         growable: true,
       );
       existing.add(created);
+      updated[selected] = existing;
+
+      emit(
+        state.copyWith(
+          isLoading: false,
+          entriesByDate: updated,
+          selectedDate: selected,
+        ),
+      );
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> _onUpdateRequested(
+    DsrUpdateRequested event,
+    Emitter<DsrState> emit,
+  ) async {
+    final DateTime selected = _dayKey(event.date);
+    emit(state.copyWith(isLoading: true, clearError: true));
+    try {
+      final updatedEntry = await updateDsrUseCase(
+        dsrId: event.dsrId,
+        description: event.description,
+        hours: event.hours,
+        status: event.status,
+      );
+
+      final Map<DateTime, List<DsrEntryEntity>> updated = Map<DateTime, List<DsrEntryEntity>>.from(
+        state.entriesByDate,
+      );
+      final List<DsrEntryEntity> existing = List<DsrEntryEntity>.from(
+        updated[selected] ?? <DsrEntryEntity>[],
+        growable: true,
+      );
+      final int index = existing.indexWhere((entry) => entry.id == event.dsrId);
+      if (index != -1) {
+        existing[index] = updatedEntry;
+      }
+      updated[selected] = existing;
+
+      emit(
+        state.copyWith(
+          isLoading: false,
+          entriesByDate: updated,
+          selectedDate: selected,
+        ),
+      );
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteRequested(
+    DsrDeleteRequested event,
+    Emitter<DsrState> emit,
+  ) async {
+    final DateTime selected = _dayKey(event.date);
+    emit(state.copyWith(isLoading: true, clearError: true));
+    try {
+      await deleteDsrUseCase(event.dsrId);
+      final Map<DateTime, List<DsrEntryEntity>> updated = Map<DateTime, List<DsrEntryEntity>>.from(
+        state.entriesByDate,
+      );
+      final List<DsrEntryEntity> existing = List<DsrEntryEntity>.from(
+        updated[selected] ?? <DsrEntryEntity>[],
+        growable: true,
+      );
+      existing.removeWhere((entry) => entry.id == event.dsrId);
       updated[selected] = existing;
 
       emit(

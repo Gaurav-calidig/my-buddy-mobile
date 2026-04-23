@@ -2,6 +2,7 @@ import 'package:core/features/dsr/domain/entities/dsr_entry_entity.dart';
 
 class DsrEntryModel extends DsrEntryEntity {
   const DsrEntryModel({
+    required super.id,
     required super.project,
     required super.hours,
     required super.status,
@@ -12,6 +13,7 @@ class DsrEntryModel extends DsrEntryEntity {
   factory DsrEntryModel.fromJson(Map<String, dynamic> json) {
     final String rawDate = (json['date'] as String? ?? '').trim();
     final DateTime parsedDate = DateTime.tryParse(rawDate) ?? DateTime.now();
+    final String id = _readId(json);
     final projectMap = json['project'] is Map
         ? Map<String, dynamic>.from(json['project'] as Map)
         : <String, dynamic>{};
@@ -22,6 +24,7 @@ class DsrEntryModel extends DsrEntryEntity {
     final String status = _normalizeStatus((json['status'] as String? ?? 'Completed'));
 
     return DsrEntryModel(
+      id: id,
       project: projectName.isNotEmpty
           ? projectName
           : (fallbackProject.isNotEmpty ? fallbackProject : 'Unknown'),
@@ -30,6 +33,12 @@ class DsrEntryModel extends DsrEntryEntity {
       description: (json['description'] as String? ?? '').trim(),
       date: DateTime(parsedDate.year, parsedDate.month, parsedDate.day),
     );
+  }
+
+  static String _readId(Map<String, dynamic> json) {
+    final dynamic raw = json['id'] ?? json['_id'] ?? json['dsrId'] ?? json['dsr_id'];
+    if (raw == null) return '';
+    return raw.toString().trim();
   }
 
   static String _normalizeStatus(String value) {
@@ -41,4 +50,3 @@ class DsrEntryModel extends DsrEntryEntity {
     }).join(' ');
   }
 }
-

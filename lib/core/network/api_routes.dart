@@ -102,6 +102,7 @@ class ApiRoutes {
   static String get dashHilights => '$base/api/dashboard-highlights';
   static String get amsLeaveOverview => '$base/api/dashboard/ams-leave-overview';
   static String get dsr => '$base/api/dsr';
+  static String dsrById(String dsrId) => '$base/api/dsr/$dsrId';
   static String dsrByDate(String date) => '$base/api/dsr/date/$date';
   static String get myDsr => '$base/api/dsr/my';
 }
