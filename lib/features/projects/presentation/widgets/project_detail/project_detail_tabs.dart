@@ -179,12 +179,67 @@ class TeamTab extends StatelessWidget {
                       padding: const EdgeInsets.all(12),
                       itemCount: members.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 8),
-                      itemBuilder: (_, i) => MemberCard(member: members[i]),
+                      itemBuilder: (_, i) {
+                        final member = members[i];
+                        final currentUserEmail = authState is AuthSuccess ? authState.user.email : null;
+                        final currentUserMember = members.where((m) => m.user.email == currentUserEmail).firstOrNull;
+                        final currentUserRole = currentUserMember?.role;
+
+                        return MemberCard(
+                          projectId: projectId,
+                          member: member,
+                          currentUserRole: currentUserRole,
+                          onEdit: () {
+                            context.read<ProjectDetailBloc>().add(
+                                  UpdateProjectMemberRole(
+                                    projectId: projectId,
+                                    userId: member.userId,
+                                    role: 'project_lead',
+                                  ),
+                                );
+                          },
+                          onDelete: () {
+                            _showDeleteConfirmation(context, member);
+                          },
+                        );
+                      },
                     ),
             ),
           ],
         );
       },
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, ProjectMemberEntity member) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: kPanel,
+        title: const Text('Remove Member', style: TextStyle(color: kTextPrimary)),
+        content: Text(
+          'Are you sure you want to remove ${member.user.fullName} from this project?',
+          style: const TextStyle(color: kTextSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel', style: TextStyle(color: kTextMuted)),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<ProjectDetailBloc>().add(
+                    RemoveProjectMember(
+                      projectId: projectId,
+                      userId: member.userId,
+                    ),
+                  );
+              Navigator.pop(dialogContext);
+            },
+            child: const Text('Remove', style: TextStyle(color: kDanger)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -373,7 +428,10 @@ class TechStackTab extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         ...grouped.entries.map((entry) {
-          return TechGroupCard(groupName: entry.key, items: entry.value);
+          return Padding(
+            padding: const EdgeInsets.only(top:  8.0),
+            child: TechGroupCard(groupName: entry.key, items: entry.value),
+          );
         }),
       ],
     );

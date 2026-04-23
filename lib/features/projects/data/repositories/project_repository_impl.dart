@@ -149,5 +149,23 @@ class ProjectRepositoryImpl implements ProjectRepository {
       isBillable: isBillable,
     );
   }
+
+  @override
+  Future<void> updateProjectMemberRole({
+    required int projectId,
+    required String userId,
+    required String role,
+  }) async {
+    return await remoteDataSource.updateProjectMemberRole(
+      projectId: projectId,
+      userId: userId,
+      role: role,
+    );
+  }
+
+  @override
+  Future<void> removeProjectMember(int projectId, String userId) async {
+    return await remoteDataSource.removeProjectMember(projectId, userId);
+  }
 }
 

@@ -54,6 +54,12 @@ abstract class ProjectRemoteDataSource {
     required String description,
     required bool isBillable,
   });
+  Future<void> updateProjectMemberRole({
+    required int projectId,
+    required String userId,
+    required String role,
+  });
+  Future<void> removeProjectMember(int projectId, String userId);
 }
 
 class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
@@ -349,6 +355,35 @@ class ProjectRemoteDataSourceImpl implements ProjectRemoteDataSource {
       throw Exception('Failed to update project');
     } catch (e) {
       logger.e('Error updating project', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> updateProjectMemberRole({
+    required int projectId,
+    required String userId,
+    required String role,
+  }) async {
+    try {
+      await apiService.patch(
+        ApiRoutes.projectMemberRole(projectId, userId),
+        {'role': role},
+      );
+    } catch (e) {
+      logger.e('Error updating project member role', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> removeProjectMember(int projectId, String userId) async {
+    try {
+      await apiService.delete(
+        ApiRoutes.projectMemberDetail(projectId, userId),
+      );
+    } catch (e) {
+      logger.e('Error removing project member', error: e);
       rethrow;
     }
   }

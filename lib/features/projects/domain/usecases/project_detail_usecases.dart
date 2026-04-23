@@ -126,3 +126,25 @@ class UpdateProjectTechStacksUseCase {
   Future<void> call(int projectId, List<int> techStackIds) =>
       repository.updateProjectTechStacks(projectId, techStackIds);
 }
+
+class UpdateProjectMemberRoleUseCase {
+  final ProjectRepository repository;
+  UpdateProjectMemberRoleUseCase(this.repository);
+  Future<void> call({
+    required int projectId,
+    required String userId,
+    required String role,
+  }) =>
+      repository.updateProjectMemberRole(
+        projectId: projectId,
+        userId: userId,
+        role: role,
+      );
+}
+
+class RemoveProjectMemberUseCase {
+  final ProjectRepository repository;
+  RemoveProjectMemberUseCase(this.repository);
+  Future<void> call(int projectId, String userId) =>
+      repository.removeProjectMember(projectId, userId);
+}

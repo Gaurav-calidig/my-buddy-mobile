@@ -1,3 +1,5 @@
+import 'package:core/features/projects/domain/entities/project_asset_entity.dart';
+import 'package:core/features/projects/domain/entities/tech_stack_entity.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/features/projects/domain/usecases/project_detail_usecases.dart';
 import 'project_detail_event.dart';
@@ -17,6 +19,8 @@ class ProjectDetailBloc
   final AddProjectMemberUseCase addProjectMemberUseCase;
   final GetAllTechStacksUseCase getAllTechStacksUseCase;
   final UpdateProjectTechStacksUseCase updateProjectTechStacksUseCase;
+  final UpdateProjectMemberRoleUseCase updateProjectMemberRoleUseCase;
+  final RemoveProjectMemberUseCase removeProjectMemberUseCase;
 
   ProjectDetailBloc({
     required this.getProjectAssetsUseCase,
@@ -31,6 +35,8 @@ class ProjectDetailBloc
     required this.addProjectMemberUseCase,
     required this.getAllTechStacksUseCase,
     required this.updateProjectTechStacksUseCase,
+    required this.updateProjectMemberRoleUseCase,
+    required this.removeProjectMemberUseCase,
   }) : super(ProjectDetailInitial()) {
     on<FetchUsers>((event, emit) async {
       if (state is ProjectDetailLoaded) {
@@ -50,7 +56,38 @@ class ProjectDetailBloc
           username: event.username,
           role: event.role,
         );
-        add(FetchProjectDetail(event.projectId));
+        final currentUserId = state is ProjectDetailLoaded
+            ? (state as ProjectDetailLoaded).currentUserId
+            : null;
+        add(FetchProjectDetail(event.projectId, currentUserId: currentUserId));
+      } catch (e) {
+        emit(ProjectDetailError(e.toString()));
+      }
+    });
+
+    on<UpdateProjectMemberRole>((event, emit) async {
+      try {
+        await updateProjectMemberRoleUseCase(
+          projectId: event.projectId,
+          userId: event.userId,
+          role: event.role,
+        );
+        final currentUserId = state is ProjectDetailLoaded
+            ? (state as ProjectDetailLoaded).currentUserId
+            : null;
+        add(FetchProjectDetail(event.projectId, currentUserId: currentUserId));
+      } catch (e) {
+        emit(ProjectDetailError(e.toString()));
+      }
+    });
+
+    on<RemoveProjectMember>((event, emit) async {
+      try {
+        await removeProjectMemberUseCase(event.projectId, event.userId);
+        final currentUserId = state is ProjectDetailLoaded
+            ? (state as ProjectDetailLoaded).currentUserId
+            : null;
+        add(FetchProjectDetail(event.projectId, currentUserId: currentUserId));
       } catch (e) {
         emit(ProjectDetailError(e.toString()));
       }
@@ -67,7 +104,10 @@ class ProjectDetailBloc
           allowedRoles: event.allowedRoles,
           allowedUserIds: event.allowedUserIds,
         );
-        add(FetchProjectDetail(event.projectId));
+        final currentUserId = state is ProjectDetailLoaded
+            ? (state as ProjectDetailLoaded).currentUserId
+            : null;
+        add(FetchProjectDetail(event.projectId, currentUserId: currentUserId));
       } catch (e) {
         emit(ProjectDetailError(e.toString()));
       }
@@ -85,7 +125,10 @@ class ProjectDetailBloc
           allowedRoles: event.allowedRoles,
           allowedUserIds: event.allowedUserIds,
         );
-        add(FetchProjectDetail(event.projectId));
+        final currentUserId = state is ProjectDetailLoaded
+            ? (state as ProjectDetailLoaded).currentUserId
+            : null;
+        add(FetchProjectDetail(event.projectId, currentUserId: currentUserId));
       } catch (e) {
         emit(ProjectDetailError(e.toString()));
       }
@@ -94,7 +137,10 @@ class ProjectDetailBloc
     on<DeleteProjectAsset>((event, emit) async {
       try {
         await deleteProjectAssetUseCase(event.projectId, event.assetId);
-        add(FetchProjectDetail(event.projectId));
+        final currentUserId = state is ProjectDetailLoaded
+            ? (state as ProjectDetailLoaded).currentUserId
+            : null;
+        add(FetchProjectDetail(event.projectId, currentUserId: currentUserId));
       } catch (e) {
         emit(ProjectDetailError(e.toString()));
       }
@@ -103,7 +149,10 @@ class ProjectDetailBloc
     on<RestoreProjectAsset>((event, emit) async {
       try {
         await restoreProjectAssetUseCase(event.projectId, event.assetId);
-        add(FetchProjectDetail(event.projectId));
+        final currentUserId = state is ProjectDetailLoaded
+            ? (state as ProjectDetailLoaded).currentUserId
+            : null;
+        add(FetchProjectDetail(event.projectId, currentUserId: currentUserId));
       } catch (e) {
         emit(ProjectDetailError(e.toString()));
       }
@@ -112,21 +161,37 @@ class ProjectDetailBloc
     on<FetchProjectDetail>((event, emit) async {
       emit(ProjectDetailLoading());
       try {
+        final members = await getProjectMembersUseCase(event.projectId);
+
+        bool canSeeDeleted = false;
+        if (event.currentUserId != null) {
+          final currentUser = members
+              .where((m) => m.userId == event.currentUserId)
+              .firstOrNull;
+          if (currentUser != null) {
+            canSeeDeleted =
+                currentUser.role == 'admin' ||
+                currentUser.role == 'project_lead';
+          }
+        }
+
         final results = await Future.wait([
           getProjectAssetsUseCase(event.projectId),
-          getDeletedProjectAssetsUseCase(event.projectId),
-          getProjectMembersUseCase(event.projectId),
+          canSeeDeleted
+              ? getDeletedProjectAssetsUseCase(event.projectId)
+              : Future.value(<ProjectAssetEntity>[]),
           getProjectTechStacksUseCase(event.projectId),
           getAllTechStacksUseCase(),
         ]);
 
         emit(
           ProjectDetailLoaded(
-            assets: results[0] as dynamic,
-            deletedAssets: results[1] as dynamic,
-            members: results[2] as dynamic,
-            techStacks: results[3] as dynamic,
-            allTechStacks: results[4] as dynamic,
+            assets: results[0] as List<ProjectAssetEntity>,
+            deletedAssets: results[1] as List<ProjectAssetEntity>,
+            members: members,
+            techStacks: results[2] as List<ProjectTechStackEntity>,
+            allTechStacks: results[3] as List<TechStackEntity>,
+            currentUserId: event.currentUserId,
           ),
         );
       } catch (e) {
@@ -137,7 +202,10 @@ class ProjectDetailBloc
     on<UpdateProjectTechStacks>((event, emit) async {
       try {
         await updateProjectTechStacksUseCase(event.projectId, event.techStackIds);
-        add(FetchProjectDetail(event.projectId));
+        final currentUserId = state is ProjectDetailLoaded
+            ? (state as ProjectDetailLoaded).currentUserId
+            : null;
+        add(FetchProjectDetail(event.projectId, currentUserId: currentUserId));
       } catch (e) {
         emit(ProjectDetailError(e.toString()));
       }

@@ -50,4 +50,10 @@ abstract class ProjectRepository {
     required String description,
     required bool isBillable,
   });
+  Future<void> updateProjectMemberRole({
+    required int projectId,
+    required String userId,
+    required String role,
+  });
+  Future<void> removeProjectMember(int projectId, String userId);
 }

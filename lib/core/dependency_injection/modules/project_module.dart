@@ -36,6 +36,8 @@ void registerProjectModule(GetIt sl) {
   sl.registerLazySingleton(() => GetAllUsersUseCase(sl()));
   sl.registerLazySingleton(() => GetAllTechStacksUseCase(sl()));
   sl.registerLazySingleton(() => UpdateProjectTechStacksUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateProjectMemberRoleUseCase(sl()));
+  sl.registerLazySingleton(() => RemoveProjectMemberUseCase(sl()));
 
   // Blocs
   sl.registerFactory(
@@ -59,6 +61,8 @@ void registerProjectModule(GetIt sl) {
       getAllUsersUseCase: sl(),
       getAllTechStacksUseCase: sl(),
       updateProjectTechStacksUseCase: sl(),
+      updateProjectMemberRoleUseCase: sl(),
+      removeProjectMemberUseCase: sl(),
     ),
   );
 }

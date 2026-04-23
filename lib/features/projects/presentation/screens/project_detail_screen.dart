@@ -1,4 +1,6 @@
 import 'package:core/core/dependency_injection/injection_container.dart';
+import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:core/features/auth/presentation/bloc/auth_state.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
 import 'package:core/features/projects/presentation/bloc/project_detail_bloc.dart';
 import 'package:core/features/projects/presentation/bloc/project_detail_event.dart';
@@ -18,88 +20,88 @@ class ProjectDetailScreen extends StatefulWidget {
   State<ProjectDetailScreen> createState() => _ProjectDetailScreenState();
 }
 
-class _ProjectDetailScreenState extends State<ProjectDetailScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  final List<String> _tabs = [
-    'Assets',
-    'Team',
-    'Tech Stack',
-    'Overview',
-    'Deleted',
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
+class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   @override
   Widget build(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    final currentUserId = authState is AuthSuccess ? authState.user.id : null;
+
     return BlocProvider(
       create: (context) =>
           sl<ProjectDetailBloc>()
-            ..add(FetchProjectDetail(widget.project.id)),
-      child: Scaffold(
-        backgroundColor: kBg,
-        body: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(context),
-              _buildTabBar(),
-              Expanded(
-                child: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
-                  builder: (context, state) {
-                    if (state is ProjectDetailLoading ||
-                        state is ProjectDetailInitial) {
-                      return const Center(
-                        child: CircularProgressIndicator(color: kAccent),
-                      );
-                    }
-                    if (state is ProjectDetailError) {
-                      return ErrorView(message: state.message);
-                    }
-                    if (state is ProjectDetailLoaded) {
-                      return TabBarView(
-                        controller: _tabController,
-                        children: [
-                          AssetsTab(
-                            projectId: widget.project.id,
-                            assets: state.assets,
-                          ),
-                          TeamTab(
-                            projectId: widget.project.id,
-                            members: state.members,
-                          ),
-                          TechStackTab(
-                            projectId: widget.project.id,
-                            techStacks: state.techStacks,
-                            allTechStacks: state.allTechStacks,
-                          ),
-                          OverviewTab(project: widget.project),
-                          DeletedAssetsTab(
-                            projectId: widget.project.id,
-                            deletedAssets: state.deletedAssets,
-                          ),
-                        ],
-                      );
-                    }
-                    return const SizedBox();
-                  },
+        ..add(
+          FetchProjectDetail(widget.project.id, currentUserId: currentUserId),
+        ),
+      child: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
+        builder: (context, state) {
+          final List<String> tabs = [
+            'Assets',
+            'Team',
+            'Tech Stack',
+            'Overview',
+          ];
+          bool showDeleted = false;
+
+          if (state is ProjectDetailLoaded) {
+            final currentUser = state.members
+                .where((m) => m.userId == currentUserId)
+                .firstOrNull;
+            if (currentUser != null &&
+                (currentUser.role == 'admin' ||
+                    currentUser.role == 'project_lead')) {
+              showDeleted = true;
+              tabs.add('Deleted');
+            }
+          }
+
+          return DefaultTabController(
+            length: tabs.length,
+            child: Scaffold(
+              backgroundColor: kBg,
+              body: SafeArea(
+                child: Column(
+                  children: [
+                    _buildHeader(context),
+                    _buildTabBar(tabs),
+                    Expanded(
+                      child: _buildBody(state, showDeleted)),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
+  }
+
+  Widget _buildBody(ProjectDetailState state, bool showDeleted) {
+    if (state is ProjectDetailLoading || state is ProjectDetailInitial) {
+      return const Center(child: CircularProgressIndicator(color: kAccent));
+    }
+    if (state is ProjectDetailError) {
+      return ErrorView(message: state.message);
+    }
+    if (state is ProjectDetailLoaded) {
+      return TabBarView(
+        children: [
+          AssetsTab(projectId: widget.project.id, assets: state.assets),
+          TeamTab(projectId: widget.project.id, members: state.members),
+          TechStackTab(
+            projectId: widget.project.id,
+            techStacks: state.techStacks,
+            allTechStacks: state.allTechStacks,
+          ),
+          OverviewTab(project: widget.project),
+          if (showDeleted)
+            DeletedAssetsTab(
+              projectId: widget.project.id,
+              deletedAssets: state.deletedAssets,
+            ),
+        ],
+      );
+    }
+    return const SizedBox();
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -154,11 +156,10 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
     );
   }
 
-  Widget _buildTabBar() {
+  Widget _buildTabBar(List<String> tabs) {
     return Container(
       color: kPanel,
       child: TabBar(
-        controller: _tabController,
         isScrollable: true,
         labelColor: kTextPrimary,
         unselectedLabelColor: kTextMuted,
@@ -170,7 +171,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen>
         indicatorColor: kAccent,
         indicatorWeight: 2,
         tabAlignment: TabAlignment.start,
-        tabs: _tabs.map((t) => Tab(text: t)).toList(),
+        tabs: tabs.map((t) => Tab(text: t)).toList(),
       ),
     );
   }

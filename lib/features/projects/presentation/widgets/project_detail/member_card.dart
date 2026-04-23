@@ -3,8 +3,20 @@ import 'package:core/features/projects/domain/entities/project_member_entity.dar
 import 'project_detail_constants.dart';
 
 class MemberCard extends StatelessWidget {
+  final int projectId;
   final ProjectMemberEntity member;
-  const MemberCard({super.key, required this.member});
+  final String? currentUserRole;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  const MemberCard({
+    super.key,
+    required this.projectId,
+    required this.member,
+    this.currentUserRole,
+    this.onEdit,
+    this.onDelete,
+  });
 
   Color get _roleColor {
     switch (member.role) {
@@ -26,6 +38,16 @@ class MemberCard extends StatelessWidget {
       default:
         return kPanelLight;
     }
+  }
+
+  bool get _canEditOrRemove {
+    if (currentUserRole == null) return false;
+    if (currentUserRole == 'admin') return true;
+    if (currentUserRole == 'project_lead') {
+      // project_lead cannot remove/edit admin
+      return member.role != 'admin' && member.role != 'project_lead';
+    }
+    return false;
   }
 
   @override
@@ -88,6 +110,7 @@ class MemberCard extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -107,11 +130,43 @@ class MemberCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
-              // Text(
-              //   user.portalRole.replaceAll('_', ' '),
-              //   style: const TextStyle(color: kTextMuted, fontSize: 11),
-              // ),
+              if (_canEditOrRemove) ...[
+                const SizedBox(height: 4),
+                PopupMenuButton<String>(
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(Icons.more_vert, color: kTextMuted, size: 20),
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      onEdit?.call();
+                    } else if (value == 'remove') {
+                      onDelete?.call();
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    if (currentUserRole == 'admin') // Only admin can assign roles according to prompt restriction
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit_outlined, size: 18),
+                            SizedBox(width: 8),
+                            Text('Make Project Lead'),
+                          ],
+                        ),
+                      ),
+                    const PopupMenuItem(
+                      value: 'remove',
+                      child: Row(
+                        children: [
+                          Icon(Icons.person_remove_outlined, size: 18, color: kDanger),
+                          SizedBox(width: 8),
+                          Text('Remove Member', style: TextStyle(color: kDanger)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ],

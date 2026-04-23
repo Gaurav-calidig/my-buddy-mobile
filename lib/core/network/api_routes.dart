@@ -77,6 +77,10 @@ class ApiRoutes {
       '$base/api/projects/$projectId/assets/$assetId';
   static String restoreProjectAsset(int projectId, int assetId) =>
       '$base/api/projects/$projectId/assets/$assetId/restore';
+  static String projectMemberDetail(int projectId, String userId) =>
+      '$base/api/projects/$projectId/members/$userId';
+  static String projectMemberRole(int projectId, String userId) =>
+      '$base/api/projects/$projectId/members/$userId/role';
 
   static String get users => '$base/api/users';
   static String get techStacks => '$base/api/tech-stacks';

@@ -21,6 +21,7 @@ class ProjectDetailLoaded extends ProjectDetailState {
   final List<ProjectTechStackEntity> techStacks;
   final List<UserEntity> users;
   final List<TechStackEntity> allTechStacks;
+  final String? currentUserId;
 
   const ProjectDetailLoaded({
     required this.assets,
@@ -29,6 +30,7 @@ class ProjectDetailLoaded extends ProjectDetailState {
     required this.techStacks,
     this.users = const [],
     this.allTechStacks = const [],
+    this.currentUserId,
   });
 
   ProjectDetailLoaded copyWith({
@@ -38,6 +40,7 @@ class ProjectDetailLoaded extends ProjectDetailState {
     List<ProjectTechStackEntity>? techStacks,
     List<UserEntity>? users,
     List<TechStackEntity>? allTechStacks,
+    String? currentUserId,
   }) {
     return ProjectDetailLoaded(
       assets: assets ?? this.assets,
@@ -46,12 +49,13 @@ class ProjectDetailLoaded extends ProjectDetailState {
       techStacks: techStacks ?? this.techStacks,
       users: users ?? this.users,
       allTechStacks: allTechStacks ?? this.allTechStacks,
+      currentUserId: currentUserId ?? this.currentUserId,
     );
   }
 
   @override
   List<Object?> get props =>
-      [assets, deletedAssets, members, techStacks, users, allTechStacks];
+      [assets, deletedAssets, members, techStacks, users, allTechStacks, currentUserId];
 }
 
 class ProjectDetailError extends ProjectDetailState {

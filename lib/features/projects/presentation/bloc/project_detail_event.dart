@@ -8,9 +8,10 @@ abstract class ProjectDetailEvent extends Equatable {
 
 class FetchProjectDetail extends ProjectDetailEvent {
   final int projectId;
-  const FetchProjectDetail(this.projectId);
+  final String? currentUserId;
+  const FetchProjectDetail(this.projectId, {this.currentUserId});
   @override
-  List<Object?> get props => [projectId];
+  List<Object?> get props => [projectId, currentUserId];
 }
 class AddProjectAsset extends ProjectDetailEvent {
   final int projectId;
@@ -133,4 +134,32 @@ class UpdateProjectTechStacks extends ProjectDetailEvent {
 
   @override
   List<Object?> get props => [projectId, techStackIds];
+}
+
+class UpdateProjectMemberRole extends ProjectDetailEvent {
+  final int projectId;
+  final String userId;
+  final String role;
+
+  const UpdateProjectMemberRole({
+    required this.projectId,
+    required this.userId,
+    required this.role,
+  });
+
+  @override
+  List<Object?> get props => [projectId, userId, role];
+}
+
+class RemoveProjectMember extends ProjectDetailEvent {
+  final int projectId;
+  final String userId;
+
+  const RemoveProjectMember({
+    required this.projectId,
+    required this.userId,
+  });
+
+  @override
+  List<Object?> get props => [projectId, userId];
 }
