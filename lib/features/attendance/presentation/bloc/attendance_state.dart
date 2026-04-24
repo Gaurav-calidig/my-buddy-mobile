@@ -44,7 +44,7 @@ class AttendanceState extends Equatable {
         casual: '0',
         sick: '0',
       ),
-      legend: const <String>['Approved', 'Pending'],
+      legend: const <String>['Approved', 'Pending', 'Holiday', 'Birthday'],
       days: const <AmsCalendarDayEntity>[],
       leavesLoading: false,
       leaveRequests: const <LeaveRequestEntity>[],

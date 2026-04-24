@@ -39,6 +39,12 @@ class AmsCalendar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const List<String> weekdays = <String>['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const Map<String, Color> legendColors = <String, Color>{
+      'Approved': Color(0xFF3F7BE0),
+      'Pending': Color(0xFFC49C2B),
+      'Holiday': Color(0xFFB36A1E),
+      'Birthday': Color(0xFFCD4C8D),
+    };
 
     return Container(
       width: double.infinity,
@@ -69,7 +75,7 @@ class AmsCalendar extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Container(width: 8, height: 8, decoration: BoxDecoration(color: item == 'Approved' ? const Color(0xFF3F7BE0) : const Color(0xFFC49C2B), shape: BoxShape.circle)),
+                        Container(width: 8, height: 8, decoration: BoxDecoration(color: legendColors[item] ?? const Color(0xFF3F7BE0), shape: BoxShape.circle)),
                         const SizedBox(width: 4),
                         Text(item, style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 11)),
                       ],
@@ -121,7 +127,28 @@ class AmsCalendar extends StatelessWidget {
                                     margin: const EdgeInsets.only(bottom: 2),
                                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                                     decoration: BoxDecoration(color: Color(e.colorHex), borderRadius: BorderRadius.circular(10)),
-                                    child: Text(e.name, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w600)),
+                                    child: Row(
+                                      children: <Widget>[
+                                        if (e.type == 'birthday') ...<Widget>[
+                                          const Icon(Icons.cake, size: 9, color: Colors.white),
+                                          const SizedBox(width: 2),
+                                        ],
+                                        Expanded(
+                                          child: Text(
+                                            e.name,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w600),
+                                          ),
+                                        ),
+                                        if (e.halfLabel != null && e.halfLabel!.isNotEmpty)
+                                          Container(
+                                            margin: const EdgeInsets.only(left: 3),
+                                            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                                            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(8)),
+                                            child: Text(e.halfLabel!, style: const TextStyle(color: Colors.white, fontSize: 6.8, fontWeight: FontWeight.w700)),
+                                          ),
+                                      ],
+                                    ),
                                   ),
                                 )),
                           ],
@@ -144,10 +171,7 @@ class AmsCalendar extends StatelessWidget {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           backgroundColor: AppColors.kcBackgroundColorDark,
-          title: const Text(
-            'Leave Details',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-          ),
+          title: const Text('Event Details', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,6 +179,10 @@ class AmsCalendar extends StatelessWidget {
               Text('Name: ${event.name}', style: const TextStyle(color: AppColors.kcDarkTextPrimary)),
               const SizedBox(height: 8),
               Text('Status: ${event.status.toUpperCase()}', style: const TextStyle(color: AppColors.kcDarkTextPrimary)),
+              if (event.halfLabel != null && event.halfLabel!.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 8),
+                Text('Leave Half: ${event.halfLabel}', style: const TextStyle(color: AppColors.kcDarkTextPrimary)),
+              ],
               const SizedBox(height: 8),
               Text('Reason: ${event.reason}', style: const TextStyle(color: AppColors.kcDarkTextPrimary)),
             ],

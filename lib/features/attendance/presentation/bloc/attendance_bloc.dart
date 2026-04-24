@@ -466,20 +466,23 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     try {
       final String startDate = _ymd(start);
       final String endDate = _ymd(end);
-      final resp = await _apiService.get(
-        ApiRoutes.leaveRequestsCalendar(startDate: startDate, endDate: endDate),
-      );
-      final dynamic data = resp.data;
-      final List<dynamic> list = data is List
-          ? data
-          : (data is Map && data['data'] is List ? data['data'] as List : <dynamic>[]);
+      final leaveResp = await _apiService.get(ApiRoutes.leaveRequestsCalendar(startDate: startDate, endDate: endDate));
+      final holidaysResp = await _apiService.get(ApiRoutes.holidays);
+      final birthdaysResp = await _apiService.get(ApiRoutes.userBirthdays);
 
-      for (final dynamic raw in list) {
+      final dynamic leaveData = leaveResp.data;
+      final List<dynamic> leaveList = leaveData is List
+          ? leaveData
+          : (leaveData is Map && leaveData['data'] is List ? leaveData['data'] as List : <dynamic>[]);
+
+      for (final dynamic raw in leaveList) {
         if (raw is! Map) continue;
         final Map<String, dynamic> item = raw.cast<String, dynamic>();
         final DateTime? leaveStart = DateTime.tryParse((item['startDate'] ?? '').toString());
         final DateTime? leaveEnd = DateTime.tryParse((item['endDate'] ?? '').toString());
         if (leaveStart == null || leaveEnd == null) continue;
+        final String startHalf = (item['startHalf'] ?? 'full_day').toString();
+        final String endHalf = (item['endHalf'] ?? 'full_day').toString();
 
         final dynamic userRaw = item['user'];
         final Map<String, dynamic> user = userRaw is Map ? userRaw.cast<String, dynamic>() : const <String, dynamic>{};
@@ -497,16 +500,74 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
         for (DateTime day = rangeStart; !day.isAfter(rangeEnd); day = day.add(const Duration(days: 1))) {
           final DateTime key = DateTime(day.year, day.month, day.day);
           final List<AmsLeaveEventEntity> events = byDate[key] ?? <AmsLeaveEventEntity>[];
+          final String? halfLabel = _halfLabelForCalendarDay(
+            day: key,
+            leaveStart: DateTime(leaveStart.year, leaveStart.month, leaveStart.day),
+            leaveEnd: DateTime(leaveEnd.year, leaveEnd.month, leaveEnd.day),
+            startHalf: startHalf,
+            endHalf: endHalf,
+          );
           events.add(
             AmsLeaveEventEntity(
               name: fullName,
               reason: reason.isEmpty ? 'No reason provided.' : reason,
               status: status,
               colorHex: color,
+              halfLabel: halfLabel,
+              type: 'leave',
             ),
           );
           byDate[key] = events;
         }
+      }
+
+      final dynamic holidaysData = holidaysResp.data;
+      final List<dynamic> holidaysList = holidaysData is List
+          ? holidaysData
+          : (holidaysData is Map && holidaysData['data'] is List ? holidaysData['data'] as List : <dynamic>[]);
+      for (final dynamic raw in holidaysList) {
+        if (raw is! Map) continue;
+        final Map<String, dynamic> item = raw.cast<String, dynamic>();
+        final DateTime? holidayDate = DateTime.tryParse((item['date'] ?? '').toString());
+        if (holidayDate == null || holidayDate.month != month.month || holidayDate.year != month.year) continue;
+        final DateTime key = DateTime(holidayDate.year, holidayDate.month, holidayDate.day);
+        final List<AmsLeaveEventEntity> events = byDate[key] ?? <AmsLeaveEventEntity>[];
+        events.add(
+          AmsLeaveEventEntity(
+            name: (item['name'] ?? 'Holiday').toString(),
+            reason: 'Holiday',
+            status: 'holiday',
+            colorHex: 0xFFB36A1E,
+            type: 'holiday',
+          ),
+        );
+        byDate[key] = events;
+      }
+
+      final dynamic birthdaysData = birthdaysResp.data;
+      final List<dynamic> birthdaysList = birthdaysData is List
+          ? birthdaysData
+          : (birthdaysData is Map && birthdaysData['data'] is List ? birthdaysData['data'] as List : <dynamic>[]);
+      for (final dynamic raw in birthdaysList) {
+        if (raw is! Map) continue;
+        final Map<String, dynamic> item = raw.cast<String, dynamic>();
+        final DateTime? dob = DateTime.tryParse((item['dateOfBirth'] ?? '').toString());
+        if (dob == null || dob.month != month.month) continue;
+        final DateTime key = DateTime(month.year, month.month, dob.day);
+        final String firstName = (item['firstName'] ?? '').toString().trim();
+        final String lastName = (item['lastName'] ?? '').toString().trim();
+        final String fullName = '$firstName $lastName'.trim().isEmpty ? 'Birthday' : '$firstName $lastName'.trim();
+        final List<AmsLeaveEventEntity> events = byDate[key] ?? <AmsLeaveEventEntity>[];
+        events.add(
+          AmsLeaveEventEntity(
+            name: fullName,
+            reason: 'Birthday',
+            status: 'birthday',
+            colorHex: 0xFFCD4C8D,
+            type: 'birthday',
+          ),
+        );
+        byDate[key] = events;
       }
     } catch (_) {
       // Keep calendar usable even if API fails.
@@ -530,5 +591,30 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
   num _asNum(dynamic value) {
     if (value is num) return value;
     return num.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  String? _halfLabelForCalendarDay({
+    required DateTime day,
+    required DateTime leaveStart,
+    required DateTime leaveEnd,
+    required String startHalf,
+    required String endHalf,
+  }) {
+    if (leaveStart == leaveEnd) {
+      if (startHalf == 'first_half') return '1st half';
+      if (startHalf == 'second_half') return '2nd half';
+      if (endHalf == 'first_half') return '1st half';
+      if (endHalf == 'second_half') return '2nd half';
+      return null;
+    }
+    if (day == leaveStart) {
+      if (startHalf == 'first_half') return '1st half';
+      if (startHalf == 'second_half') return '2nd half';
+    }
+    if (day == leaveEnd) {
+      if (endHalf == 'first_half') return '1st half';
+      if (endHalf == 'second_half') return '2nd half';
+    }
+    return null;
   }
 }
