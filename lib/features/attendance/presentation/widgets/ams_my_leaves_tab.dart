@@ -119,13 +119,19 @@ class _AmsMyLeavesTabState extends State<AmsMyLeavesTab> {
                         children: <Widget>[
                           const _WideHeader(),
                           const SizedBox(height: 6),
-                          ...visible.map((LeaveRequestEntity e) => _WideRow(
+                          ...List<Widget>.generate(visible.length, (int index) {
+                            final LeaveRequestEntity e = visible[index];
+                            return Padding(
+                              padding: EdgeInsets.only(bottom: index == visible.length - 1 ? 0 : 8),
+                              child: _WideRow(
                                 item: e,
                                 fmtDate: _fmtDate,
                                 onEdit: widget.onEdit,
                                 onCancel: widget.onCancel,
                                 actionInProgressId: widget.actionInProgressId,
-                              )),
+                              ),
+                            );
+                          }),
                         ],
                       ),
                     ),
@@ -228,7 +234,38 @@ class _ActionButtons extends StatelessWidget {
       children: <Widget>[
         InkWell(onTap: onEdit, child: const Icon(Icons.edit_outlined, size: 15, color: AppColors.kcDarkTextSecondary)),
         const SizedBox(width: 8),
-        InkWell(onTap: onCancel, child: const Icon(Icons.close, size: 15, color: AppColors.kcDarkTextSecondary)),
+        InkWell(
+          onTap: () async {
+            final bool confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext dialogContext) {
+                    return AlertDialog(
+                      backgroundColor: AppColors.kcBackgroundColorDark,
+                      title: const Text('Cancel leave?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                      content: const Text(
+                        'Do you want to cancel this leave request?',
+                        style: TextStyle(color: AppColors.kcDarkTextSecondary),
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(false),
+                          child: const Text('No'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(dialogContext).pop(true),
+                          child: const Text('Yes, Cancel'),
+                        ),
+                      ],
+                    );
+                  },
+                ) ??
+                false;
+            if (confirmed) {
+              onCancel();
+            }
+          },
+          child: const Icon(Icons.close, size: 15, color: AppColors.kcDarkTextSecondary),
+        ),
       ],
     );
   }

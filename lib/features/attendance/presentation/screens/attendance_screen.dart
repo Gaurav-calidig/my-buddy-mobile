@@ -278,15 +278,15 @@ class AttendanceScreen extends StatelessWidget {
     if (state.leaveTypes.isNotEmpty) {
       return state.leaveTypes;
     }
-    final Map<int, String> byId = <int, String>{};
+    final Map<String, Map<String, dynamic>> byName = <String, Map<String, dynamic>>{};
     for (final leave in state.leaveRequests) {
       final leaveType = leave.leaveType;
       if (leaveType == null) continue;
-      byId[leaveType.id] = leaveType.name;
+      final String key = leaveType.name.trim().toLowerCase();
+      if (key.isEmpty || byName.containsKey(key)) continue;
+      byName[key] = <String, dynamic>{'id': leaveType.id, 'name': leaveType.name};
     }
-    final List<Map<String, dynamic>> list = byId.entries
-        .map((e) => <String, dynamic>{'id': e.key, 'name': e.value})
-        .toList(growable: false)
+    final List<Map<String, dynamic>> list = byName.values.toList(growable: false)
       ..sort((a, b) => a['name'].toString().compareTo(b['name'].toString()));
     return list;
   }

@@ -209,7 +209,14 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
       }).where((Map<String, dynamic> item) => item['isActive'] == true).toList(growable: false)
         ..sort((a, b) => a['name'].toString().compareTo(b['name'].toString()));
 
-      emit(state.copyWith(leaveTypes: leaveTypes));
+      final Map<String, Map<String, dynamic>> uniqueByName = <String, Map<String, dynamic>>{};
+      for (final Map<String, dynamic> item in leaveTypes) {
+        final String key = item['name'].toString().trim().toLowerCase();
+        if (key.isEmpty || uniqueByName.containsKey(key)) continue;
+        uniqueByName[key] = item;
+      }
+
+      emit(state.copyWith(leaveTypes: uniqueByName.values.toList(growable: false)));
     } catch (_) {
       // Keep leave form usable via fallback list generation.
     }
