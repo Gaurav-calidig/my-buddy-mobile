@@ -21,6 +21,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     on<AttendanceMonthChanged>(_onMonthChanged);
     on<AttendanceFilterChanged>(_onFilterChanged);
     on<AttendanceLeavesRequested>(_onLeavesRequested);
+    on<AttendanceLeaveTypesRequested>(_onLeaveTypesRequested);
     on<AttendanceFiscalYearChanged>(_onFiscalYearChanged);
     on<AttendanceLeaveSubmitted>(_onLeaveSubmitted);
     on<AttendanceCompOffSubmitted>(_onCompOffSubmitted);
@@ -56,6 +57,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
 
     // Preload leaves so "My Leaves" shows instantly.
     add(const AttendanceLeavesRequested());
+    add(const AttendanceLeaveTypesRequested());
     add(const AttendanceCompOffHistoryRequested());
   }
 
@@ -180,6 +182,34 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
       );
     } catch (e) {
       emit(state.copyWith(leavesLoading: false, error: e.toString()));
+    }
+  }
+
+  Future<void> _onLeaveTypesRequested(
+    AttendanceLeaveTypesRequested event,
+    Emitter<AttendanceState> emit,
+  ) async {
+    try {
+      final resp = await _apiService.get(ApiRoutes.leaveTypes);
+      final dynamic data = resp.data;
+      final List<dynamic> list = data is List
+          ? data
+          : (data is Map && data['data'] is List ? data['data'] as List : <dynamic>[]);
+
+      final List<Map<String, dynamic>> leaveTypes = list.whereType<Map>().map((Map item) {
+        final Map<String, dynamic> map = item.cast<String, dynamic>();
+        return <String, dynamic>{
+          'id': _asInt(map['id']),
+          'name': (map['name'] ?? '').toString(),
+          'isPaid': map['isPaid'] == true,
+          'isActive': map['isActive'] == true,
+        };
+      }).where((Map<String, dynamic> item) => item['isActive'] == true).toList(growable: false)
+        ..sort((a, b) => a['name'].toString().compareTo(b['name'].toString()));
+
+      emit(state.copyWith(leaveTypes: leaveTypes));
+    } catch (_) {
+      // Keep leave form usable via fallback list generation.
     }
   }
 

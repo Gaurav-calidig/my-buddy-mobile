@@ -14,6 +14,7 @@ class AttendanceState extends Equatable {
     required this.days,
     required this.leavesLoading,
     required this.leaveRequests,
+    required this.leaveTypes,
     required this.fiscalYears,
     required this.selectedFiscalYear,
     required this.leaveSubmitInProgress,
@@ -47,6 +48,7 @@ class AttendanceState extends Equatable {
       days: const <AmsCalendarDayEntity>[],
       leavesLoading: false,
       leaveRequests: const <LeaveRequestEntity>[],
+      leaveTypes: const <Map<String, dynamic>>[],
       fiscalYears: const <String>[],
       selectedFiscalYear: '',
       leaveSubmitInProgress: false,
@@ -72,6 +74,7 @@ class AttendanceState extends Equatable {
   final List<AmsCalendarDayEntity> days;
   final bool leavesLoading;
   final List<LeaveRequestEntity> leaveRequests;
+  final List<Map<String, dynamic>> leaveTypes;
   final List<String> fiscalYears;
   final String selectedFiscalYear;
   final bool leaveSubmitInProgress;
@@ -97,6 +100,7 @@ class AttendanceState extends Equatable {
     List<AmsCalendarDayEntity>? days,
     bool? leavesLoading,
     List<LeaveRequestEntity>? leaveRequests,
+    List<Map<String, dynamic>>? leaveTypes,
     List<String>? fiscalYears,
     String? selectedFiscalYear,
     bool? leaveSubmitInProgress,
@@ -127,6 +131,7 @@ class AttendanceState extends Equatable {
       days: days ?? this.days,
       leavesLoading: leavesLoading ?? this.leavesLoading,
       leaveRequests: leaveRequests ?? this.leaveRequests,
+      leaveTypes: leaveTypes ?? this.leaveTypes,
       fiscalYears: fiscalYears ?? this.fiscalYears,
       selectedFiscalYear: selectedFiscalYear ?? this.selectedFiscalYear,
       leaveSubmitInProgress: leaveSubmitInProgress ?? this.leaveSubmitInProgress,
@@ -155,6 +160,7 @@ class AttendanceState extends Equatable {
         days,
         leavesLoading,
         leaveRequests,
+        leaveTypes,
         fiscalYears,
         selectedFiscalYear,
         leaveSubmitInProgress,

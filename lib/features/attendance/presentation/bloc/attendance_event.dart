@@ -34,6 +34,10 @@ class AttendanceLeavesRequested extends AttendanceEvent {
   const AttendanceLeavesRequested();
 }
 
+class AttendanceLeaveTypesRequested extends AttendanceEvent {
+  const AttendanceLeaveTypesRequested();
+}
+
 class AttendanceFiscalYearChanged extends AttendanceEvent {
   const AttendanceFiscalYearChanged(this.fiscalYear);
 

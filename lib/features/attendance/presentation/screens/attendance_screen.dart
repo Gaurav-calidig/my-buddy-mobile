@@ -271,6 +271,9 @@ class AttendanceScreen extends StatelessWidget {
   }
 
   List<Map<String, dynamic>> _leaveTypes(AttendanceState state) {
+    if (state.leaveTypes.isNotEmpty) {
+      return state.leaveTypes;
+    }
     final Map<int, String> byId = <int, String>{};
     for (final leave in state.leaveRequests) {
       final leaveType = leave.leaveType;

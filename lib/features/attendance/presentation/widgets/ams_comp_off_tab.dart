@@ -23,6 +23,18 @@ class _AmsCompOffTabState extends State<AmsCompOffTab> {
   String _days = '1';
 
   @override
+  void didUpdateWidget(covariant AmsCompOffTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final bool submitFinished = oldWidget.isSubmitting && !widget.isSubmitting;
+    final bool historyIncreased = widget.history.length > oldWidget.history.length;
+    if (submitFinished && historyIncreased) {
+      _workedDateController.clear();
+      _reasonController.clear();
+      setState(() => _days = '1');
+    }
+  }
+
+  @override
   void dispose() {
     _workedDateController.dispose();
     _reasonController.dispose();
