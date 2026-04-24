@@ -1,4 +1,5 @@
 import 'package:core/core/config/feature_flags.dart';
+import 'package:core/core/dependency_injection/modules/attendance_module.dart';
 import 'package:core/core/dependency_injection/modules/auth_module.dart';
 import 'package:core/core/dependency_injection/modules/chat_module.dart';
 import 'package:core/core/dependency_injection/modules/core_module.dart';
@@ -33,6 +34,7 @@ Future<void> init() async {
   }
 
   registerDashboardModule(sl);
+  registerAttendanceModule(sl);
   registerDsrModule(sl);
 
 

@@ -1,3 +1,4 @@
+import 'package:core/features/attendance/presentation/bloc/attendance_state.dart';
 import 'package:equatable/equatable.dart';
 import 'package:core/features/attendance/domain/entities/leave_request_entity.dart';
 
@@ -32,6 +33,10 @@ class AttendanceFilterChanged extends AttendanceEvent {
 
 class AttendanceLeavesRequested extends AttendanceEvent {
   const AttendanceLeavesRequested();
+}
+
+class AttendanceLeaveTypesRequested extends AttendanceEvent {
+  const AttendanceLeaveTypesRequested();
 }
 
 class AttendanceFiscalYearChanged extends AttendanceEvent {
@@ -69,16 +74,41 @@ class AttendanceLeaveSubmitted extends AttendanceEvent {
 class AttendanceCompOffSubmitted extends AttendanceEvent {
   const AttendanceCompOffSubmitted({
     required this.workedDate,
-    required this.days,
+    required this.leaveDays,
     required this.reason,
   });
 
   final String workedDate;
-  final String days;
+  final String leaveDays;
   final String reason;
 
   @override
-  List<Object?> get props => <Object?>[workedDate, days, reason];
+  List<Object?> get props => <Object?>[workedDate, leaveDays, reason];
+}
+
+class AttendanceLeaveDaysCalculationRequested extends AttendanceEvent {
+  const AttendanceLeaveDaysCalculationRequested({
+    required this.startDate,
+    required this.startHalf,
+    required this.endDate,
+    required this.endHalf,
+  });
+
+  final String startDate;
+  final String startHalf;
+  final String endDate;
+  final String endHalf;
+
+  @override
+  List<Object?> get props => <Object?>[startDate, startHalf, endDate, endHalf];
+}
+
+class AttendanceLeaveDaysCalculationCleared extends AttendanceEvent {
+  const AttendanceLeaveDaysCalculationCleared();
+}
+
+class AttendanceCompOffHistoryRequested extends AttendanceEvent {
+  const AttendanceCompOffHistoryRequested();
 }
 
 class AttendanceLeaveCancelRequested extends AttendanceEvent {
@@ -101,4 +131,17 @@ class AttendanceLeaveEditRequested extends AttendanceEvent {
 
 class AttendanceMessageCleared extends AttendanceEvent {
   const AttendanceMessageCleared();
+}
+
+class AttendanceCalendarViewModeChanged extends AttendanceEvent {
+  const AttendanceCalendarViewModeChanged(this.viewMode);
+
+  final AmsCalendarViewMode viewMode;
+
+  @override
+  List<Object?> get props => <Object?>[viewMode];
+}
+
+class AttendanceTodayRequested extends AttendanceEvent {
+  const AttendanceTodayRequested();
 }

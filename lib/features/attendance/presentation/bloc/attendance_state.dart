@@ -2,6 +2,8 @@ import 'package:core/features/attendance/domain/entities/attendance_entities.dar
 import 'package:core/features/attendance/domain/entities/leave_request_entity.dart';
 import 'package:equatable/equatable.dart';
 
+enum AmsCalendarViewMode { monthly, grid }
+
 class AttendanceState extends Equatable {
   const AttendanceState({
     required this.isLoading,
@@ -12,16 +14,23 @@ class AttendanceState extends Equatable {
     required this.summary,
     required this.legend,
     required this.days,
+    required this.calendarLoading,
     required this.leavesLoading,
     required this.leaveRequests,
+    required this.leaveTypes,
     required this.fiscalYears,
     required this.selectedFiscalYear,
     required this.leaveSubmitInProgress,
     required this.compOffSubmitInProgress,
+    required this.leaveDaysCalculationInProgress,
     required this.leaveActionInProgressId,
     required this.compOffHistory,
+    required this.calculatedTotalDays,
+    required this.calculatedHolidayCount,
+    required this.calculatedWeekendCount,
     required this.prefillLeave,
     required this.successMessage,
+    this.calendarViewMode = AmsCalendarViewMode.monthly,
     this.error,
   });
 
@@ -39,16 +48,22 @@ class AttendanceState extends Equatable {
         casual: '0',
         sick: '0',
       ),
-      legend: const <String>['Approved', 'Pending'],
+      legend: const <String>['Approved', 'Pending', 'Holiday', 'Birthday'],
       days: const <AmsCalendarDayEntity>[],
+      calendarLoading: false,
       leavesLoading: false,
       leaveRequests: const <LeaveRequestEntity>[],
+      leaveTypes: const <Map<String, dynamic>>[],
       fiscalYears: const <String>[],
       selectedFiscalYear: '',
       leaveSubmitInProgress: false,
       compOffSubmitInProgress: false,
+      leaveDaysCalculationInProgress: false,
       leaveActionInProgressId: null,
       compOffHistory: const <Map<String, String>>[],
+      calculatedTotalDays: null,
+      calculatedHolidayCount: null,
+      calculatedWeekendCount: null,
       prefillLeave: null,
       successMessage: null,
     );
@@ -62,16 +77,23 @@ class AttendanceState extends Equatable {
   final AmsLeaveSummaryEntity summary;
   final List<String> legend;
   final List<AmsCalendarDayEntity> days;
+  final bool calendarLoading;
   final bool leavesLoading;
   final List<LeaveRequestEntity> leaveRequests;
+  final List<Map<String, dynamic>> leaveTypes;
   final List<String> fiscalYears;
   final String selectedFiscalYear;
   final bool leaveSubmitInProgress;
   final bool compOffSubmitInProgress;
+  final bool leaveDaysCalculationInProgress;
   final int? leaveActionInProgressId;
   final List<Map<String, String>> compOffHistory;
+  final num? calculatedTotalDays;
+  final int? calculatedHolidayCount;
+  final int? calculatedWeekendCount;
   final LeaveRequestEntity? prefillLeave;
   final String? successMessage;
+  final AmsCalendarViewMode calendarViewMode;
   final String? error;
 
   AttendanceState copyWith({
@@ -83,19 +105,27 @@ class AttendanceState extends Equatable {
     AmsLeaveSummaryEntity? summary,
     List<String>? legend,
     List<AmsCalendarDayEntity>? days,
+    bool? calendarLoading,
     bool? leavesLoading,
     List<LeaveRequestEntity>? leaveRequests,
+    List<Map<String, dynamic>>? leaveTypes,
     List<String>? fiscalYears,
     String? selectedFiscalYear,
     bool? leaveSubmitInProgress,
     bool? compOffSubmitInProgress,
+    bool? leaveDaysCalculationInProgress,
     int? leaveActionInProgressId,
     bool clearLeaveActionInProgressId = false,
     List<Map<String, String>>? compOffHistory,
+    num? calculatedTotalDays,
+    int? calculatedHolidayCount,
+    int? calculatedWeekendCount,
+    bool clearLeaveDaysCalculation = false,
     LeaveRequestEntity? prefillLeave,
     bool clearPrefillLeave = false,
     String? successMessage,
     bool clearSuccessMessage = false,
+    AmsCalendarViewMode? calendarViewMode,
     String? error,
     bool clearError = false,
   }) {
@@ -108,16 +138,23 @@ class AttendanceState extends Equatable {
       summary: summary ?? this.summary,
       legend: legend ?? this.legend,
       days: days ?? this.days,
+      calendarLoading: calendarLoading ?? this.calendarLoading,
       leavesLoading: leavesLoading ?? this.leavesLoading,
       leaveRequests: leaveRequests ?? this.leaveRequests,
+      leaveTypes: leaveTypes ?? this.leaveTypes,
       fiscalYears: fiscalYears ?? this.fiscalYears,
       selectedFiscalYear: selectedFiscalYear ?? this.selectedFiscalYear,
       leaveSubmitInProgress: leaveSubmitInProgress ?? this.leaveSubmitInProgress,
       compOffSubmitInProgress: compOffSubmitInProgress ?? this.compOffSubmitInProgress,
+      leaveDaysCalculationInProgress: leaveDaysCalculationInProgress ?? this.leaveDaysCalculationInProgress,
       leaveActionInProgressId: clearLeaveActionInProgressId ? null : (leaveActionInProgressId ?? this.leaveActionInProgressId),
       compOffHistory: compOffHistory ?? this.compOffHistory,
+      calculatedTotalDays: clearLeaveDaysCalculation ? null : (calculatedTotalDays ?? this.calculatedTotalDays),
+      calculatedHolidayCount: clearLeaveDaysCalculation ? null : (calculatedHolidayCount ?? this.calculatedHolidayCount),
+      calculatedWeekendCount: clearLeaveDaysCalculation ? null : (calculatedWeekendCount ?? this.calculatedWeekendCount),
       prefillLeave: clearPrefillLeave ? null : (prefillLeave ?? this.prefillLeave),
       successMessage: clearSuccessMessage ? null : (successMessage ?? this.successMessage),
+      calendarViewMode: calendarViewMode ?? this.calendarViewMode,
       error: clearError ? null : (error ?? this.error),
     );
   }
@@ -132,16 +169,23 @@ class AttendanceState extends Equatable {
         summary,
         legend,
         days,
+        calendarLoading,
         leavesLoading,
         leaveRequests,
+        leaveTypes,
         fiscalYears,
         selectedFiscalYear,
         leaveSubmitInProgress,
         compOffSubmitInProgress,
+        leaveDaysCalculationInProgress,
         leaveActionInProgressId,
         compOffHistory,
+        calculatedTotalDays,
+        calculatedHolidayCount,
+        calculatedWeekendCount,
         prefillLeave,
         successMessage,
+        calendarViewMode,
         error,
       ];
 }

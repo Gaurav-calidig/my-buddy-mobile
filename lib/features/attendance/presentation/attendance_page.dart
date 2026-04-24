@@ -11,7 +11,7 @@ class AttendancePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => AttendanceBloc(apiService: sl())..add(const AttendanceStarted()),
+      create: (_) => sl<AttendanceBloc>()..add(const AttendanceStarted()),
       child: const AttendanceScreen(),
     );
   }

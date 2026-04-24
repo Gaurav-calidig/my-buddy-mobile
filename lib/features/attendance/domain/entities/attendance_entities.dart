@@ -32,12 +32,16 @@ class AmsLeaveEventEntity {
     required this.reason,
     required this.status,
     required this.colorHex,
+    this.halfLabel,
+    this.type = 'leave',
   });
 
   final String name;
   final String reason;
   final String status;
   final int colorHex;
+  final String? halfLabel;
+  final String type;
 }
 
 class AmsCalendarDayEntity {
