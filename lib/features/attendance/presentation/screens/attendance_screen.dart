@@ -256,6 +256,7 @@ class AttendanceScreen extends StatelessWidget {
                       month: state.month,
                       days: state.days,
                       legend: state.legend,
+                      isLoading: state.calendarLoading,
                       viewMode: state.calendarViewMode,
                       onPrev: () => context.read<AttendanceBloc>().add(const AttendanceMonthChanged(-1)),
                       onNext: () => context.read<AttendanceBloc>().add(const AttendanceMonthChanged(1)),

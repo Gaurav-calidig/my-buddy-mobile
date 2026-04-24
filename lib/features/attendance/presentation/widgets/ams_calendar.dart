@@ -8,6 +8,7 @@ class AmsCalendar extends StatefulWidget {
     required this.month,
     required this.days,
     required this.legend,
+    required this.isLoading,
     required this.viewMode,
     required this.onPrev,
     required this.onNext,
@@ -19,6 +20,7 @@ class AmsCalendar extends StatefulWidget {
   final DateTime month;
   final List<AmsCalendarDayEntity> days;
   final List<String> legend;
+  final bool isLoading;
   final AmsCalendarViewMode viewMode;
   final VoidCallback onPrev;
   final VoidCallback onNext;
@@ -55,6 +57,12 @@ class _AmsCalendarState extends State<AmsCalendar> {
           const SizedBox(height: 12),
           _buildLegend(),
           const SizedBox(height: 16),
+          if (widget.isLoading)
+            const SizedBox(
+              height: 220,
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else
           if (widget.viewMode == AmsCalendarViewMode.monthly)
             _buildMonthlyView()
           else

@@ -14,6 +14,7 @@ class AttendanceState extends Equatable {
     required this.summary,
     required this.legend,
     required this.days,
+    required this.calendarLoading,
     required this.leavesLoading,
     required this.leaveRequests,
     required this.leaveTypes,
@@ -49,6 +50,7 @@ class AttendanceState extends Equatable {
       ),
       legend: const <String>['Approved', 'Pending', 'Holiday', 'Birthday'],
       days: const <AmsCalendarDayEntity>[],
+      calendarLoading: false,
       leavesLoading: false,
       leaveRequests: const <LeaveRequestEntity>[],
       leaveTypes: const <Map<String, dynamic>>[],
@@ -75,6 +77,7 @@ class AttendanceState extends Equatable {
   final AmsLeaveSummaryEntity summary;
   final List<String> legend;
   final List<AmsCalendarDayEntity> days;
+  final bool calendarLoading;
   final bool leavesLoading;
   final List<LeaveRequestEntity> leaveRequests;
   final List<Map<String, dynamic>> leaveTypes;
@@ -102,6 +105,7 @@ class AttendanceState extends Equatable {
     AmsLeaveSummaryEntity? summary,
     List<String>? legend,
     List<AmsCalendarDayEntity>? days,
+    bool? calendarLoading,
     bool? leavesLoading,
     List<LeaveRequestEntity>? leaveRequests,
     List<Map<String, dynamic>>? leaveTypes,
@@ -134,6 +138,7 @@ class AttendanceState extends Equatable {
       summary: summary ?? this.summary,
       legend: legend ?? this.legend,
       days: days ?? this.days,
+      calendarLoading: calendarLoading ?? this.calendarLoading,
       leavesLoading: leavesLoading ?? this.leavesLoading,
       leaveRequests: leaveRequests ?? this.leaveRequests,
       leaveTypes: leaveTypes ?? this.leaveTypes,
@@ -164,6 +169,7 @@ class AttendanceState extends Equatable {
         summary,
         legend,
         days,
+        calendarLoading,
         leavesLoading,
         leaveRequests,
         leaveTypes,

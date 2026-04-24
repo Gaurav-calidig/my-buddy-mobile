@@ -113,10 +113,39 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
     controller.text = '${picked.year}-$mm-$dd';
   }
 
+  void _showValidationError(String message) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.kcBackgroundColorDark,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: const Text('Validation Error', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          content: Text(message, style: const TextStyle(color: Colors.white70)),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('OK', style: TextStyle(color: AppColors.kcDarkPrimarySoft)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _submit() {
     if (_leaveTypeId == null || _startController.text.trim().isEmpty || _endController.text.trim().isEmpty) {
       return;
     }
+
+    final DateTime start = DateTime.parse(_startController.text.trim());
+    final DateTime end = DateTime.parse(_endController.text.trim());
+
+    if (start.isAfter(end)) {
+      _showValidationError('Start date must be before or the same as the end date.');
+      return;
+    }
+
     widget.onSubmit(
       leaveId: _leaveId,
       leaveTypeId: _leaveTypeId!,
@@ -132,6 +161,12 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
     final String startDate = _startController.text.trim();
     final String endDate = _endController.text.trim();
     if (startDate.isEmpty || endDate.isEmpty) {
+      widget.onClearCalculatedDays();
+      return;
+    }
+    final DateTime start = DateTime.parse(startDate);
+    final DateTime end = DateTime.parse(endDate);
+    if (start.isAfter(end)) {
       widget.onClearCalculatedDays();
       return;
     }
@@ -200,10 +235,14 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
           _label('Leave Type'),
           DropdownButtonFormField<int>(
             initialValue: _leaveTypeId,
+            hint: const Text(
+              'Select leave type',
+              style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 15),
+            ),
             dropdownColor: AppColors.kcBackgroundColorDark,
             style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
             iconEnabledColor: AppColors.kcDarkTextSecondary,
-            decoration: _dec('Select leave type'),
+            decoration: _dec(''),
             items: widget.leaveTypes
                 .map((Map<String, dynamic> item) => DropdownMenuItem<int>(
                       value: item['id'] as int,
