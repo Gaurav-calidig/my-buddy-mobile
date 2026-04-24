@@ -117,27 +117,27 @@ class AttendanceScreen extends StatelessWidget {
             }
 
             return SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(8, 10, 8, 20),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(state.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 30)),
-                  const SizedBox(height: 10),
+                  Text(state.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 24, letterSpacing: -0.5)),
+                  const SizedBox(height: 16),
                   GridView.builder(
                     physics: const NeverScrollableScrollPhysics(),
                     shrinkWrap: true,
                     itemCount: state.stats.length,
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4,
-                      mainAxisSpacing: 6,
-                      crossAxisSpacing: 6,
-                      childAspectRatio: 0.67,
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.8,
                     ),
                     itemBuilder: (BuildContext context, int index) => AmsStatCard(item: state.stats[index]),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   AmsSummaryCard(summary: state.summary),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
                   AmsFilterTabs(
                     items: const <String>['My Leaves', 'Apply Leave', 'Comp Off', 'Calendar'],
                     selectedIndex: state.selectedFilterIndex,
