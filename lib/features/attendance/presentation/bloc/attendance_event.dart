@@ -69,16 +69,41 @@ class AttendanceLeaveSubmitted extends AttendanceEvent {
 class AttendanceCompOffSubmitted extends AttendanceEvent {
   const AttendanceCompOffSubmitted({
     required this.workedDate,
-    required this.days,
+    required this.leaveDays,
     required this.reason,
   });
 
   final String workedDate;
-  final String days;
+  final String leaveDays;
   final String reason;
 
   @override
-  List<Object?> get props => <Object?>[workedDate, days, reason];
+  List<Object?> get props => <Object?>[workedDate, leaveDays, reason];
+}
+
+class AttendanceLeaveDaysCalculationRequested extends AttendanceEvent {
+  const AttendanceLeaveDaysCalculationRequested({
+    required this.startDate,
+    required this.startHalf,
+    required this.endDate,
+    required this.endHalf,
+  });
+
+  final String startDate;
+  final String startHalf;
+  final String endDate;
+  final String endHalf;
+
+  @override
+  List<Object?> get props => <Object?>[startDate, startHalf, endDate, endHalf];
+}
+
+class AttendanceLeaveDaysCalculationCleared extends AttendanceEvent {
+  const AttendanceLeaveDaysCalculationCleared();
+}
+
+class AttendanceCompOffHistoryRequested extends AttendanceEvent {
+  const AttendanceCompOffHistoryRequested();
 }
 
 class AttendanceLeaveCancelRequested extends AttendanceEvent {

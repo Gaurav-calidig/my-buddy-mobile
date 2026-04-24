@@ -5,7 +5,13 @@ class AmsApplyLeaveTab extends StatefulWidget {
   const AmsApplyLeaveTab({
     required this.leaveTypes,
     required this.isSubmitting,
+    required this.isCalculatingDays,
+    required this.onCalculateDays,
+    required this.onClearCalculatedDays,
     required this.onSubmit,
+    this.calculatedTotalDays,
+    this.calculatedHolidayCount,
+    this.calculatedWeekendCount,
     this.prefill,
     this.onClose,
     super.key,
@@ -13,8 +19,19 @@ class AmsApplyLeaveTab extends StatefulWidget {
 
   final List<Map<String, dynamic>> leaveTypes;
   final bool isSubmitting;
+  final bool isCalculatingDays;
+  final num? calculatedTotalDays;
+  final int? calculatedHolidayCount;
+  final int? calculatedWeekendCount;
   final Map<String, dynamic>? prefill;
   final VoidCallback? onClose;
+  final void Function({
+    required String startDate,
+    required String startHalf,
+    required String endDate,
+    required String endHalf,
+  }) onCalculateDays;
+  final VoidCallback onClearCalculatedDays;
   final void Function({
     int? leaveId,
     required int leaveTypeId,
@@ -68,6 +85,10 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
     _startHalf = (p['startHalf'] ?? 'full_day').toString();
     _endHalf = (p['endHalf'] ?? 'full_day').toString();
     _reasonController.text = (p['reason'] ?? '').toString();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _triggerCalculateDaysIfReady();
+    });
   }
 
   @override
@@ -104,6 +125,21 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
       endDate: _endController.text.trim(),
       endHalf: _endHalf,
       reason: _reasonController.text.trim(),
+    );
+  }
+
+  void _triggerCalculateDaysIfReady() {
+    final String startDate = _startController.text.trim();
+    final String endDate = _endController.text.trim();
+    if (startDate.isEmpty || endDate.isEmpty) {
+      widget.onClearCalculatedDays();
+      return;
+    }
+    widget.onCalculateDays(
+      startDate: startDate,
+      startHalf: _startHalf,
+      endDate: endDate,
+      endHalf: _endHalf,
     );
   }
 
@@ -187,7 +223,10 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
                     TextFormField(
                       controller: _startController,
                       readOnly: true,
-                      onTap: () => _pickDate(_startController),
+                      onTap: () async {
+                        await _pickDate(_startController);
+                        _triggerCalculateDaysIfReady();
+                      },
                       style: const TextStyle(color: Colors.white),
                       decoration: _dec('dd-mm-yyyy'),
                     ),
@@ -209,7 +248,10 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
                       items: const <String>['full_day', 'first_half', 'second_half']
                           .map((String s) => DropdownMenuItem<String>(value: s, child: Text(_halfLabel[s] ?? s, style: const TextStyle(color: Colors.white))))
                           .toList(growable: false),
-                      onChanged: (String? v) => setState(() => _startHalf = v ?? 'full_day'),
+                      onChanged: (String? v) {
+                        setState(() => _startHalf = v ?? 'full_day');
+                        _triggerCalculateDaysIfReady();
+                      },
                     ),
                   ],
                 ),
@@ -227,7 +269,10 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
                     TextFormField(
                       controller: _endController,
                       readOnly: true,
-                      onTap: () => _pickDate(_endController),
+                      onTap: () async {
+                        await _pickDate(_endController);
+                        _triggerCalculateDaysIfReady();
+                      },
                       style: const TextStyle(color: Colors.white),
                       decoration: _dec('dd-mm-yyyy'),
                     ),
@@ -249,12 +294,40 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
                       items: const <String>['full_day', 'first_half', 'second_half']
                           .map((String s) => DropdownMenuItem<String>(value: s, child: Text(_halfLabel[s] ?? s, style: const TextStyle(color: Colors.white))))
                           .toList(growable: false),
-                      onChanged: (String? v) => setState(() => _endHalf = v ?? 'full_day'),
+                      onChanged: (String? v) {
+                        setState(() => _endHalf = v ?? 'full_day');
+                        _triggerCalculateDaysIfReady();
+                      },
                     ),
                   ],
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0C1730),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: AppColors.kcDarkBorderStrong),
+            ),
+            child: widget.isCalculatingDays
+                ? const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+                      SizedBox(width: 8),
+                      Text('Calculating leave days...', style: TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 12)),
+                    ],
+                  )
+                : Text(
+                    widget.calculatedTotalDays == null
+                        ? 'Select start and end date to calculate leave days.'
+                        : 'Total days: ${widget.calculatedTotalDays} | Holidays: ${widget.calculatedHolidayCount ?? 0} | Weekends: ${widget.calculatedWeekendCount ?? 0}',
+                    style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 12),
+                  ),
           ),
           const SizedBox(height: 10),
           _label('Reason'),

@@ -11,7 +11,7 @@ class AmsCompOffTab extends StatefulWidget {
 
   final bool isSubmitting;
   final List<Map<String, String>> history;
-  final void Function({required String workedDate, required String days, required String reason}) onSubmit;
+  final void Function({required String workedDate, required String leaveDays, required String reason}) onSubmit;
 
   @override
   State<AmsCompOffTab> createState() => _AmsCompOffTabState();
@@ -71,7 +71,7 @@ class _AmsCompOffTabState extends State<AmsCompOffTab> {
     if (_workedDateController.text.trim().isEmpty) return;
     widget.onSubmit(
       workedDate: _workedDateController.text.trim(),
-      days: _days,
+      leaveDays: _days,
       reason: _reasonController.text.trim(),
     );
   }
@@ -168,9 +168,11 @@ class _AmsCompOffTabState extends State<AmsCompOffTab> {
                 children: <Widget>[
                   Text((h['workedDate'] ?? '-'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
                   const SizedBox(width: 10),
-                  Text('${h['days'] ?? '-'} day', style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 12)),
+                  Text('${h['leaveDays'] ?? '-'} day', style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 12)),
                   const SizedBox(width: 10),
                   Expanded(child: Text((h['reason'] ?? ''), overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 12))),
+                  const SizedBox(width: 8),
+                  Text((h['status'] ?? '').toUpperCase(), style: const TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 10)),
                 ],
               ),
             );

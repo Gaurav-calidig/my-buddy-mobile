@@ -18,8 +18,12 @@ class AttendanceState extends Equatable {
     required this.selectedFiscalYear,
     required this.leaveSubmitInProgress,
     required this.compOffSubmitInProgress,
+    required this.leaveDaysCalculationInProgress,
     required this.leaveActionInProgressId,
     required this.compOffHistory,
+    required this.calculatedTotalDays,
+    required this.calculatedHolidayCount,
+    required this.calculatedWeekendCount,
     required this.prefillLeave,
     required this.successMessage,
     this.error,
@@ -47,8 +51,12 @@ class AttendanceState extends Equatable {
       selectedFiscalYear: '',
       leaveSubmitInProgress: false,
       compOffSubmitInProgress: false,
+      leaveDaysCalculationInProgress: false,
       leaveActionInProgressId: null,
       compOffHistory: const <Map<String, String>>[],
+      calculatedTotalDays: null,
+      calculatedHolidayCount: null,
+      calculatedWeekendCount: null,
       prefillLeave: null,
       successMessage: null,
     );
@@ -68,8 +76,12 @@ class AttendanceState extends Equatable {
   final String selectedFiscalYear;
   final bool leaveSubmitInProgress;
   final bool compOffSubmitInProgress;
+  final bool leaveDaysCalculationInProgress;
   final int? leaveActionInProgressId;
   final List<Map<String, String>> compOffHistory;
+  final num? calculatedTotalDays;
+  final int? calculatedHolidayCount;
+  final int? calculatedWeekendCount;
   final LeaveRequestEntity? prefillLeave;
   final String? successMessage;
   final String? error;
@@ -89,9 +101,14 @@ class AttendanceState extends Equatable {
     String? selectedFiscalYear,
     bool? leaveSubmitInProgress,
     bool? compOffSubmitInProgress,
+    bool? leaveDaysCalculationInProgress,
     int? leaveActionInProgressId,
     bool clearLeaveActionInProgressId = false,
     List<Map<String, String>>? compOffHistory,
+    num? calculatedTotalDays,
+    int? calculatedHolidayCount,
+    int? calculatedWeekendCount,
+    bool clearLeaveDaysCalculation = false,
     LeaveRequestEntity? prefillLeave,
     bool clearPrefillLeave = false,
     String? successMessage,
@@ -114,8 +131,12 @@ class AttendanceState extends Equatable {
       selectedFiscalYear: selectedFiscalYear ?? this.selectedFiscalYear,
       leaveSubmitInProgress: leaveSubmitInProgress ?? this.leaveSubmitInProgress,
       compOffSubmitInProgress: compOffSubmitInProgress ?? this.compOffSubmitInProgress,
+      leaveDaysCalculationInProgress: leaveDaysCalculationInProgress ?? this.leaveDaysCalculationInProgress,
       leaveActionInProgressId: clearLeaveActionInProgressId ? null : (leaveActionInProgressId ?? this.leaveActionInProgressId),
       compOffHistory: compOffHistory ?? this.compOffHistory,
+      calculatedTotalDays: clearLeaveDaysCalculation ? null : (calculatedTotalDays ?? this.calculatedTotalDays),
+      calculatedHolidayCount: clearLeaveDaysCalculation ? null : (calculatedHolidayCount ?? this.calculatedHolidayCount),
+      calculatedWeekendCount: clearLeaveDaysCalculation ? null : (calculatedWeekendCount ?? this.calculatedWeekendCount),
       prefillLeave: clearPrefillLeave ? null : (prefillLeave ?? this.prefillLeave),
       successMessage: clearSuccessMessage ? null : (successMessage ?? this.successMessage),
       error: clearError ? null : (error ?? this.error),
@@ -138,8 +159,12 @@ class AttendanceState extends Equatable {
         selectedFiscalYear,
         leaveSubmitInProgress,
         compOffSubmitInProgress,
+        leaveDaysCalculationInProgress,
         leaveActionInProgressId,
         compOffHistory,
+        calculatedTotalDays,
+        calculatedHolidayCount,
+        calculatedWeekendCount,
         prefillLeave,
         successMessage,
         error,

@@ -24,7 +24,10 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     on<AttendanceFiscalYearChanged>(_onFiscalYearChanged);
     on<AttendanceLeaveSubmitted>(_onLeaveSubmitted);
     on<AttendanceCompOffSubmitted>(_onCompOffSubmitted);
+    on<AttendanceCompOffHistoryRequested>(_onCompOffHistoryRequested);
     on<AttendanceLeaveCancelRequested>(_onLeaveCancelRequested);
+    on<AttendanceLeaveDaysCalculationRequested>(_onLeaveDaysCalculationRequested);
+    on<AttendanceLeaveDaysCalculationCleared>(_onLeaveDaysCalculationCleared);
     on<AttendanceLeaveEditRequested>(_onLeaveEditRequested);
     on<AttendanceMessageCleared>(_onMessageCleared);
   }
@@ -53,6 +56,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
 
     // Preload leaves so "My Leaves" shows instantly.
     add(const AttendanceLeavesRequested());
+    add(const AttendanceCompOffHistoryRequested());
   }
 
   Future<AttendanceLeaveStatsEntity?> _safeFetchLeaveStats() async {
@@ -143,6 +147,9 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     if (event.filterIndex == 0 && state.leaveRequests.isEmpty && !state.leavesLoading) {
       add(const AttendanceLeavesRequested());
     }
+    if (event.filterIndex == 2 && state.compOffHistory.isEmpty) {
+      add(const AttendanceCompOffHistoryRequested());
+    }
   }
 
   Future<void> _onLeavesRequested(
@@ -201,13 +208,14 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
       if (event.leaveId == null) {
         await _apiService.post(ApiRoutes.leaveRequests, payload);
       } else {
-        await _apiService.put(ApiRoutes.leaveRequestById(event.leaveId!), payload);
+        await _apiService.patch(ApiRoutes.leaveRequestById(event.leaveId!), payload);
       }
 
       emit(
         state.copyWith(
           leaveSubmitInProgress: false,
           selectedFilterIndex: 0,
+          clearLeaveDaysCalculation: true,
           clearPrefillLeave: true,
           successMessage: event.leaveId == null ? 'Leave request submitted.' : 'Leave request updated.',
         ),
@@ -226,23 +234,47 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     try {
       final Map<String, dynamic> payload = <String, dynamic>{
         'workedDate': event.workedDate,
-        'days': event.days,
+        'leaveDays': event.leaveDays,
         'reason': event.reason,
       };
       await _apiService.post(ApiRoutes.compOffRequests, payload);
 
-      final List<Map<String, String>> next = List<Map<String, String>>.from(state.compOffHistory, growable: true)
-        ..insert(0, <String, String>{'workedDate': event.workedDate, 'days': event.days, 'reason': event.reason});
-
       emit(
         state.copyWith(
           compOffSubmitInProgress: false,
-          compOffHistory: next,
           successMessage: 'Comp off request submitted.',
         ),
       );
+      add(const AttendanceCompOffHistoryRequested());
     } catch (e) {
       emit(state.copyWith(compOffSubmitInProgress: false, error: e.toString()));
+    }
+  }
+
+  Future<void> _onCompOffHistoryRequested(
+    AttendanceCompOffHistoryRequested event,
+    Emitter<AttendanceState> emit,
+  ) async {
+    try {
+      final resp = await _apiService.get(ApiRoutes.compOffRequests);
+      final dynamic data = resp.data;
+      final List<dynamic> list = data is List
+          ? data
+          : (data is Map && data['data'] is List ? data['data'] as List : <dynamic>[]);
+
+      final List<Map<String, String>> history = list.whereType<Map>().map((Map item) {
+        final Map<String, dynamic> map = item.cast<String, dynamic>();
+        return <String, String>{
+          'workedDate': (map['workedDate'] ?? '').toString(),
+          'leaveDays': (map['leaveDays'] ?? '').toString(),
+          'reason': (map['reason'] ?? '').toString(),
+          'status': (map['status'] ?? '').toString(),
+        };
+      }).toList(growable: false);
+
+      emit(state.copyWith(compOffHistory: history));
+    } catch (_) {
+      // Keep tab usable even when history fetch fails.
     }
   }
 
@@ -252,8 +284,29 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
   ) async {
     emit(state.copyWith(leaveActionInProgressId: event.leaveId, clearError: true, clearSuccessMessage: true));
     try {
-      await _apiService.delete(ApiRoutes.leaveRequestById(event.leaveId));
-      final List<LeaveRequestEntity> next = state.leaveRequests.where((e) => e.id != event.leaveId).toList(growable: false);
+      await _apiService.post(ApiRoutes.leaveRequestCancelById(event.leaveId), <String, dynamic>{});
+      final List<LeaveRequestEntity> next = state.leaveRequests.map((LeaveRequestEntity e) {
+        if (e.id != event.leaveId) return e;
+        return LeaveRequestEntity(
+          id: e.id,
+          userId: e.userId,
+          leaveTypeId: e.leaveTypeId,
+          startDate: e.startDate,
+          startHalf: e.startHalf,
+          endDate: e.endDate,
+          endHalf: e.endHalf,
+          totalDays: e.totalDays,
+          reason: e.reason,
+          status: 'cancelled',
+          isUnpaid: e.isUnpaid,
+          reviewedById: e.reviewedById,
+          reviewerNote: e.reviewerNote,
+          createdAt: e.createdAt,
+          updatedAt: DateTime.now(),
+          leaveType: e.leaveType,
+          reviewedBy: e.reviewedBy,
+        );
+      }).toList(growable: false);
       emit(
         state.copyWith(
           leaveRequests: next,
@@ -264,6 +317,49 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     } catch (e) {
       emit(state.copyWith(clearLeaveActionInProgressId: true, error: e.toString()));
     }
+  }
+
+  Future<void> _onLeaveDaysCalculationRequested(
+    AttendanceLeaveDaysCalculationRequested event,
+    Emitter<AttendanceState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        leaveDaysCalculationInProgress: true,
+        clearError: true,
+      ),
+    );
+    try {
+      final Map<String, dynamic> payload = <String, dynamic>{
+        'startDate': event.startDate,
+        'startHalf': event.startHalf,
+        'endDate': event.endDate,
+        'endHalf': event.endHalf,
+      };
+      final resp = await _apiService.post(ApiRoutes.leaveRequestsCalculateDays, payload);
+      final dynamic data = resp.data;
+      final Map<String, dynamic> map = data is Map<String, dynamic>
+          ? (data['data'] is Map<String, dynamic> ? Map<String, dynamic>.from(data['data'] as Map<String, dynamic>) : data)
+          : (data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{});
+
+      emit(
+        state.copyWith(
+          leaveDaysCalculationInProgress: false,
+          calculatedTotalDays: _asNum(map['totalDays']),
+          calculatedHolidayCount: _asInt(map['holidayCount']),
+          calculatedWeekendCount: _asInt(map['weekendCount']),
+        ),
+      );
+    } catch (_) {
+      emit(state.copyWith(leaveDaysCalculationInProgress: false));
+    }
+  }
+
+  void _onLeaveDaysCalculationCleared(
+    AttendanceLeaveDaysCalculationCleared event,
+    Emitter<AttendanceState> emit,
+  ) {
+    emit(state.copyWith(clearLeaveDaysCalculation: true));
   }
 
   void _onLeaveEditRequested(
@@ -393,5 +489,16 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     final String mm = d.month.toString().padLeft(2, '0');
     final String dd = d.day.toString().padLeft(2, '0');
     return '${d.year}-$mm-$dd';
+  }
+
+  int _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  num _asNum(dynamic value) {
+    if (value is num) return value;
+    return num.tryParse(value?.toString() ?? '') ?? 0;
   }
 }

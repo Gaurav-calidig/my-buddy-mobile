@@ -57,7 +57,27 @@ class AttendanceScreen extends StatelessWidget {
                     return AmsApplyLeaveTab(
                       leaveTypes: _leaveTypes(dialogState),
                       isSubmitting: dialogState.leaveSubmitInProgress,
+                      isCalculatingDays: dialogState.leaveDaysCalculationInProgress,
+                      calculatedTotalDays: dialogState.calculatedTotalDays,
+                      calculatedHolidayCount: dialogState.calculatedHolidayCount,
+                      calculatedWeekendCount: dialogState.calculatedWeekendCount,
                       prefill: prefill,
+                      onCalculateDays: ({
+                        required String startDate,
+                        required String startHalf,
+                        required String endDate,
+                        required String endHalf,
+                      }) {
+                        bloc.add(
+                          AttendanceLeaveDaysCalculationRequested(
+                            startDate: startDate,
+                            startHalf: startHalf,
+                            endDate: endDate,
+                            endHalf: endHalf,
+                          ),
+                        );
+                      },
+                      onClearCalculatedDays: () => bloc.add(const AttendanceLeaveDaysCalculationCleared()),
                       onClose: () {
                         if (Navigator.of(dialogContext).canPop()) {
                           Navigator.of(dialogContext).pop();
@@ -166,13 +186,34 @@ class AttendanceScreen extends StatelessWidget {
                       onCancel: (id) => context.read<AttendanceBloc>().add(AttendanceLeaveCancelRequested(id)),
                     )
                   else if (state.selectedFilterIndex == 1)
-                    AmsApplyLeaveTab(
-                      leaveTypes: _leaveTypes(state),
-                      isSubmitting: state.leaveSubmitInProgress,
-                      prefill: _leavePrefill(state),
-                      onSubmit: ({
-                        int? leaveId,
-                        required int leaveTypeId,
+                        AmsApplyLeaveTab(
+                          leaveTypes: _leaveTypes(state),
+                          isSubmitting: state.leaveSubmitInProgress,
+                          isCalculatingDays: state.leaveDaysCalculationInProgress,
+                          calculatedTotalDays: state.calculatedTotalDays,
+                          calculatedHolidayCount: state.calculatedHolidayCount,
+                          calculatedWeekendCount: state.calculatedWeekendCount,
+                          prefill: _leavePrefill(state),
+                          onCalculateDays: ({
+                            required String startDate,
+                            required String startHalf,
+                            required String endDate,
+                            required String endHalf,
+                          }) {
+                            context.read<AttendanceBloc>().add(
+                                  AttendanceLeaveDaysCalculationRequested(
+                                    startDate: startDate,
+                                    startHalf: startHalf,
+                                    endDate: endDate,
+                                    endHalf: endHalf,
+                                  ),
+                                );
+                          },
+                          onClearCalculatedDays: () =>
+                              context.read<AttendanceBloc>().add(const AttendanceLeaveDaysCalculationCleared()),
+                          onSubmit: ({
+                            int? leaveId,
+                            required int leaveTypeId,
                         required String startDate,
                         required String startHalf,
                         required String endDate,
@@ -196,18 +237,18 @@ class AttendanceScreen extends StatelessWidget {
                     AmsCompOffTab(
                       isSubmitting: state.compOffSubmitInProgress,
                       history: state.compOffHistory,
-                      onSubmit: ({
-                        required String workedDate,
-                        required String days,
-                        required String reason,
-                      }) {
-                        context.read<AttendanceBloc>().add(
-                              AttendanceCompOffSubmitted(
-                                workedDate: workedDate,
-                                days: days,
-                                reason: reason,
-                              ),
-                            );
+                          onSubmit: ({
+                            required String workedDate,
+                            required String leaveDays,
+                            required String reason,
+                          }) {
+                            context.read<AttendanceBloc>().add(
+                                  AttendanceCompOffSubmitted(
+                                    workedDate: workedDate,
+                                    leaveDays: leaveDays,
+                                    reason: reason,
+                                  ),
+                                );
                       },
                     )
                   else if (state.selectedFilterIndex == 3)
