@@ -221,16 +221,16 @@ class AttendanceScreen extends StatelessWidget {
                         required String reason,
                       }) {
                         context.read<AttendanceBloc>().add(
-                              AttendanceLeaveSubmitted(
-                                leaveId: leaveId,
-                                leaveTypeId: leaveTypeId,
-                                startDate: startDate,
-                                startHalf: startHalf,
-                                endDate: endDate,
-                                endHalf: endHalf,
-                                reason: reason,
-                              ),
-                            );
+                                AttendanceLeaveSubmitted(
+                                  leaveId: leaveId,
+                                  leaveTypeId: leaveTypeId,
+                                  startDate: startDate,
+                                  startHalf: startHalf,
+                                  endDate: endDate,
+                                  endHalf: endHalf,
+                                  reason: reason,
+                                ),
+                              );
                       },
                     )
                   else if (state.selectedFilterIndex == 2)
@@ -256,8 +256,12 @@ class AttendanceScreen extends StatelessWidget {
                       month: state.month,
                       days: state.days,
                       legend: state.legend,
+                      viewMode: state.calendarViewMode,
                       onPrev: () => context.read<AttendanceBloc>().add(const AttendanceMonthChanged(-1)),
                       onNext: () => context.read<AttendanceBloc>().add(const AttendanceMonthChanged(1)),
+                      onViewModeChanged: (AmsCalendarViewMode mode) =>
+                          context.read<AttendanceBloc>().add(AttendanceCalendarViewModeChanged(mode)),
+                      onToday: () => context.read<AttendanceBloc>().add(const AttendanceTodayRequested()),
                     )
                   else
                     const SizedBox.shrink(),

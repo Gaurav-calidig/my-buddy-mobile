@@ -31,6 +31,8 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     on<AttendanceLeaveDaysCalculationCleared>(_onLeaveDaysCalculationCleared);
     on<AttendanceLeaveEditRequested>(_onLeaveEditRequested);
     on<AttendanceMessageCleared>(_onMessageCleared);
+    on<AttendanceCalendarViewModeChanged>(_onCalendarViewModeChanged);
+    on<AttendanceTodayRequested>(_onTodayRequested);
   }
 
   final ApiService _apiService;
@@ -404,6 +406,25 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     Emitter<AttendanceState> emit,
   ) {
     emit(state.copyWith(clearError: true, clearSuccessMessage: true));
+  }
+
+  void _onCalendarViewModeChanged(
+    AttendanceCalendarViewModeChanged event,
+    Emitter<AttendanceState> emit,
+  ) {
+    emit(state.copyWith(calendarViewMode: event.viewMode));
+  }
+
+  Future<void> _onTodayRequested(
+    AttendanceTodayRequested event,
+    Emitter<AttendanceState> emit,
+  ) async {
+    final DateTime now = DateTime.now();
+    final DateTime todayMonth = DateTime(now.year, now.month, 1);
+    if (state.month.year == todayMonth.year && state.month.month == todayMonth.month) return;
+    
+    final List<AmsCalendarDayEntity> days = await _buildMonthDays(todayMonth);
+    emit(state.copyWith(month: todayMonth, days: days, clearError: true));
   }
 
   List<String> _deriveFiscalYears(List<LeaveRequestEntity> items) {

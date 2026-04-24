@@ -1,3 +1,4 @@
+import 'package:core/features/attendance/presentation/bloc/attendance_state.dart';
 import 'package:equatable/equatable.dart';
 import 'package:core/features/attendance/domain/entities/leave_request_entity.dart';
 
@@ -130,4 +131,17 @@ class AttendanceLeaveEditRequested extends AttendanceEvent {
 
 class AttendanceMessageCleared extends AttendanceEvent {
   const AttendanceMessageCleared();
+}
+
+class AttendanceCalendarViewModeChanged extends AttendanceEvent {
+  const AttendanceCalendarViewModeChanged(this.viewMode);
+
+  final AmsCalendarViewMode viewMode;
+
+  @override
+  List<Object?> get props => <Object?>[viewMode];
+}
+
+class AttendanceTodayRequested extends AttendanceEvent {
+  const AttendanceTodayRequested();
 }

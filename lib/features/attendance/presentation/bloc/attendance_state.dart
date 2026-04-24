@@ -2,6 +2,8 @@ import 'package:core/features/attendance/domain/entities/attendance_entities.dar
 import 'package:core/features/attendance/domain/entities/leave_request_entity.dart';
 import 'package:equatable/equatable.dart';
 
+enum AmsCalendarViewMode { monthly, grid }
+
 class AttendanceState extends Equatable {
   const AttendanceState({
     required this.isLoading,
@@ -27,6 +29,7 @@ class AttendanceState extends Equatable {
     required this.calculatedWeekendCount,
     required this.prefillLeave,
     required this.successMessage,
+    this.calendarViewMode = AmsCalendarViewMode.monthly,
     this.error,
   });
 
@@ -87,6 +90,7 @@ class AttendanceState extends Equatable {
   final int? calculatedWeekendCount;
   final LeaveRequestEntity? prefillLeave;
   final String? successMessage;
+  final AmsCalendarViewMode calendarViewMode;
   final String? error;
 
   AttendanceState copyWith({
@@ -117,6 +121,7 @@ class AttendanceState extends Equatable {
     bool clearPrefillLeave = false,
     String? successMessage,
     bool clearSuccessMessage = false,
+    AmsCalendarViewMode? calendarViewMode,
     String? error,
     bool clearError = false,
   }) {
@@ -144,6 +149,7 @@ class AttendanceState extends Equatable {
       calculatedWeekendCount: clearLeaveDaysCalculation ? null : (calculatedWeekendCount ?? this.calculatedWeekendCount),
       prefillLeave: clearPrefillLeave ? null : (prefillLeave ?? this.prefillLeave),
       successMessage: clearSuccessMessage ? null : (successMessage ?? this.successMessage),
+      calendarViewMode: calendarViewMode ?? this.calendarViewMode,
       error: clearError ? null : (error ?? this.error),
     );
   }
@@ -173,6 +179,7 @@ class AttendanceState extends Equatable {
         calculatedWeekendCount,
         prefillLeave,
         successMessage,
+        calendarViewMode,
         error,
       ];
 }
