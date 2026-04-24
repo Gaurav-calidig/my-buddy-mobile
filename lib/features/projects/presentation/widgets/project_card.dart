@@ -62,9 +62,12 @@ class ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push(AppRoutes.projectDetail, extra: project),
-      child: Container(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push(AppRoutes.projectDetail, extra: project),
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: const Color(0xFF152445),
@@ -166,41 +169,46 @@ class ProjectCard extends StatelessWidget {
               ),
               const Spacer(),
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: const Color(0xFF6A81AE).withValues(alpha: 0.7),
+              InkWell(
+                onTap: () => context.push(AppRoutes.taskHub, extra: project),
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
                   ),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Icon(
-                      Icons.view_list_outlined,
-                      size: 13,
-                      color: Color(0xFFD6E5FF),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: const Color(0xFF6A81AE).withValues(alpha: 0.7),
                     ),
-                    SizedBox(width: 4),
-                    Text(
-                      'Task Hub',
-                      style: TextStyle(
-                        color: Color(0xFFE3EEFF),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Icon(
+                        Icons.view_list_outlined,
+                        size: 13,
+                        color: Color(0xFFD6E5FF),
                       ),
-                    ),
-                  ],
+                      SizedBox(width: 4),
+                      Text(
+                        'Task Hub',
+                        style: TextStyle(
+                          color: Color(0xFFE3EEFF),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
         ],
       ),
+        ),
       ),
     );
   }

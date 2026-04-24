@@ -1,7 +1,6 @@
 import 'package:core/core/constants/app_constants.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-
 /// Application Environments supported by the app.
 enum AppEnvironment { dev, staging, prod }
 
@@ -34,15 +33,9 @@ class EndPoints {
 
     switch (environment) {
       case AppEnvironment.prod:
-        return dotenv.get(
-          'PRODUCTION_URL',
-          fallback: '',
-        );
+        return dotenv.get('PRODUCTION_URL', fallback: '');
       case AppEnvironment.staging:
-        return dotenv.get(
-          'STAGING_URL',
-          fallback: '',
-        );
+        return dotenv.get('STAGING_URL', fallback: '');
       case AppEnvironment.dev:
         return dotenv.get('DEV_URL', fallback: AppConstants.devBaseUrl);
     }
@@ -82,16 +75,29 @@ class ApiRoutes {
   static String projectMemberRole(int projectId, String userId) =>
       '$base/api/projects/$projectId/members/$userId/role';
 
+  static String projectTasks(int projectId) =>
+      '$base/api/projects/$projectId/tasks';
+  static String projectTask(int projectId, int taskId) =>
+      '$base/api/projects/$projectId/tasks/$taskId';
+  static String projectBoardColumns(int projectId) =>
+      '$base/api/projects/$projectId/board-columns';
+  static String taskAttachments(int projectId, int taskId) =>
+      '$base/api/projects/$projectId/tasks/$taskId/attachments';
+  static String taskAttachmentUploadUrl(int projectId, int taskId) =>
+      '$base/api/projects/$projectId/tasks/$taskId/attachments/upload-url';
+  static String taskLinks(int projectId, int taskId) =>
+      '$base/api/projects/$projectId/tasks/$taskId/links';
+  static String taskComments(int projectId, int taskId) =>
+      '$base/api/projects/$projectId/tasks/$taskId/comments';
+
   static String get users => '$base/api/users';
   static String get techStacks => '$base/api/tech-stacks';
-
-
 
   // Cart
   static String get cartAdd => '$base/cart/add';
   static String get cartRemove => '$base/cart/remove';
   static const String stripeCreatePaymentIntent =
-      'https://api.stripe.com/v1/payment_intents'; 
+      'https://api.stripe.com/v1/payment_intents';
 
   // Payment Gateways
   // Stripe through backend proxy endpoints (never expose secret on client).
@@ -101,10 +107,10 @@ class ApiRoutes {
   static String stripeCancelPaymentIntent(String paymentIntentId) =>
       '$base/payments/stripe/$paymentIntentId/cancel';
 
-
   //Dashboard
   static String get dashHilights => '$base/api/dashboard-highlights';
-  static String get amsLeaveOverview => '$base/api/dashboard/ams-leave-overview';
+  static String get amsLeaveOverview =>
+      '$base/api/dashboard/ams-leave-overview';
   static String get dsr => '$base/api/dsr';
   static String dsrByDate(String date) => '$base/api/dsr/date/$date';
   static String get myDsr => '$base/api/dsr/my';

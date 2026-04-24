@@ -1,4 +1,5 @@
 import 'package:core/core/dependency_injection/injection_container.dart';
+import 'package:core/core/navigation/app_routes.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:core/features/auth/presentation/bloc/auth_state.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
@@ -7,6 +8,7 @@ import 'package:core/features/projects/presentation/bloc/project_detail_event.da
 import 'package:core/features/projects/presentation/bloc/project_detail_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../widgets/project_detail/project_detail_constants.dart';
 import '../widgets/project_detail/project_detail_common.dart';
 import '../widgets/project_detail/project_detail_tabs.dart';
@@ -145,11 +147,15 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 ),
             ],
           ),
-          const StatusBadge(
-            label: 'Task Hub',
-            icon: Icons.bar_chart_rounded,
-            color: Color(0xFF7B61FF),
-            bg: Color(0xFF1E1840),
+          InkWell(
+            onTap: () => context.push(AppRoutes.taskHub, extra: widget.project),
+            borderRadius: BorderRadius.circular(6),
+            child: const StatusBadge(
+              label: 'Task Hub',
+              icon: Icons.bar_chart_rounded,
+              color: Color(0xFF7B61FF),
+              bg: Color(0xFF1E1840),
+            ),
           ),
         ],
       ),

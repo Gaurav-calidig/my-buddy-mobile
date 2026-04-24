@@ -6,6 +6,7 @@ import 'package:core/core/dependency_injection/modules/dashboard_module.dart';
 import 'package:core/core/dependency_injection/modules/dsr_module.dart';
 import 'package:core/core/dependency_injection/modules/firebase_module.dart';
 import 'package:core/core/dependency_injection/modules/payments_module.dart';
+import 'package:core/core/dependency_injection/modules/taskhub_module.dart';
 import 'package:get_it/get_it.dart';
 import 'package:core/core/dependency_injection/modules/project_module.dart';
 
@@ -16,6 +17,7 @@ final sl = GetIt.instance;
 Future<void> init() async {
   registerCoreModule(sl);
   registerProjectModule(sl);
+  registerTaskHubModule(sl);
 
 
   if (FeatureFlags.enableFirebase) {

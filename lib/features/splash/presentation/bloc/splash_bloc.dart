@@ -8,6 +8,7 @@ import 'package:core/core/utils/shared_pref.dart';
 import 'package:core/features/splash/presentation/bloc/splash_event.dart';
 import 'package:core/features/splash/presentation/bloc/splash_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -40,6 +41,7 @@ class SplashBloc extends Bloc<SplashEvent, SplashState> {
 
   Future<bool> _hasActiveSession() async {
     if (FeatureFlags.enableFirebase &&
+        Firebase.apps.isNotEmpty &&
         FirebaseAuth.instance.currentUser != null) {
       return true;
     }

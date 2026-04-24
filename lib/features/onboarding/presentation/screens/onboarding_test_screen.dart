@@ -1,5 +1,6 @@
 import 'package:core/core/constants/assets_paths.dart';
 import 'package:core/core/constants/pref_keys.dart';
+import 'package:core/core/config/feature_flags.dart';
 import 'package:core/core/dependency_injection/injection_container.dart';
 import 'package:core/core/navigation/app_router.dart';
 import 'package:core/core/navigation/app_routes.dart';
@@ -145,54 +146,62 @@ class _OnboardingTestScreenState extends State<OnboardingTestScreen> {
   Widget build(BuildContext context) {
     final MediaQueryData mediaQuery = MediaQuery.of(context);
 
+    final Widget body = MediaQuery(
+      data: mediaQuery.copyWith(textScaler: const TextScaler.linear(1.0)),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: <Color>[
+              Color(0xFF061A3B),
+              Color(0xFF05142F),
+              Color(0xFF041127),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: <Widget>[
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: (int value) =>
+                      setState(() => _pageIndex = value),
+                  children: _pages(),
+                ),
+              ),
+              OnboardingPagerBar(
+                pageIndex: _pageIndex,
+                totalPages: _totalPages,
+                onSkip: _finish,
+                onNext: _next,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final bool canUseAuthBloc =
+        FeatureFlags.enableAuth && sl.isRegistered<AuthBloc>();
+
+    if (!canUseAuthBloc) {
+      return Scaffold(body: body);
+    }
+
     return Scaffold(
       body: BlocProvider(
         create: (context) => sl<AuthBloc>(),
         child: BlocListener<AuthBloc, AuthState>(
           listener: (context, state) {
-         if(state is AuthSuccess){
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-      AppRouter.router.go(AppRoutes.dashboard);
-    });
-         }
+            if (state is AuthSuccess) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                AppRouter.router.go(AppRoutes.dashboard);
+              });
+            }
           },
-          child: MediaQuery(
-        data: mediaQuery.copyWith(textScaler: TextScaler.linear(1.0)),
-        child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: <Color>[
-                    Color(0xFF061A3B),
-                    Color(0xFF05142F),
-                    Color(0xFF041127),
-                  ],
-                ),
-              ),
-              child: SafeArea(
-                child: Column(
-                  children: <Widget>[
-                    Expanded(
-                      child: PageView(
-                        controller: _pageController,
-                        onPageChanged: (int value) =>
-                         
-                        setState(() => _pageIndex = value),
-                        children: _pages(),
-                      ),
-                    ),
-                    OnboardingPagerBar(
-                      pageIndex: _pageIndex,
-                      totalPages: _totalPages,
-                      onSkip: _finish,
-                      onNext: _next,
-                    ),
-                  ],
-              ),
-            ),
-            ),
-          ),
+          child: body,
         ),
       ),
     );

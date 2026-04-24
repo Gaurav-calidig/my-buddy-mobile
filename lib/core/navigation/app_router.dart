@@ -46,6 +46,7 @@ import 'package:core/features/chat/presentation/bloc/chat_rooms_cubit.dart';
 import 'package:core/features/projects/presentation/screens/projects_screen.dart';
 import 'package:core/features/projects/presentation/screens/project_detail_screen.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
+import 'package:core/features/taskhub/presentation/screens/task_hub_screen.dart';
 import 'package:core/features/settings/presentation/screens/settings_screen.dart';
 
 
@@ -86,6 +87,20 @@ class AppRouter {
           }
           return NoTransitionPage(
             child: ProjectDetailScreen(project: project),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.taskHub,
+        pageBuilder: (_, state) {
+          final project = state.extra as ProjectEntity?;
+          if (project == null) {
+            return const NoTransitionPage(
+              child: RouteErrorPage(routeName: 'Missing project data'),
+            );
+          }
+          return NoTransitionPage(
+            child: TaskHubScreen(project: project),
           );
         },
       ),

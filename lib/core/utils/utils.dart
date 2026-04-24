@@ -115,6 +115,11 @@ class AppUtils {
         return 'powerpoint';
       case 'txt':
         return 'text';
+      case 'mp4':
+      case 'mov':
+      case 'avi':
+      case 'mkv':
+        return 'video';
       default:
         return extension;
     }

@@ -14,6 +14,7 @@ class AppRoutes {
   static const String dashboard = '/dashboard';
   static const String projects = '/projects';
   static const String projectDetail = '/project-detail';
+  static const String taskHub = '/task-hub';
   static const String myDsr = '/my-dsr';
   static const String capacityPlanner = '/capacity-planner';
   static const String attendance = '/attendance';

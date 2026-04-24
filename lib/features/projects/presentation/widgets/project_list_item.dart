@@ -121,7 +121,8 @@ class ProjectTableRow extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        context.push(AppRoutes.projectDetail, extra: project);},
+        context.push(AppRoutes.projectDetail, extra: project);
+      },
       child: Container(
       height: 56,
       decoration: const BoxDecoration(
@@ -256,17 +257,46 @@ class ProjectTableRow extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                     ],
-                    const Text(
-                      'View',
-                      style: TextStyle(
-                        color: Color(0xFFD9E7FF),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                    InkWell(
+                      onTap: () => context.push(
+                        AppRoutes.projectDetail,
+                        extra: project,
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'View',
+                            style: TextStyle(
+                              color: Color(0xFFD9E7FF),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          SizedBox(width: 6),
+                          Icon(
+                            Icons.arrow_forward,
+                            size: 15,
+                            color: Color(0xFFBED2F7),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 6),
-                    const Icon(Icons.arrow_forward,
-                        size: 15, color: Color(0xFFBED2F7)),
+                    const SizedBox(width: 10),
+                    Tooltip(
+                      message: 'Task Hub',
+                      child: InkWell(
+                        onTap: () => context.push(
+                          AppRoutes.taskHub,
+                          extra: project,
+                        ),
+                        child: const Icon(
+                          Icons.view_kanban_outlined,
+                          size: 18,
+                          color: Color(0xFFD9E7FF),
+                        ),
+                      ),
+                    ),
                   ],
                 );
               },
