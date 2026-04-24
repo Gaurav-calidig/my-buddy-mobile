@@ -22,7 +22,7 @@ class TaskStatusColumn extends StatefulWidget {
   final String projectPrefix;
   final Map<String, String> assigneeById;
   final VoidCallback onAddPressed;
-  final ValueChanged<TaskEntity> onTaskDropped;
+  final void Function(TaskEntity task, int position) onTaskDropped;
   final ValueChanged<Offset?>? onDragPositionChanged;
   final ValueChanged<TaskEntity> onTaskTapped;
 
@@ -32,6 +32,19 @@ class TaskStatusColumn extends StatefulWidget {
 
 class _TaskStatusColumnState extends State<TaskStatusColumn> {
   bool _hovering = false;
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,15 +83,13 @@ class _TaskStatusColumnState extends State<TaskStatusColumn> {
         Expanded(
           child: DragTarget<TaskEntity>(
             onWillAcceptWithDetails: (details) {
-              final incoming = details.data;
-              final ok = incoming.columnId != widget.column.id;
-              if (ok) setState(() => _hovering = true);
-              return ok;
+              setState(() => _hovering = true);
+              return true;
             },
             onLeave: (_) => setState(() => _hovering = false),
             onAcceptWithDetails: (details) {
               setState(() => _hovering = false);
-              widget.onTaskDropped(details.data);
+              widget.onTaskDropped(details.data, widget.tasks.length);
             },
             builder: (context, candidates, rejects) {
               return AnimatedContainer(
@@ -98,17 +109,42 @@ class _TaskStatusColumnState extends State<TaskStatusColumn> {
                     ? _EmptyHint(columnName: widget.column.name)
                     : Scrollbar(
                         thumbVisibility: true,
+                        controller: _scrollController,
                         child: ListView.separated(
+                          controller: _scrollController,
+                          primary: false,
                           padding: EdgeInsets.zero,
                           itemCount: widget.tasks.length,
                           separatorBuilder: (context, index) =>
                               const SizedBox(height: 12),
-                          itemBuilder: (context, i) => TaskTicketCard(
-                            task: widget.tasks[i],
-                            projectPrefix: widget.projectPrefix,
-                            assigneeLabel: widget.assigneeById[widget.tasks[i].assignee],
-                            onDragPositionChanged: widget.onDragPositionChanged,
-                            onTap: () => widget.onTaskTapped(widget.tasks[i]),
+                          itemBuilder: (context, i) => DragTarget<TaskEntity>(
+                            onAcceptWithDetails: (details) {
+                              widget.onTaskDropped(details.data, i);
+                            },
+                            builder: (context, candidates, rejects) {
+                              final isTargeted = candidates.isNotEmpty;
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (isTargeted)
+                                    Container(
+                                      height: 4,
+                                      margin: const EdgeInsets.only(bottom: 8),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.kcDarkPrimary,
+                                        borderRadius: BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                  TaskTicketCard(
+                                    task: widget.tasks[i],
+                                    projectPrefix: widget.projectPrefix,
+                                    assigneeLabel: widget.assigneeById[widget.tasks[i].assignee],
+                                    onDragPositionChanged: widget.onDragPositionChanged,
+                                    onTap: () => widget.onTaskTapped(widget.tasks[i]),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ),
                       ),

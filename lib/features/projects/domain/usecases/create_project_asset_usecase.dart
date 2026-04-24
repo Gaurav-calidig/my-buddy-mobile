@@ -1,0 +1,24 @@
+import 'package:core/features/projects/domain/entities/project_asset_entity.dart';
+import 'package:core/features/projects/domain/repositories/project_repository.dart';
+
+class CreateProjectAssetUseCase {
+  final ProjectRepository repository;
+  CreateProjectAssetUseCase(this.repository);
+  Future<ProjectAssetEntity> call({
+    required int projectId,
+    required String name,
+    required String type,
+    required String environment,
+    required String value,
+    required String allowedRoles,
+    required String allowedUserIds,
+  }) => repository.createProjectAsset(
+        projectId: projectId,
+        name: name,
+        type: type,
+        environment: environment,
+        value: value,
+        allowedRoles: allowedRoles,
+        allowedUserIds: allowedUserIds,
+      );
+}

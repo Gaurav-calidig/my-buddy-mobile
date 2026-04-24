@@ -1,38 +1,66 @@
 import 'dart:math';
 
 import 'package:core/features/projects/domain/entities/project_entity.dart';
-import 'package:core/features/taskhub/data/datasources/task_hub_remote_data_source.dart';
 import 'package:core/features/taskhub/domain/entities/board_column_entity.dart';
 import 'package:core/features/taskhub/domain/entities/task_entity.dart';
 import 'package:core/features/taskhub/domain/entities/task_assignee_entity.dart';
 import 'package:core/features/taskhub/domain/enums/task_board_type.dart';
 import 'package:core/features/taskhub/domain/enums/task_priority.dart';
+import 'package:core/features/taskhub/domain/usecases/get_board_columns_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/get_project_assignees_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/get_tasks_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/update_task_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/reorder_board_columns_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/create_board_column_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/delete_board_column_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/move_task_usecase.dart';
 import 'package:core/features/taskhub/presentation/bloc/task_hub_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class TaskHubCubit extends Cubit<TaskHubState> {
   TaskHubCubit({
     required this.project,
-    required TaskHubRemoteDataSource remoteDataSource,
-  })  : _remoteDataSource = remoteDataSource,
+    required GetBoardColumnsUseCase getBoardColumnsUseCase,
+    required GetTasksUseCase getTasksUseCase,
+    required GetProjectAssigneesUseCase getProjectAssigneesUseCase,
+    required UpdateTaskUseCase updateTaskUseCase,
+    required ReorderBoardColumnsUseCase reorderBoardColumnsUseCase,
+    required CreateBoardColumnUseCase createBoardColumnUseCase,
+    required DeleteBoardColumnUseCase deleteBoardColumnUseCase,
+    required MoveTaskUseCase moveTaskUseCase,
+  })  : _getBoardColumnsUseCase = getBoardColumnsUseCase,
+        _getTasksUseCase = getTasksUseCase,
+        _getProjectAssigneesUseCase = getProjectAssigneesUseCase,
+        _updateTaskUseCase = updateTaskUseCase,
+        _reorderBoardColumnsUseCase = reorderBoardColumnsUseCase,
+        _createBoardColumnUseCase = createBoardColumnUseCase,
+        _deleteBoardColumnUseCase = deleteBoardColumnUseCase,
+        _moveTaskUseCase = moveTaskUseCase,
         super(TaskHubState.initial()) {
     load(boardType: TaskBoardType.kanban);
   }
 
   final ProjectEntity project;
-  final TaskHubRemoteDataSource _remoteDataSource;
+  final GetBoardColumnsUseCase _getBoardColumnsUseCase;
+  final GetTasksUseCase _getTasksUseCase;
+  final GetProjectAssigneesUseCase _getProjectAssigneesUseCase;
+  final UpdateTaskUseCase _updateTaskUseCase;
+  final ReorderBoardColumnsUseCase _reorderBoardColumnsUseCase;
+  final CreateBoardColumnUseCase _createBoardColumnUseCase;
+  final DeleteBoardColumnUseCase _deleteBoardColumnUseCase;
+  final MoveTaskUseCase _moveTaskUseCase;
 
   Future<void> load({required TaskBoardType boardType}) async {
     emit(state.copyWith(status: TaskHubLoadStatus.loading, boardType: boardType));
 
     try {
       final results = await Future.wait([
-        _remoteDataSource.getBoardColumns(
+        _getBoardColumnsUseCase(
           projectId: project.id,
           boardType: boardType,
         ),
-        _remoteDataSource.getTasks(projectId: project.id, boardType: boardType),
-        _remoteDataSource.getProjectAssignees(projectId: project.id),
+        _getTasksUseCase(projectId: project.id, boardType: boardType),
+        _getProjectAssigneesUseCase(projectId: project.id),
       ]);
 
       final columns = (results[0] as List<BoardColumnEntity>)
@@ -85,23 +113,6 @@ class TaskHubCubit extends Cubit<TaskHubState> {
     }
   }
 
-  void moveTask({
-    required TaskEntity task,
-    required int toColumnId,
-  }) {
-    if (task.columnId == toColumnId) return;
-
-    final next = <int, List<TaskEntity>>{};
-    for (final entry in state.tasksByColumnId.entries) {
-      next[entry.key] = entry.value.where((t) => t.id != task.id).toList();
-    }
-
-    final moved = task.copyWith(columnId: toColumnId);
-    next[toColumnId] = [...(next[toColumnId] ?? const []), moved];
-
-    emit(state.copyWith(tasksByColumnId: _freezeTasks(next)));
-  }
-
   void addTaskLocal({
     required int columnId,
     required String title,
@@ -152,7 +163,7 @@ class TaskHubCubit extends Cubit<TaskHubState> {
     String? title,
   }) async {
     try {
-      await _remoteDataSource.updateTask(
+      await _updateTaskUseCase(
         projectId: project.id,
         taskId: taskId,
         assigneeId: assigneeId,
@@ -169,6 +180,79 @@ class TaskHubCubit extends Cubit<TaskHubState> {
     }
   }
 
+  Future<void> reorderColumns(List<int> columnIds) async {
+    emit(state.copyWith(status: TaskHubLoadStatus.loading));
+    try {
+      final updated = await _reorderBoardColumnsUseCase(
+        projectId: project.id,
+        columnIds: columnIds,
+      );
+      final sorted = List<BoardColumnEntity>.from(updated)
+        ..sort((a, b) => a.position.compareTo(b.position));
+
+      emit(state.copyWith(
+        status: TaskHubLoadStatus.loaded,
+        columns: List<BoardColumnEntity>.unmodifiable(sorted),
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        status: TaskHubLoadStatus.error,
+        errorMessage: e.toString(),
+      ));
+    }
+  }
+
+  Future<void> createColumn(String name) async {
+    emit(state.copyWith(status: TaskHubLoadStatus.loading));
+    try {
+      await _createBoardColumnUseCase(
+        projectId: project.id,
+        name: name,
+        boardType: state.boardType,
+      );
+      await load(boardType: state.boardType);
+    } catch (e) {
+      emit(state.copyWith(
+        status: TaskHubLoadStatus.error,
+        errorMessage: e.toString(),
+      ));
+    }
+  }
+
+  Future<void> deleteColumn(int columnId) async {
+    emit(state.copyWith(status: TaskHubLoadStatus.loading));
+    try {
+      await _deleteBoardColumnUseCase(
+        projectId: project.id,
+        columnId: columnId,
+      );
+      await load(boardType: state.boardType);
+    } catch (e) {
+      emit(state.copyWith(
+        status: TaskHubLoadStatus.error,
+        errorMessage: e.toString(),
+      ));
+    }
+  }
+
+  Future<void> moveTask({
+    required int taskId,
+    required int columnId,
+    required int position,
+  }) async {
+    try {
+      await _moveTaskUseCase(
+        projectId: project.id,
+        taskId: taskId,
+        columnId: columnId,
+        position: position,
+      );
+      await load(boardType: state.boardType);
+    } catch (e) {
+      emit(state.copyWith(errorMessage: e.toString()));
+    }
+  }
+
   Map<int, List<TaskEntity>> _freezeTasks(Map<int, List<TaskEntity>> input) {
     final out = <int, List<TaskEntity>>{};
     for (final entry in input.entries) {
@@ -177,3 +261,4 @@ class TaskHubCubit extends Cubit<TaskHubState> {
     return Map<int, List<TaskEntity>>.unmodifiable(out);
   }
 }
+

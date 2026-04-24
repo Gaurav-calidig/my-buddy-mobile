@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:core/core/theme/app_colors.dart';
@@ -10,6 +11,8 @@ import 'package:core/features/taskhub/presentation/bloc/task_hub_cubit.dart';
 import 'package:core/features/taskhub/presentation/bloc/task_hub_state.dart';
 import 'package:core/features/taskhub/presentation/widgets/task_status_column.dart';
 import 'package:core/features/taskhub/presentation/widgets/task_hub_task_dialog.dart';
+import 'package:core/features/taskhub/presentation/widgets/manage_states_dialog.dart';
+import 'package:core/features/taskhub/presentation/widgets/manage_sprints_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -28,9 +31,32 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
   final GlobalKey _boardKey = GlobalKey();
   final ValueNotifier<Offset?> _dragGlobalPosition = ValueNotifier(null);
   String _taskFilter = 'All Tasks';
+  Timer? _scrollTimer;
 
   void _handleDragPosition(Offset? globalPosition) {
     _dragGlobalPosition.value = globalPosition;
+    if (globalPosition != null) {
+      _startScrollTimer();
+    } else {
+      _stopScrollTimer();
+    }
+  }
+
+  void _startScrollTimer() {
+    if (_scrollTimer != null) return;
+    _scrollTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
+      final pos = _dragGlobalPosition.value;
+      if (pos != null) {
+        _maybeAutoScrollHorizontal(pos);
+      } else {
+        _stopScrollTimer();
+      }
+    });
+  }
+
+  void _stopScrollTimer() {
+    _scrollTimer?.cancel();
+    _scrollTimer = null;
   }
 
   void _maybeAutoScrollHorizontal(Offset globalPosition) {
@@ -43,16 +69,16 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
     final local = renderObject.globalToLocal(globalPosition);
     final width = renderObject.size.width;
 
-    const edge = 56.0;
-    const maxStep = 22.0;
+    const edge = 80.0; // Increased edge sensitivity for smoother start
+    const maxStep = 14.0; // Reduced step for smoother, more controlled scroll
 
     double delta = 0;
     if (local.dx < edge) {
       final strength = (edge - local.dx).clamp(0, edge) / edge;
-      delta = -maxStep * strength;
+      delta = -maxStep * pow(strength, 2); // Exponential speed for better feel
     } else if (local.dx > width - edge) {
       final strength = (local.dx - (width - edge)).clamp(0, edge) / edge;
-      delta = maxStep * strength;
+      delta = maxStep * pow(strength, 2);
     }
 
     if (delta == 0) return;
@@ -66,17 +92,47 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
 
   @override
   void dispose() {
+    _stopScrollTimer();
     _searchController.dispose();
     _horizontalController.dispose();
     _dragGlobalPosition.dispose();
     super.dispose();
   }
 
+  void _onSettings() {
+    showDialog(
+      context: context,
+      builder: (ctx) => BlocProvider.value(
+        value: context.read<TaskHubCubit>(),
+        child: const ManageStatesDialog(),
+      ),
+    );
+  }
+
+  void _onManageSprints() async {
+    await showDialog(
+      context: context,
+      builder: (ctx) => ManageSprintsDialog(projectId: widget.project.id),
+    );
+    if (!mounted) return;
+    context.read<TaskHubCubit>().load(boardType: context.read<TaskHubCubit>().state.boardType);
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) =>
-          TaskHubCubit(project: widget.project, remoteDataSource: sl()),
+          TaskHubCubit(
+        project: widget.project,
+        getBoardColumnsUseCase: sl(),
+        getTasksUseCase: sl(),
+        getProjectAssigneesUseCase: sl(),
+        updateTaskUseCase: sl(),
+        reorderBoardColumnsUseCase: sl(),
+        createBoardColumnUseCase: sl(),
+        deleteBoardColumnUseCase: sl(),
+        moveTaskUseCase: sl(),
+      ),
       child: BlocBuilder<TaskHubCubit, TaskHubState>(
         builder: (context, state) {
           return Scaffold(
@@ -112,13 +168,8 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
                           ),
                         );
                       },
-                      onSettings: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Settings not implemented yet.'),
-                          ),
-                        );
-                      },
+                      onSettings: _onSettings,
+                      onManageSprints: _onManageSprints,
                     ),
                     const SizedBox(height: 12),
                     Expanded(
@@ -164,6 +215,7 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
 
                           return Scrollbar(
                             thumbVisibility: true,
+                            controller: _horizontalController,
                             child: ValueListenableBuilder<Offset?>(
                               valueListenable: _dragGlobalPosition,
                               builder: (context, dragPos, child) {
@@ -258,10 +310,11 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
         if (!mounted || created == null) return;
         cubit.load(boardType: cubit.state.boardType);
       },
-      onTaskDropped: (task) {
+      onTaskDropped: (task, position) {
         context.read<TaskHubCubit>().moveTask(
-          task: task,
-          toColumnId: column.id,
+          taskId: task.id,
+          columnId: column.id,
+          position: position,
         );
       },
       onTaskTapped: (task) async {
@@ -301,6 +354,7 @@ class _HeaderBar extends StatelessWidget {
     required this.onBoardTypeChanged,
     required this.onExport,
     required this.onSettings,
+    required this.onManageSprints,
   });
 
   final String projectName;
@@ -313,6 +367,7 @@ class _HeaderBar extends StatelessWidget {
   final ValueChanged<TaskBoardType> onBoardTypeChanged;
   final VoidCallback onExport;
   final VoidCallback onSettings;
+  final VoidCallback onManageSprints;
 
   @override
   Widget build(BuildContext context) {
@@ -404,6 +459,12 @@ class _HeaderBar extends StatelessWidget {
               icon: Icons.download,
               onPressed: onExport,
             ),
+            if (boardType == TaskBoardType.sprint)
+              _DarkButton(
+                label: 'Manage Sprints',
+                icon: Icons.date_range,
+                onPressed: onManageSprints,
+              ),
             _BoardTypeDropdown(value: boardType, onChanged: onBoardTypeChanged),
           ],
         );

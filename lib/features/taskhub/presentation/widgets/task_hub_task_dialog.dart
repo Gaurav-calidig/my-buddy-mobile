@@ -7,7 +7,20 @@ import 'package:core/core/widgets/custom_video_player.dart';
 import 'package:core/core/widgets/document_viewer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
-import 'package:core/features/taskhub/data/datasources/task_hub_remote_data_source.dart';
+import 'package:core/features/taskhub/domain/usecases/create_attachment_metadata_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/create_attachment_upload_url_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/create_comment_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/create_link_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/create_task_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/delete_attachment_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/delete_task_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/get_attachments_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/get_comments_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/get_links_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/get_project_assignees_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/update_task_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/upload_to_presigned_url_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/delete_link_usecase.dart';
 import 'package:core/features/taskhub/domain/entities/board_column_entity.dart';
 import 'package:core/features/taskhub/domain/entities/task_assignee_entity.dart';
 import 'package:core/features/taskhub/domain/entities/task_attachment_entity.dart';
@@ -53,19 +66,33 @@ class TaskHubTaskDialog extends StatefulWidget {
 }
 
 class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
-  final _remote = sl<TaskHubRemoteDataSource>();
+  final _getProjectAssigneesUseCase = sl<GetProjectAssigneesUseCase>();
+  final _getAttachmentsUseCase = sl<GetAttachmentsUseCase>();
+  final _getLinksUseCase = sl<GetLinksUseCase>();
+  final _getCommentsUseCase = sl<GetCommentsUseCase>();
+  final _createAttachmentUploadUrlUseCase = sl<CreateAttachmentUploadUrlUseCase>();
+  final _uploadToPresignedUrlUseCase = sl<UploadToPresignedUrlUseCase>();
+  final _createAttachmentMetadataUseCase = sl<CreateAttachmentMetadataUseCase>();
+  final _createTaskUseCase = sl<CreateTaskUseCase>();
+  final _updateTaskUseCase = sl<UpdateTaskUseCase>();
+  final _deleteTaskUseCase = sl<DeleteTaskUseCase>();
+  final _createCommentUseCase = sl<CreateCommentUseCase>();
+  final _deleteAttachmentUseCase = sl<DeleteAttachmentUseCase>();
+  final _createLinkUseCase = sl<CreateLinkUseCase>();
+  final _deleteLinkUseCase = sl<DeleteLinkUseCase>();
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _commentController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
+  bool _busy = false;
   TaskTicketType _ticketType = TaskTicketType.task;
   TaskPriority _priority = TaskPriority.medium;
   String? _assigneeId;
   DateTime? _dueDate;
   late int _columnId;
 
-  bool _busy = false;
   List<TaskAssigneeEntity> _assignees = const [];
   List<TaskAttachmentEntity> _attachments = const [];
   List<TaskLinkEntity> _links = const [];
@@ -106,12 +133,13 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
     _titleController.dispose();
     _descriptionController.dispose();
     _commentController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   Future<void> _loadAssignees() async {
     try {
-      final a = await _remote.getProjectAssignees(projectId: widget.project.id);
+      final a = await _getProjectAssigneesUseCase(projectId: widget.project.id);
       if (!mounted) return;
       setState(() => _assignees = a);
     } catch (_) {
@@ -125,9 +153,9 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
 
     try {
       final results = await Future.wait([
-        _remote.getAttachments(projectId: widget.project.id, taskId: task.id),
-        _remote.getLinks(projectId: widget.project.id, taskId: task.id),
-        _remote.getComments(projectId: widget.project.id, taskId: task.id),
+        _getAttachmentsUseCase(projectId: widget.project.id, taskId: task.id),
+        _getLinksUseCase(projectId: widget.project.id, taskId: task.id),
+        _getCommentsUseCase(projectId: widget.project.id, taskId: task.id),
       ]);
 
       if (!mounted) return;
@@ -159,7 +187,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
       final fileName = f.name;
       final fileSize = bytes.length;
 
-      final uploadInfo = await _remote.createAttachmentUploadUrl(
+      final uploadInfo = await _createAttachmentUploadUrlUseCase(
         projectId: widget.project.id,
         taskId: taskId,
         contentType: contentType,
@@ -173,13 +201,13 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
         continue;
       }
 
-      await _remote.uploadToPresignedUrl(
+      await _uploadToPresignedUrlUseCase(
         uploadUrl: uploadUrl,
         bytes: bytes,
         contentType: contentType,
       );
 
-      await _remote.createAttachmentMetadata(
+      await _createAttachmentMetadataUseCase(
         projectId: widget.project.id,
         taskId: taskId,
         contentType: contentType,
@@ -204,7 +232,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
             ? null
             : '<p>$descriptionText</p>';
 
-        final created = await _remote.createTask(
+        final created = await _createTaskUseCase(
           projectId: widget.project.id,
           boardType: widget.boardType,
           columnId: _columnId,
@@ -239,7 +267,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
             ? null
             : '<p>$descriptionText</p>';
 
-        final updated = await _remote.updateTask(
+        final updated = await _updateTaskUseCase(
           projectId: widget.project.id,
           taskId: widget.task!.id,
           title: title,
@@ -319,7 +347,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
 
     setState(() => _busy = true);
     try {
-      await _remote.deleteTask(projectId: widget.project.id, taskId: task.id);
+      await _deleteTaskUseCase(projectId: widget.project.id, taskId: task.id);
       if (!mounted) return;
       Navigator.of(context).pop<bool>(true);
     } catch (e) {
@@ -339,7 +367,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
     if (content.isEmpty) return;
     setState(() => _busy = true);
     try {
-      await _remote.createComment(
+      await _createCommentUseCase(
         projectId: widget.project.id,
         taskId: task.id,
         content: content,
@@ -402,7 +430,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
 
     setState(() => _busy = true);
     try {
-      await _remote.deleteAttachment(
+      await _deleteAttachmentUseCase(
         projectId: widget.project.id,
         taskId: widget.task!.id,
         attachmentId: attachmentId,
@@ -449,7 +477,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
 
     setState(() => _busy = true);
     try {
-      await _remote.createLink(
+      await _createLinkUseCase(
         projectId: widget.project.id,
         taskId: task.id,
         linkedTaskId: selectedTask.id,
@@ -497,15 +525,20 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
       view.devicePixelRatio,
     );
     final dialogWidth = maxWidth < 720 ? maxWidth - 24 : 980.0;
-    final availableHeight = (maxHeight - viewInsets.bottom - 24).clamp(
-      280.0,
-      maxHeight,
-    );
+    
+    // Stable height that doesn't change with keyboard
+    final availableHeight = (maxHeight * 0.9).clamp(300.0, 900.0);
+    
+    // Calculate how much we can push up without hitting the top
+    final topMargin = (maxHeight - availableHeight) / 2;
+    final pushAmount = viewInsets.bottom > 0 
+        ? (viewInsets.bottom - 20).clamp(0.0, topMargin - 12) 
+        : 0.0;
 
     return AnimatedPadding(
-      duration: const Duration(milliseconds: 140),
+      duration: const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,
-      padding: EdgeInsets.only(bottom: viewInsets.bottom),
+      padding: EdgeInsets.only(bottom: pushAmount),
       child: Dialog(
         insetPadding: const EdgeInsets.all(12),
         backgroundColor: Colors.transparent,
@@ -528,7 +561,9 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
               children: [
                 Scrollbar(
                   thumbVisibility: true,
+                  controller: _scrollController,
                   child: SingleChildScrollView(
+                    controller: _scrollController,
                     keyboardDismissBehavior:
                         ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: const EdgeInsets.only(right: 6),
@@ -599,6 +634,16 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                               ),
                               _assigneeDropdown(),
                               _dueDateField(),
+                              _dropdown<int>(
+                                label: 'State',
+                                value: _columnId,
+                                items: widget.columns.map((c) => c.id).toList(),
+                                labelFor: (id) => widget.columns
+                                    .firstWhere((c) => c.id == id,
+                                        orElse: () => widget.columns.first)
+                                    .name,
+                                onChanged: (v) => setState(() => _columnId = v),
+                              ),
                             ];
 
                             if (isMobile) {
@@ -628,6 +673,12 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                                     Expanded(child: items[2]),
                                     const SizedBox(width: 12),
                                     Expanded(child: items[3]),
+                                  ],
+                                ),
+                                const SizedBox(height: 14),
+                                Row(
+                                  children: [
+                                    Expanded(child: items[4]),
                                   ],
                                 ),
                               ],
@@ -730,6 +781,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                                         (l) => _linkRow(
                                           displayId: l.linkedTaskDisplayId,
                                           title: l.linkedTaskTitle,
+                                          linkId: l.id,
                                         ),
                                       )
                                       .toList(growable: false),
@@ -1075,6 +1127,25 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
               initialDate: _dueDate ?? now,
               firstDate: DateTime(now.year - 5),
               lastDate: DateTime(now.year + 10),
+              builder: (context, child) {
+                return Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: const ColorScheme.dark(
+                      primary: AppColors.kcDarkPrimary,
+                      onPrimary: Colors.white,
+                      surface: Color(0xFF121F3D),
+                      onSurface: AppColors.kcDarkTextPrimary,
+                    ),
+                    dialogBackgroundColor: const Color(0xFF121F3D),
+                    textButtonTheme: TextButtonThemeData(
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.kcDarkPrimary,
+                      ),
+                    ),
+                  ),
+                  child: child!,
+                );
+              },
             );
             if (!mounted) return;
             if (selected != null) setState(() => _dueDate = selected);
@@ -1174,7 +1245,11 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
     );
   }
 
-  Widget _linkRow({required String displayId, required String title}) {
+  Widget _linkRow({
+    required String displayId,
+    required String title,
+    required int linkId,
+  }) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.all(12),
@@ -1214,9 +1289,52 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          IconButton(
+            onPressed: _busy ? null : () => _deleteLink(linkId),
+            icon: const Icon(
+              Icons.close,
+              size: 18,
+              color: AppColors.kcDarkTextMuted,
+            ),
+            splashRadius: 18,
+            tooltip: 'Remove link',
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _deleteLink(int linkId) async {
+    if (_busy || widget.task == null) return;
+    setState(() => _busy = true);
+    try {
+      await _deleteLinkUseCase(
+        projectId: widget.project.id,
+        taskId: widget.task!.id,
+        linkId: linkId,
+      );
+      // Re-load to refresh links
+      final results = await Future.wait([
+        _getAttachmentsUseCase(projectId: widget.project.id, taskId: widget.task!.id),
+        _getLinksUseCase(projectId: widget.project.id, taskId: widget.task!.id),
+        _getCommentsUseCase(projectId: widget.project.id, taskId: widget.task!.id),
+      ]);
+      if (mounted) {
+        setState(() {
+          _attachments = results[0] as List<TaskAttachmentEntity>;
+          _links = results[1] as List<TaskLinkEntity>;
+          _comments = results[2] as List<TaskCommentEntity>;
+          _busy = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _busy = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete link: $e')),
+        );
+      }
+    }
   }
 
   Widget _commentBox() {

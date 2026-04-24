@@ -1,7 +1,20 @@
 import 'package:core/features/projects/domain/entities/project_asset_entity.dart';
 import 'package:core/features/projects/domain/entities/tech_stack_entity.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:core/features/projects/domain/usecases/project_detail_usecases.dart';
+import 'package:core/features/projects/domain/usecases/get_project_assets_usecase.dart';
+import 'package:core/features/projects/domain/usecases/get_deleted_project_assets_usecase.dart';
+import 'package:core/features/projects/domain/usecases/get_project_members_usecase.dart';
+import 'package:core/features/projects/domain/usecases/get_project_tech_stacks_usecase.dart';
+import 'package:core/features/projects/domain/usecases/create_project_asset_usecase.dart';
+import 'package:core/features/projects/domain/usecases/update_project_asset_usecase.dart';
+import 'package:core/features/projects/domain/usecases/delete_project_asset_usecase.dart';
+import 'package:core/features/projects/domain/usecases/restore_project_asset_usecase.dart';
+import 'package:core/features/projects/domain/usecases/get_all_users_usecase.dart';
+import 'package:core/features/projects/domain/usecases/add_project_member_usecase.dart';
+import 'package:core/features/projects/domain/usecases/get_all_tech_stacks_usecase.dart';
+import 'package:core/features/projects/domain/usecases/update_project_tech_stacks_usecase.dart';
+import 'package:core/features/projects/domain/usecases/update_project_member_role_usecase.dart';
+import 'package:core/features/projects/domain/usecases/remove_project_member_usecase.dart';
 import 'project_detail_event.dart';
 import 'project_detail_state.dart';
 

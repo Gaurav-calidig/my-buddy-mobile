@@ -2,8 +2,9 @@ import 'package:core/core/theme/app_colors.dart';
 import 'package:core/features/taskhub/domain/entities/task_entity.dart';
 import 'package:core/features/taskhub/domain/enums/task_priority.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-class TaskTicketCard extends StatelessWidget {
+class TaskTicketCard extends StatefulWidget {
   const TaskTicketCard({
     super.key,
     required this.task,
@@ -20,37 +21,70 @@ class TaskTicketCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final card = _CardBody(
-      task: task,
-      projectPrefix: projectPrefix,
-      assigneeLabel: assigneeLabel,
-    );
-    final tappableCard = Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: card,
-      ),
-    );
+  State<TaskTicketCard> createState() => _TaskTicketCardState();
+}
 
-    return Draggable<TaskEntity>(
-      data: task,
-      onDragUpdate: (details) => onDragPositionChanged?.call(
+class _TaskTicketCardState extends State<TaskTicketCard> {
+  bool _isDragging = false;
+
+  @override
+  Widget build(BuildContext context) {
+    // The handle that initiates the drag
+    final dragHandle = Draggable<TaskEntity>(
+      data: widget.task,
+      onDragUpdate: (details) => widget.onDragPositionChanged?.call(
         details.globalPosition,
       ),
-      onDragEnd: (_) => onDragPositionChanged?.call(null),
-      onDraggableCanceled: (_, __) => onDragPositionChanged?.call(null),
+      onDragStarted: () => setState(() => _isDragging = true),
+      onDragEnd: (_) {
+        if (mounted) setState(() => _isDragging = false);
+        widget.onDragPositionChanged?.call(null);
+      },
+      onDraggableCanceled: (_, __) {
+        if (mounted) setState(() => _isDragging = false);
+        widget.onDragPositionChanged?.call(null);
+      },
       feedback: Material(
         color: Colors.transparent,
         child: SizedBox(
           width: 320,
-          child: Opacity(opacity: 0.92, child: card),
+          child: Opacity(
+            opacity: 0.92,
+            child: _CardBody(
+              task: widget.task,
+              projectPrefix: widget.projectPrefix,
+              assigneeLabel: widget.assigneeLabel,
+            ),
+          ),
         ),
       ),
-      childWhenDragging: Opacity(opacity: 0.45, child: tappableCard),
-      child: tappableCard,
+      child: const Padding(
+        padding: EdgeInsets.only(right: 8),
+        child: Icon(
+          Icons.drag_indicator,
+          size: 18,
+          color: AppColors.kcDarkTextMuted,
+        ),
+      ),
+    );
+
+    final card = _CardBody(
+      task: widget.task,
+      projectPrefix: widget.projectPrefix,
+      assigneeLabel: widget.assigneeLabel,
+      dragHandle: dragHandle,
+    );
+
+    return Opacity(
+      opacity: _isDragging ? 0.45 : 1.0,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: card,
+        ),
+      ),
     );
   }
 }
@@ -60,11 +94,13 @@ class _CardBody extends StatelessWidget {
     required this.task,
     required this.projectPrefix,
     this.assigneeLabel,
+    this.dragHandle,
   });
 
   final TaskEntity task;
   final String projectPrefix;
   final String? assigneeLabel;
+  final Widget? dragHandle;
 
   @override
   Widget build(BuildContext context) {
@@ -82,12 +118,16 @@ class _CardBody extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.drag_indicator,
-                size: 18,
-                color: AppColors.kcDarkTextMuted,
-              ),
-              const SizedBox(width: 8),
+              if (dragHandle != null)
+                dragHandle!
+              else ...[
+                const Icon(
+                  Icons.drag_indicator,
+                  size: 18,
+                  color: AppColors.kcDarkTextMuted,
+                ),
+                const SizedBox(width: 8),
+              ],
               Expanded(
                 child: Text(
                   '$projectPrefix-${task.taskNumber}',
@@ -123,7 +163,61 @@ class _CardBody extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 12),
-          _PriorityPill(priority: task.priority),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _PriorityPill(priority: task.priority),
+                  if (task.ticketType.toLowerCase() == 'bug') ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF421C1C),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFF8B2C2C).withValues(alpha: 0.6),
+                        ),
+                      ),
+                      child: const Text(
+                        'BUG',
+                        style: TextStyle(
+                          color: Color(0xFFFF8A8A),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              if (task.dueDate != null)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.calendar_today_outlined,
+                      size: 14,
+                      color: AppColors.kcDarkTextMuted,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      DateFormat('MMM d, y').format(task.dueDate!),
+                      style: const TextStyle(
+                        color: AppColors.kcDarkTextMuted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
         ],
       ),
     );

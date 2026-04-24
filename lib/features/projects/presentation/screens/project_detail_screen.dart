@@ -114,39 +114,51 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         color: kPanel,
         border: Border(bottom: BorderSide(color: kBorder)),
       ),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        crossAxisAlignment: WrapCrossAlignment.center,
+      child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(Icons.arrow_back_ios_new, color: kTextPrimary, size: 20),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.project.name,
-                style: const TextStyle(
-                  color: kTextPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Outfit',
+          Expanded(
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.arrow_back_ios_new, color: kTextPrimary, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 ),
-              ),
-              if (widget.project.prefix.isNotEmpty)
-                Text(
-                  widget.project.prefix,
-                  style: const TextStyle(
-                    color: kTextMuted,
-                    fontSize: 12,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.project.name,
+                        style: const TextStyle(
+                          color: kTextPrimary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Outfit',
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (widget.project.prefix.isNotEmpty)
+                        Text(
+                          widget.project.prefix,
+                          style: const TextStyle(
+                            color: kTextMuted,
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
                   ),
                 ),
-            ],
+              ],
+            ),
           ),
+          const SizedBox(width: 12),
           InkWell(
             onTap: () => context.push(AppRoutes.taskHub, extra: widget.project),
             borderRadius: BorderRadius.circular(6),

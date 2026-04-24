@@ -5,6 +5,7 @@ import 'package:core/features/taskhub/data/models/task_assignee_model.dart';
 import 'package:core/features/taskhub/data/models/task_attachment_model.dart';
 import 'package:core/features/taskhub/data/models/task_comment_model.dart';
 import 'package:core/features/taskhub/data/models/task_link_model.dart';
+import 'package:core/features/taskhub/data/models/sprint_model.dart';
 import 'package:core/features/taskhub/data/models/task_model.dart';
 import 'package:core/features/taskhub/domain/enums/task_board_type.dart';
 import 'package:dio/dio.dart';
@@ -106,6 +107,61 @@ abstract class TaskHubRemoteDataSource {
     required int projectId,
     required int taskId,
     required int attachmentId,
+  });
+
+  Future<List<BoardColumnModel>> reorderBoardColumns({
+    required int projectId,
+    required List<int> columnIds,
+  });
+
+  Future<BoardColumnModel> createBoardColumn({
+    required int projectId,
+    required String name,
+    required TaskBoardType boardType,
+  });
+
+  Future<void> deleteBoardColumn({
+    required int projectId,
+    required int columnId,
+  });
+ 
+  Future<void> moveTask({
+    required int projectId,
+    required int taskId,
+    required int columnId,
+    required int position,
+  });
+
+  Future<void> deleteLink({
+    required int projectId,
+    required int taskId,
+    required int linkId,
+  });
+
+  Future<List<SprintModel>> getSprints(int projectId);
+  
+  Future<SprintModel> createSprint({
+    required int projectId,
+    required String name,
+    required DateTime startDate,
+    required DateTime endDate,
+    required String goal,
+    required String status,
+  });
+
+  Future<SprintModel> updateSprint({
+    required int projectId,
+    required int sprintId,
+    String? name,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? goal,
+    String? status,
+  });
+
+  Future<void> deleteSprint({
+    required int projectId,
+    required int sprintId,
   });
 }
 
@@ -490,6 +546,187 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
       );
     } catch (e) {
       logger.e('Error deleting attachment', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<BoardColumnModel>> reorderBoardColumns({
+    required int projectId,
+    required List<int> columnIds,
+  }) async {
+    try {
+      final response = await apiService.patch(
+        ApiRoutes.reorderBoardColumns(projectId),
+        {'columnIds': columnIds},
+      );
+
+      if (response.data != null && response.data is List) {
+        final List<dynamic> data = response.data;
+        return data
+            .whereType<Map>()
+            .map((e) => BoardColumnModel.fromJson(Map<String, dynamic>.from(e)))
+            .toList(growable: false);
+      }
+
+      throw Exception('Reorder columns failed');
+    } catch (e) {
+      logger.e('Error reordering columns', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<BoardColumnModel> createBoardColumn({
+    required int projectId,
+    required String name,
+    required TaskBoardType boardType,
+  }) async {
+    try {
+      final response = await apiService.post(
+        ApiRoutes.projectBoardColumns(projectId),
+        {
+          'name': name,
+          'boardType': boardType.apiValue,
+        },
+      );
+
+      if (response.data != null && response.data is Map) {
+        return BoardColumnModel.fromJson(Map<String, dynamic>.from(response.data));
+      }
+
+      throw Exception('Create board column failed');
+    } catch (e) {
+      logger.e('Error creating board column', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteBoardColumn({
+    required int projectId,
+    required int columnId,
+  }) async {
+    try {
+      await apiService.delete(ApiRoutes.projectBoardColumn(projectId, columnId));
+    } catch (e) {
+      logger.e('Error deleting board column', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> moveTask({
+    required int projectId,
+    required int taskId,
+    required int columnId,
+    required int position,
+  }) async {
+    try {
+      await apiService.patch(
+        ApiRoutes.moveTask(projectId, taskId),
+        {
+          'columnId': columnId,
+          'position': position,
+        },
+      );
+    } catch (e) {
+      logger.e('Error moving task', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteLink({
+    required int projectId,
+    required int taskId,
+    required int linkId,
+  }) async {
+    try {
+      await apiService.delete(ApiRoutes.taskLinkDetail(projectId, taskId, linkId));
+    } catch (e) {
+      logger.e('Error deleting task link', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<SprintModel>> getSprints(int projectId) async {
+    try {
+      final response = await apiService.get(ApiRoutes.projectSprints(projectId));
+      final data = response.data as List;
+      return data.map((json) => SprintModel.fromJson(json as Map<String, dynamic>)).toList();
+    } catch (e) {
+      logger.e('Error fetching sprints', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<SprintModel> createSprint({
+    required int projectId,
+    required String name,
+    required DateTime startDate,
+    required DateTime endDate,
+    required String goal,
+    required String status,
+  }) async {
+    try {
+      final response = await apiService.post(
+        ApiRoutes.projectSprints(projectId),
+        {
+          'name': name,
+          'startDate': startDate.toIso8601String().split('T')[0],
+          'endDate': endDate.toIso8601String().split('T')[0],
+          'goal': goal,
+          'status': status,
+        },
+      );
+      return SprintModel.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      logger.e('Error creating sprint', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<SprintModel> updateSprint({
+    required int projectId,
+    required int sprintId,
+    String? name,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? goal,
+    String? status,
+  }) async {
+    try {
+      final data = <String, dynamic>{};
+      if (name != null) data['name'] = name;
+      if (startDate != null) data['startDate'] = startDate.toIso8601String().split('T')[0];
+      if (endDate != null) data['endDate'] = endDate.toIso8601String().split('T')[0];
+      if (goal != null) data['goal'] = goal;
+      if (status != null) data['status'] = status;
+
+      final response = await apiService.patch(
+        ApiRoutes.projectSprintDetail(projectId, sprintId),
+        data,
+      );
+      return SprintModel.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      logger.e('Error updating sprint', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteSprint({
+    required int projectId,
+    required int sprintId,
+  }) async {
+    try {
+      await apiService.delete(ApiRoutes.projectSprintDetail(projectId, sprintId));
+    } catch (e) {
+      logger.e('Error deleting sprint', error: e);
       rethrow;
     }
   }

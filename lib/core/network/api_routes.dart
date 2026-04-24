@@ -81,14 +81,26 @@ class ApiRoutes {
       '$base/api/projects/$projectId/tasks/$taskId';
   static String projectBoardColumns(int projectId) =>
       '$base/api/projects/$projectId/board-columns';
+  static String projectBoardColumn(int projectId, int columnId) =>
+      '$base/api/projects/$projectId/board-columns/$columnId';
+  static String reorderBoardColumns(int projectId) =>
+      '$base/api/projects/$projectId/board-columns/reorder';
   static String taskAttachments(int projectId, int taskId) =>
       '$base/api/projects/$projectId/tasks/$taskId/attachments';
   static String taskAttachmentUploadUrl(int projectId, int taskId) =>
       '$base/api/projects/$projectId/tasks/$taskId/attachments/upload-url';
   static String taskLinks(int projectId, int taskId) =>
       '$base/api/projects/$projectId/tasks/$taskId/links';
+  static String taskLinkDetail(int projectId, int taskId, int linkId) =>
+      '$base/api/projects/$projectId/tasks/$taskId/links/$linkId';
   static String taskComments(int projectId, int taskId) =>
       '$base/api/projects/$projectId/tasks/$taskId/comments';
+  static String moveTask(int projectId, int taskId) =>
+      '$base/api/projects/$projectId/tasks/$taskId/move';
+  static String projectSprints(int projectId) =>
+      '$base/api/projects/$projectId/sprints';
+  static String projectSprintDetail(int projectId, int sprintId) =>
+      '$base/api/projects/$projectId/sprints/$sprintId';
 
   static String get users => '$base/api/users';
   static String get techStacks => '$base/api/tech-stacks';

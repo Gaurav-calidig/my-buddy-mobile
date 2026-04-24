@@ -104,15 +104,15 @@ class ProjectsView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Text(
-            'Projects',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Outfit',
-            ),
-          ),
+          // const Text(
+          //   'Projects',
+          //   style: TextStyle(
+          //     color: Colors.white,
+          //     fontSize: 32,
+          //     fontWeight: FontWeight.bold,
+          //     fontFamily: 'Outfit',
+          //   ),
+          // ),
           const SizedBox(height: 8),
           const Text(
             'Manage your projects and teams',
@@ -134,110 +134,156 @@ class ProjectsView extends StatelessWidget {
   Widget _buildControlsRow(BuildContext context, Color border) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
-        final isSuperAdmin =
-            authState is AuthSuccess && authState.user.portalRole == 'super_admin';
+        final isSuperAdmin = authState is AuthSuccess &&
+            authState.user.portalRole == 'super_admin';
 
-        return Row(
-          children: <Widget>[
-            Expanded(
-              child: Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0F1A33),
-                  border: Border.all(color: border.withValues(alpha: 0.65)),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: TextField(
-                  controller: searchController,
-                  onChanged: onSearchChanged,
-                  style: const TextStyle(color: Color(0xFFDCE8FF), fontSize: 15),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    prefixIcon: Icon(
-                      Icons.search,
-                      size: 18,
-                      color: Color(0xFF7F95BE),
-                    ),
-                    hintText: 'Search projects...',
-                    hintStyle: TextStyle(color: Color(0xFF8EA5CD), fontSize: 15),
-                    contentPadding: EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 8,
-                    ),
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isSmall = constraints.maxWidth < 600;
+
+            final searchBar = Container(
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F1A33),
+                border: Border.all(color: border.withValues(alpha: 0.65)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: TextField(
+                controller: searchController,
+                onChanged: onSearchChanged,
+                style: const TextStyle(color: Color(0xFFDCE8FF), fontSize: 15),
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 18,
+                    color: Color(0xFF7F95BE),
+                  ),
+                  hintText: 'Search projects...',
+                  hintStyle: TextStyle(color: Color(0xFF8EA5CD), fontSize: 15),
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 8,
                   ),
                 ),
               ),
-            ),
-            if (isSuperAdmin) ...[
-              const SizedBox(width: 16),
-              ElevatedButton.icon(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (innerContext) => ProjectModal(
-                      onSave: (name, description, isBillable) {
-                        context.read<ProjectBloc>().add(
-                              CreateProject(
-                                name: name,
-                                description: description,
-                                isBillable: isBillable,
-                              ),
-                            );
-                      },
+            );
+
+            final createButton = isSuperAdmin
+                ? ElevatedButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (innerContext) => ProjectModal(
+                          onSave: (name, description, isBillable) {
+                            context.read<ProjectBloc>().add(
+                                  CreateProject(
+                                    name: name,
+                                    description: description,
+                                    isBillable: isBillable,
+                                  ),
+                                );
+                          },
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.add, size: 18, color: Colors.white),
+                    label: Text(
+                      isSmall ? 'Create' : 'Create Project',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                      ),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.add, size: 18, color: Colors.white),
-                label: const Text(
-                  'Create Project',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2D75FF),
+                      minimumSize: const Size(0, 40),
+                      padding: EdgeInsets.symmetric(horizontal: isSmall ? 12 : 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  )
+                : const SizedBox.shrink();
+
+            final archivedToggle = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: Checkbox(
+                    value: showArchived,
+                    onChanged: (bool? value) {
+                      onArchivedChanged(value ?? false);
+                    },
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    side: const BorderSide(color: Color(0xFF5F82C7), width: 1.2),
                   ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2D75FF),
-                  minimumSize: const Size(0, 40),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                const SizedBox(width: 8),
+                Text(
+                  isSmall ? 'Archived' : 'Show\nArchived',
+                  style: const TextStyle(
+                      color: Color(0xFFB7C8E8), fontSize: 12, height: 1.0),
+                ),
+              ],
+            );
+
+            final viewToggles = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _viewToggle(
+                  icon: Icons.grid_view_rounded,
+                  active: !isListView,
+                  onTap: () => onViewChanged(false),
+                ),
+                const SizedBox(width: 6),
+                _viewToggle(
+                  icon: Icons.menu,
+                  active: isListView,
+                  onTap: () => onViewChanged(true),
+                ),
+              ],
+            );
+
+            if (isSmall) {
+              return Column(
+                children: [
+                  searchBar,
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      if (isSuperAdmin) ...[
+                        createButton,
+                        const Spacer(),
+                      ],
+                      archivedToggle,
+                      const SizedBox(width: 12),
+                      viewToggles,
+                    ],
                   ),
-                ),
-              ),
-            ],
-            const SizedBox(width: 16),
-            SizedBox(
-              width: 18,
-              height: 18,
-              child: Checkbox(
-                value: showArchived,
-                onChanged: (bool? value) {
-                  onArchivedChanged(value ?? false);
-                },
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                side: const BorderSide(color: Color(0xFF5F82C7), width: 1.2),
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Show\nArchived',
-              style: TextStyle(color: Color(0xFFB7C8E8), fontSize: 12, height: 1.0),
-            ),
-            const SizedBox(width: 16),
-            _viewToggle(
-              icon: Icons.grid_view_rounded,
-              active: !isListView,
-              onTap: () => onViewChanged(false),
-            ),
-            const SizedBox(width: 6),
-            _viewToggle(
-              icon: Icons.menu,
-              active: isListView,
-              onTap: () => onViewChanged(true),
-            ),
-          ],
+                ],
+              );
+            }
+
+            return Row(
+              children: <Widget>[
+                Expanded(child: searchBar),
+                const SizedBox(width: 16),
+                if (isSuperAdmin) ...[
+                  createButton,
+                  const SizedBox(width: 16),
+                ],
+                archivedToggle,
+                const SizedBox(width: 16),
+                viewToggles,
+              ],
+            );
+          },
         );
       },
     );
