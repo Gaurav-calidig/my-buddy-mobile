@@ -35,16 +35,13 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
   }
 
   List<String> get _hoursOptions => List<String>.generate(19, (int index) {
-    final double value = index * 0.5;
-    return '${value.toStringAsFixed(1)}h';
-  });
+        final double value = index * 0.5;
+        return '${value.toStringAsFixed(1)}h';
+      });
 
   DateTime get _todayKey => _dayKey(DateTime.now());
 
   DateTime _dayKey(DateTime date) => DateTime(date.year, date.month, date.day);
-
-  bool _isSameDate(DateTime a, DateTime b) =>
-      a.year == b.year && a.month == b.month && a.day == b.day;
 
   String _formatDate(DateTime date) {
     final String day = date.day.toString().padLeft(2, '0');
@@ -53,12 +50,20 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     return '$day/$month/$year';
   }
 
+  String _toDisplayStatus(String raw) {
+    final String normalized = raw.trim().replaceAll('_', ' ').toLowerCase();
+    if (normalized.isEmpty) return 'Completed';
+    return normalized
+        .split(RegExp(r'\s+'))
+        .where((String word) => word.isNotEmpty)
+        .map((String word) => '${word[0].toUpperCase()}${word.substring(1)}')
+        .join(' ');
+  }
+
   void _addEntry(DsrState state, DateTime selectedDate) {
     final String projectName = (_selectedProject ?? '').trim();
     final String selectedHours = (_selectedHours ?? '').trim();
-    if (projectName.isEmpty || selectedHours.isEmpty) {
-      return;
-    }
+    if (projectName.isEmpty || selectedHours.isEmpty) return;
 
     final int projectIndex = state.projects.indexWhere((p) => p.name == projectName);
     if (projectIndex == -1) return;
@@ -66,17 +71,17 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
 
     final String normalizedHours = selectedHours.replaceAll('h', '').trim();
     final String description = _descriptionController.text.trim();
-    final String status = _selectedStatus.trim().toLowerCase();
+    final String status = _selectedStatus.trim().toLowerCase().replaceAll(' ', '_');
 
     context.read<DsrBloc>().add(
-      DsrCreateRequested(
-        projectId: project.id,
-        date: selectedDate,
-        description: description,
-        hours: normalizedHours,
-        status: status,
-      ),
-    );
+          DsrCreateRequested(
+            projectId: project.id,
+            date: selectedDate,
+            description: description,
+            hours: normalizedHours,
+            status: status,
+          ),
+        );
 
     setState(() {
       _selectedHours = null;
@@ -85,8 +90,42 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     });
   }
 
-  void _deleteEntry(DateTime date, int index) {
-    // Keeping current delete action local-only by design until delete API is wired.
+  Future<void> _deleteEntry(DateTime date, int index) async {
+    final DateTime dateKey = _dayKey(date);
+    final List<DsrEntryEntity> entries = context.read<DsrBloc>().state.entriesByDate[dateKey] ?? <DsrEntryEntity>[];
+    if (index < 0 || index >= entries.length) return;
+    final String dsrId = entries[index].id.trim();
+    if (dsrId.isEmpty) return;
+
+    final bool? shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppColors.kcBackgroundColorDark,
+          title: const Text(
+            'Delete DSR Entry',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          ),
+          content: const Text(
+            'Are you sure you want to delete this entry?',
+            style: TextStyle(color: AppColors.kcDarkTextPrimary),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true || !mounted) return;
+    context.read<DsrBloc>().add(DsrDeleteRequested(dsrId: dsrId, date: dateKey));
   }
 
   Future<void> _editEntry({
@@ -95,655 +134,183 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     required int index,
     required DsrEntryEntity current,
   }) async {
-    final TextEditingController descController = TextEditingController(text: current.description);
     final List<String> projectNames = state.projects.map((p) => p.name).toList(growable: false);
-    String? selectedProject = projectNames.contains(current.project)
-        ? current.project
-        : (projectNames.isNotEmpty ? projectNames.first : null);
-    String selectedStatus = current.status;
+    String? selectedProject = projectNames.contains(current.project) ? current.project : (projectNames.isNotEmpty ? projectNames.first : null);
+    final String currentStatusLabel = _toDisplayStatus(current.status);
+    String selectedStatus = _statuses.firstWhere((String item) => item.toLowerCase() == currentStatusLabel.toLowerCase(), orElse: () => 'Completed');
     String? selectedHours = '${current.hours.toStringAsFixed(1)}h';
+    String description = current.description;
 
     final bool? shouldSave = await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: AppColors.kcBackgroundColorDark,
-          title: const Text(
-            'Edit DSR Entry',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-          ),
-          content: SingleChildScrollView(
-            child: SizedBox(
-              width: 340,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  const DsrLabel('Project'),
-                  DsrDropdownField<String>(
-                    value: selectedProject,
-                    hintText: 'Select project',
-                    items: projectNames,
-                    onChanged: (String? v) => selectedProject = v,
+      builder: (BuildContext dialogContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, void Function(void Function()) setDialogState) {
+            return AlertDialog(
+              backgroundColor: AppColors.kcBackgroundColorDark,
+              title: const Text('Edit DSR Entry', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              content: SingleChildScrollView(
+                child: SizedBox(
+                  width: 340,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      const DsrLabel('Project'),
+                      DsrDropdownField<String>(value: selectedProject, hintText: 'Select project', items: projectNames, onChanged: (String? v) => setDialogState(() => selectedProject = v)),
+                      const SizedBox(height: 10),
+                      const DsrLabel('Hours'),
+                      DsrDropdownField<String>(value: selectedHours, hintText: 'Select hours', items: _hoursOptions, onChanged: (String? v) => setDialogState(() => selectedHours = v)),
+                      const SizedBox(height: 10),
+                      const DsrLabel('Status'),
+                      DsrDropdownField<String>(
+                        value: selectedStatus,
+                        hintText: 'Select status',
+                        items: _statuses,
+                        onChanged: (String? v) {
+                          if (v == null) return;
+                          setDialogState(() => selectedStatus = v);
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      const DsrLabel('Description'),
+                      TextFormField(
+                        initialValue: description,
+                        maxLines: 4,
+                        style: const TextStyle(color: AppColors.kcDarkTextPrimary),
+                        decoration: dsrFieldDecoration('What did you work on?'),
+                        onChanged: (String value) => description = value,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 10),
-                  const DsrLabel('Hours'),
-                  DsrDropdownField<String>(
-                    value: selectedHours,
-                    hintText: 'Select hours',
-                    items: _hoursOptions,
-                    onChanged: (String? v) => selectedHours = v,
-                  ),
-                  const SizedBox(height: 10),
-                  const DsrLabel('Status'),
-                  DsrDropdownField<String>(
-                    value: selectedStatus,
-                    hintText: 'Select status',
-                    items: _statuses,
-                    onChanged: (String? v) {
-                      if (v != null) selectedStatus = v;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  const DsrLabel('Description'),
-                  TextField(
-                    controller: descController,
-                    maxLines: 4,
-                    style: const TextStyle(color: AppColors.kcDarkTextPrimary),
-                    decoration: dsrFieldDecoration('What did you work on?'),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Save'),
-            ),
-          ],
+              actions: <Widget>[
+                TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
+                TextButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Save')),
+              ],
+            );
+          },
         );
       },
     );
 
     if (shouldSave != true || selectedHours == null) return;
-    descController.dispose();
+    final String dsrId = current.id.trim();
+    if (dsrId.isEmpty || !mounted) return;
+
+    final String normalizedHours = selectedHours!.replaceAll('h', '').trim();
+    final String normalizedDescription = description.trim();
+    final String normalizedStatus = selectedStatus.trim().toLowerCase().replaceAll(' ', '_');
+    context.read<DsrBloc>().add(
+          DsrUpdateRequested(
+            dsrId: dsrId,
+            date: _dayKey(date),
+            description: normalizedDescription,
+            hours: normalizedHours,
+            status: normalizedStatus,
+          ),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-           drawer: const TemplateFeatureDrawer(),
+      drawer: const TemplateFeatureDrawer(),
       appBar: const CustomAppBar(title: 'DSR'),
       body: BlocBuilder<DsrBloc, DsrState>(
-        builder: (context, state) {
+        builder: (BuildContext context, DsrState state) {
           final DateTime selectedDate = state.selectedDate ?? _todayKey;
           final bool showTabLoader = state.isLoading;
           final List<String> projectNames = state.projects.map((p) => p.name).toList(growable: false);
           if (_selectedProject == null && projectNames.isNotEmpty) {
             _selectedProject = projectNames.first;
           }
-      
-          return Container(
-        height: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom],
-              ),
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(8, 10, 8, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  const Text(
-                    'Daily Status Report',
-                    style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    'Log your daily work activity and hours',
-                    style: TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 14),
-                  ),
-                  const SizedBox(height: 10),
-                  _tabStrip(),
-                  const SizedBox(height: 10),
-                  if (state.errorMessage != null) ...<Widget>[
-                    Text(
-                      state.errorMessage!,
-                      style: const TextStyle(
-                        color: AppColors.kcDarkErrorText,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+
+          final DateTime dateKey = _dayKey(selectedDate);
+          final List<DsrEntryEntity> addTabEntries = state.entriesByDate[dateKey] ?? <DsrEntryEntity>[];
+          final double addTabTotalHours = addTabEntries.fold<double>(0, (double sum, DsrEntryEntity entry) => sum + entry.hours);
+
+          final DateTime today = _todayKey;
+          final DateTime yesterday = today.subtract(const Duration(days: 1));
+          final List<MapEntry<DateTime, List<DsrEntryEntity>>> historyGroups = state.entriesByDate.entries.toList()..sort((a, b) => b.key.compareTo(a.key));
+
+          return LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              return Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom]),
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(8, 10, 8, 20),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        const Text('Daily Status Report', style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 2),
+                        const Text('Log your daily work activity and hours', style: TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 14)),
+                        const SizedBox(height: 10),
+                        DsrTabStripWidget(
+                          isAddSelected: _activeTab == _DsrTab.add,
+                          onAddTap: () => setState(() => _activeTab = _DsrTab.add),
+                          onHistoryTap: () {
+                            setState(() => _activeTab = _DsrTab.history);
+                            context.read<DsrBloc>().add(const DsrHistoryLoadRequested());
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        if (state.errorMessage != null) ...<Widget>[
+                          Text(state.errorMessage!, style: const TextStyle(color: AppColors.kcDarkErrorText, fontSize: 12, fontWeight: FontWeight.w600)),
+                          const SizedBox(height: 10),
+                        ],
+                        if (showTabLoader)
+                          const Padding(padding: EdgeInsets.only(top: 24), child: Center(child: CircularProgressIndicator()))
+                        else if (_activeTab == _DsrTab.add)
+                          DsrAddTabWidget(
+                            selectedDate: selectedDate,
+                            today: today,
+                            yesterday: yesterday,
+                            totalHours: addTabTotalHours,
+                            projectNames: projectNames,
+                            selectedProject: _selectedProject,
+                            selectedHours: _selectedHours,
+                            selectedStatus: _selectedStatus,
+                            descriptionController: _descriptionController,
+                            entries: addTabEntries,
+                            formatDate: _formatDate,
+                            onDateChanged: (DateTime value) => context.read<DsrBloc>().add(DsrDateChangedRequested(value)),
+                            onProjectChanged: (String? value) => setState(() => _selectedProject = value),
+                            onHoursChanged: (String? value) => setState(() => _selectedHours = value),
+                            onStatusChanged: (String? value) {
+                              if (value != null) setState(() => _selectedStatus = value);
+                            },
+                            onAdd: () => _addEntry(state, selectedDate),
+                            onEdit: (int index, DsrEntryEntity entry) => _editEntry(state: state, date: selectedDate, index: index, current: entry),
+                            onDelete: (int index) => _deleteEntry(selectedDate, index),
+                            statuses: _statuses,
+                            hoursOptions: _hoursOptions,
+                          )
+                        else
+                          DsrHistoryTabWidget(
+                            historyGroups: historyGroups,
+                            today: today,
+                            yesterday: yesterday,
+                            formatDate: _formatDate,
+                            onEdit: (DateTime date, int index, DsrEntryEntity entry) => _editEntry(state: state, date: date, index: index, current: entry),
+                            onDelete: (DateTime date, int index) => _deleteEntry(date, index),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 10),
-                  ],
-                  if (showTabLoader)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 24),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else if (_activeTab == _DsrTab.add)
-                    _buildAddTab(state: state, selectedDate: selectedDate, projectNames: projectNames)
-                  else
-                    _buildHistoryTab(state),
-                ],
-              ),
-            ),
+                  ),
+                ),
+              );
+            },
           );
         },
-      ),
-    );
-  }
-
-  Widget _tabStrip() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.kcDarkCardSoft,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.kcDarkBorderStrong),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          DsrTabButton(
-            title: 'Add DSR',
-            selected: _activeTab == _DsrTab.add,
-            onTap: () => setState(() => _activeTab = _DsrTab.add),
-          ),
-          DsrTabButton(
-            title: 'My DSR History',
-            selected: _activeTab == _DsrTab.history,
-            onTap: () {
-              setState(() => _activeTab = _DsrTab.history);
-              context.read<DsrBloc>().add(const DsrHistoryLoadRequested());
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAddTab({
-    required DsrState state,
-    required DateTime selectedDate,
-    required List<String> projectNames,
-  }) {
-    final DateTime dateKey = _dayKey(selectedDate);
-    final List<DsrEntryEntity> entries = state.entriesByDate[dateKey] ?? <DsrEntryEntity>[];
-    final double totalHours = entries.fold<double>(0, (double sum, DsrEntryEntity entry) => sum + entry.hours);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Container(
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: AppColors.kcDarkInput,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.kcDarkBorderSoft),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<DateTime>(
-              value: selectedDate,
-              dropdownColor: AppColors.kcBackgroundColorDark,
-              iconEnabledColor: AppColors.kcDarkTextSecondary,
-              style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontWeight: FontWeight.w600),
-              items: <DateTime>[
-                _todayKey,
-                _todayKey.subtract(const Duration(days: 1)),
-              ].map((date) {
-                final bool isToday = _isSameDate(date, _todayKey);
-                final String label = isToday ? 'Today' : 'Yesterday';
-                return DropdownMenuItem<DateTime>(
-                  value: date,
-                  child: Text('$label (${_formatDate(date)})'),
-                );
-              }).toList(growable: false),
-              onChanged: (value) {
-                if (value == null) return;
-                context.read<DsrBloc>().add(DsrDateChangedRequested(value));
-              },
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: AppColors.kcDarkInput,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.kcDarkBorderMid),
-          ),
-          child: Text(
-            '${totalHours.toStringAsFixed(1)}h logged',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        DsrCardShell(
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const Text(
-                  'Add Entry',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                const DsrLabel('Project'),
-                DsrDropdownField<String>(
-                  value: _selectedProject,
-                  hintText: 'Select project',
-                  items: projectNames,
-                  onChanged: (String? value) => setState(() => _selectedProject = value),
-                ),
-                const SizedBox(height: 10),
-                const DsrLabel('Hours'),
-                DsrDropdownField<String>(
-                  value: _selectedHours,
-                  hintText: 'Select hours',
-                  items: _hoursOptions,
-                  onChanged: (String? value) =>
-                      setState(() => _selectedHours = value),
-                ),
-                const SizedBox(height: 10),
-                const DsrLabel('Status'),
-                DsrDropdownField<String>(
-                  value: _selectedStatus,
-                  hintText: 'Select status',
-                  items: _statuses,
-                  onChanged: (String? value) {
-                    if (value != null) setState(() => _selectedStatus = value);
-                  },
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _addEntry(state, selectedDate),
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('Add'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.kcDarkPrimarySoft,
-                      foregroundColor: AppColors.kcDarkTextPrimary,
-                      minimumSize: const Size.fromHeight(40),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const DsrLabel('Description'),
-                TextField(
-                  controller: _descriptionController,
-                  maxLines: 3,
-                  style: const TextStyle(color: AppColors.kcDarkTextPrimary),
-                  decoration: dsrFieldDecoration('What did you work on?'),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        _buildEntriesCard(state: state, date: selectedDate, entries: entries),
-      ],
-    );
-  }
-
-  Widget _buildEntriesCard({
-    required DsrState state,
-    required DateTime date,
-    required List<DsrEntryEntity> entries,
-  }) {
-    return DsrCardShell(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'Entries for ${_formatDate(date)}',
-              style: const TextStyle(
-                color: AppColors.kcDarkTextPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Divider(color: AppColors.kcDarkBorderSoft, height: 1),
-            const SizedBox(height: 10),
-            _entriesHeaderRow(),
-            const SizedBox(height: 8),
-            if (entries.isEmpty)
-              const SizedBox(
-                height: 90,
-                child: Center(
-                  child: Text(
-                    'No DSR entries found for selected date.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.kcDarkTextFaint, height: 1.35),
-                  ),
-                ),
-              )
-            else
-              ...List<Widget>.generate(entries.length, (int index) {
-                final entry = entries[index];
-                return _todayEntryRow(state: state, date: date, index: index, entry: entry);
-              }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _entriesHeaderRow() {
-    return const Row(
-      children: <Widget>[
-        Expanded(
-          child: Text(
-            'Project & Description',
-            style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 12, fontWeight: FontWeight.w600),
-          ),
-        ),
-        SizedBox(
-          width: 130,
-          child: Text(
-            'Hours / Status',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 12, fontWeight: FontWeight.w600),
-          ),
-        ),
-        SizedBox(
-          width: 70,
-          child: Text(
-            'Actions',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 12, fontWeight: FontWeight.w600),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _todayEntryRow({
-    required DsrState state,
-    required DateTime date,
-    required int index,
-    required DsrEntryEntity entry,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
-      decoration: BoxDecoration(
-        color: AppColors.kcDarkSurface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.kcDarkBorderStrong),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  entry.project,
-                  style: const TextStyle(
-                    color: AppColors.kcDarkTextPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    height: 1.25,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(9),
-                  decoration: BoxDecoration(
-                    color: AppColors.kcDarkReadOnlyBg,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    entry.description.isEmpty ? 'No description provided.' : entry.description,
-                    style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 12, height: 1.35),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 130,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.kcDarkBorderMid),
-                  ),
-                  child: Text(
-                    '${entry.hours.toStringAsFixed(1)}h',
-                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                DsrStatusPill(status: entry.status),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 70,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                InkWell(
-                  onTap: () => _editEntry(state: state, date: date, index: index, current: entry),
-                  child: const Icon(Icons.edit_outlined, color: AppColors.kcDarkTextPrimary, size: 17),
-                ),
-                const SizedBox(width: 10),
-                InkWell(
-                  onTap: () => _deleteEntry(date, index),
-                  child: const Icon(Icons.delete_outline, color: AppColors.kcDarkTextPrimary, size: 17),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHistoryTab(DsrState state) {
-    final DateTime today = _todayKey;
-    final List<MapEntry<DateTime, List<DsrEntryEntity>>> historyGroups = state.entriesByDate.entries
-        .where((MapEntry<DateTime, List<DsrEntryEntity>> e) => !_isSameDate(e.key, today))
-        .toList()
-      ..sort((a, b) => b.key.compareTo(a.key));
-
-    if (historyGroups.isEmpty) {
-      return const DsrCardShell(
-        child: Padding(
-          padding: EdgeInsets.all(14),
-          child: Text('No history records found.', style: TextStyle(color: AppColors.kcDarkTextFaint)),
-        ),
-      );
-    }
-
-    return Column(
-      children: historyGroups.map((MapEntry<DateTime, List<DsrEntryEntity>> group) {
-        final DateTime date = group.key;
-        final List<DsrEntryEntity> entries = group.value;
-        final double total = entries.fold<double>(0, (double s, DsrEntryEntity e) => s + e.hours);
-        final DateTime yesterday = _todayKey.subtract(const Duration(days: 1));
-        final bool canMutate = _isSameDate(date, yesterday);
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: _historyCard(state: state, date: date, entries: entries, total: total, canMutate: canMutate),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _historyCard({
-    required DsrState state,
-    required DateTime date,
-    required List<DsrEntryEntity> entries,
-    required double total,
-    required bool canMutate,
-  }) {
-    return DsrCardShell(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Row(
-              children: <Widget>[
-                Text(
-                  _formatDate(date),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const Spacer(),
-                if (!canMutate)
-                  Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.kcDarkReadOnlyBg,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.kcDarkReadOnlyBorder),
-                    ),
-                    child: const Text('Read-only', style: TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 10, fontWeight: FontWeight.w600)),
-                  ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.kcDarkBorderMid),
-                  ),
-                  child: Text(
-                    '${total.toStringAsFixed(1)}h',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            const DsrHistoryHeaderRow(),
-            const SizedBox(height: 8),
-            ...List<Widget>.generate(entries.length, (int index) {
-              final DsrEntryEntity entry = entries[index];
-              return _historyEntryRow(state: state, date: date, index: index, entry: entry, canMutate: canMutate);
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _historyEntryRow({
-    required DsrState state,
-    required DateTime date,
-    required int index,
-    required DsrEntryEntity entry,
-    required bool canMutate,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
-      decoration: BoxDecoration(
-        color: AppColors.kcDarkSurface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.kcDarkBorderStrong),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Expanded(
-                flex: 3,
-                child: Text(entry.project, style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 13, fontWeight: FontWeight.w700)),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.kcDarkBorderMid),
-                ),
-                child: Text(
-                  '${entry.hours.toStringAsFixed(1)}h',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              DsrStatusPill(status: entry.status),
-              if (canMutate) ...<Widget>[
-                const SizedBox(width: 8),
-                InkWell(
-                  onTap: () => _editEntry(state: state, date: date, index: index, current: entry),
-                  child: const Icon(Icons.edit_outlined, color: AppColors.kcDarkTextPrimary, size: 17),
-                ),
-                const SizedBox(width: 10),
-                InkWell(
-                  onTap: () => _deleteEntry(date, index),
-                  child: const Icon(Icons.delete_outline, color: AppColors.kcDarkTextPrimary, size: 17),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(color: AppColors.kcDarkReadOnlyBg, borderRadius: BorderRadius.circular(6)),
-            child: Text(
-              entry.description.isEmpty ? 'No description provided.' : entry.description,
-              style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 12, height: 1.35),
-            ),
-          ),
-        ],
       ),
     );
   }

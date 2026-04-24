@@ -112,6 +112,17 @@ class ApiRoutes {
   static String get amsLeaveOverview =>
       '$base/api/dashboard/ams-leave-overview';
   static String get dsr => '$base/api/dsr';
+  static String dsrById(String dsrId) => '$base/api/dsr/$dsrId';
   static String dsrByDate(String date) => '$base/api/dsr/date/$date';
   static String get myDsr => '$base/api/dsr/my';
+
+  // Attendance / AMS
+  static String get leaveRequests => '$base/api/leave-requests';
+  static String leaveRequestById(int id) => '$base/api/leave-requests/$id';
+  static String leaveRequestsCalendar({
+    required String startDate,
+    required String endDate,
+  }) =>
+      '$base/api/leave-requests/calendar?startDate=$startDate&endDate=$endDate';
+  static String get compOffRequests => '$base/api/comp-off-requests';
 }

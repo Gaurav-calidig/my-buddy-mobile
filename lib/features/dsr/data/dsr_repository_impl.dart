@@ -28,4 +28,24 @@ class DsrRepositoryImpl implements DsrRepository {
   Future<DsrEntryEntity> createDsr(DsrCreateRequestEntity request) {
     return datasource.createDsr(request);
   }
+
+  @override
+  Future<DsrEntryEntity> updateDsr({
+    required String dsrId,
+    required String description,
+    required String hours,
+    required String status,
+  }) {
+    return datasource.updateDsr(
+      dsrId: dsrId,
+      description: description,
+      hours: hours,
+      status: status,
+    );
+  }
+
+  @override
+  Future<void> deleteDsr(String dsrId) {
+    return datasource.deleteDsr(dsrId);
+  }
 }

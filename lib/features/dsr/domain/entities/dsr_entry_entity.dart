@@ -1,5 +1,6 @@
 class DsrEntryEntity {
   const DsrEntryEntity({
+    required this.id,
     required this.project,
     required this.hours,
     required this.status,
@@ -7,6 +8,7 @@ class DsrEntryEntity {
     required this.date,
   });
 
+  final String id;
   final String project;
   final double hours;
   final String status;
@@ -14,6 +16,7 @@ class DsrEntryEntity {
   final DateTime date;
 
   DsrEntryEntity copyWith({
+    String? id,
     String? project,
     double? hours,
     String? status,
@@ -21,6 +24,7 @@ class DsrEntryEntity {
     DateTime? date,
   }) {
     return DsrEntryEntity(
+      id: id ?? this.id,
       project: project ?? this.project,
       hours: hours ?? this.hours,
       status: status ?? this.status,
@@ -29,4 +33,3 @@ class DsrEntryEntity {
     );
   }
 }
-

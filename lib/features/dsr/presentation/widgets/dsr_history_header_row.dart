@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:core/core/theme/app_colors.dart';
 
 class DsrHistoryHeaderRow extends StatelessWidget {
-  const DsrHistoryHeaderRow({super.key});
+  const DsrHistoryHeaderRow({
+    super.key,
+    this.showAction = true,
+  });
+
+  final bool showAction;
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    return Row(
       children: <Widget>[
         Expanded(
           flex: 3,
@@ -29,13 +34,14 @@ class DsrHistoryHeaderRow extends StatelessWidget {
             style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ),
-        SizedBox(
-          width: 54,
-          child: Text(
-            'Action',
-            style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 12, fontWeight: FontWeight.w600),
+        if (showAction)
+          SizedBox(
+            width: 54,
+            child: Text(
+              'Action',
+              style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 12, fontWeight: FontWeight.w600),
+            ),
           ),
-        ),
       ],
     );
   }

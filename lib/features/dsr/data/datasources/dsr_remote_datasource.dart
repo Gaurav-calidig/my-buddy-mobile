@@ -12,6 +12,15 @@ abstract class DsrRemoteDatasource {
   Future<List<DsrEntryModel>> getMyDsr();
 
   Future<DsrEntryModel> createDsr(DsrCreateRequestEntity request);
+
+  Future<DsrEntryModel> updateDsr({
+    required String dsrId,
+    required String description,
+    required String hours,
+    required String status,
+  });
+
+  Future<void> deleteDsr(String dsrId);
 }
 
 class DsrRemoteDatasourceImpl implements DsrRemoteDatasource {
@@ -72,6 +81,38 @@ class DsrRemoteDatasourceImpl implements DsrRemoteDatasource {
       return DsrEntryModel.fromJson(map);
     }
     throw Exception('Failed to create DSR entry');
+  }
+
+  @override
+  Future<DsrEntryModel> updateDsr({
+    required String dsrId,
+    required String description,
+    required String hours,
+    required String status,
+  }) async {
+    final response = await apiService.patch(
+      ApiRoutes.dsrById(dsrId),
+      <String, dynamic>{
+        'description': description,
+        'hours': hours,
+        'status': status,
+      },
+    );
+
+    final dynamic data = response.data;
+    if (data is Map) {
+      final Map<String, dynamic> map = Map<String, dynamic>.from(data);
+      if (map['data'] is Map) {
+        return DsrEntryModel.fromJson(Map<String, dynamic>.from(map['data'] as Map));
+      }
+      return DsrEntryModel.fromJson(map);
+    }
+    throw Exception('Failed to update DSR entry');
+  }
+
+  @override
+  Future<void> deleteDsr(String dsrId) async {
+    await apiService.delete(ApiRoutes.dsrById(dsrId));
   }
 
   String _toApiDate(DateTime date) {
