@@ -262,19 +262,30 @@ class _AmsCalendarState extends State<AmsCalendar> {
   }
 
   Widget _buildGridView() {
-    // Group events by member name
-    final Map<String, Map<int, AmsLeaveEventEntity>> memberEvents = {};
+    // Group all monthly events (leave + holiday + birthday) by row key.
+    final Map<String, Map<int, AmsLeaveEventEntity>> rowEvents = <String, Map<int, AmsLeaveEventEntity>>{};
+    final Map<String, String> rowLabels = <String, String>{};
     for (final day in widget.days) {
       if (!day.isInCurrentMonth) continue;
       for (final event in day.events) {
-        if (event.type != 'leave') continue;
-        final name = event.name;
-        memberEvents[name] ??= {};
-        memberEvents[name]![day.date.day] = event;
+        final String type = event.type.trim().isEmpty ? 'leave' : event.type;
+        final String key = '$type::${event.name}';
+        rowEvents[key] ??= <int, AmsLeaveEventEntity>{};
+        rowEvents[key]![day.date.day] = event;
+        if (!rowLabels.containsKey(key)) {
+          if (type == 'holiday') {
+            rowLabels[key] = 'Holiday: ${event.name}';
+          } else if (type == 'birthday') {
+            rowLabels[key] = 'Birthday: ${event.name}';
+          } else {
+            rowLabels[key] = event.name;
+          }
+        }
       }
     }
 
-    final List<String> members = memberEvents.keys.toList()..sort();
+    final List<String> rows = rowEvents.keys.toList(growable: false)
+      ..sort((String a, String b) => (rowLabels[a] ?? a).compareTo(rowLabels[b] ?? b));
     final int daysInMonth = widget.days.where((d) => d.isInCurrentMonth).length;
     final List<int> dayNumbers = List.generate(daysInMonth, (i) => i + 1);
 
@@ -295,7 +306,7 @@ class _AmsCalendarState extends State<AmsCalendar> {
               child: const Text('Member', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
             ),
             // Member list
-            ...members.map((member) => Container(
+            ...rows.map((String rowKey) => Container(
               width: 100,
               height: 35,
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -303,7 +314,7 @@ class _AmsCalendarState extends State<AmsCalendar> {
                 border: Border(bottom: BorderSide(color: Color(0xFF1B253D))),
               ),
               child: Text(
-                member,
+                rowLabels[rowKey] ?? rowKey,
                 style: const TextStyle(color: Colors.white, fontSize: 10),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -341,9 +352,9 @@ class _AmsCalendarState extends State<AmsCalendar> {
                   }).toList(),
                 ),
                 // Data Rows
-                ...members.map((member) => Row(
+                ...rows.map((String rowKey) => Row(
                   children: dayNumbers.map((d) {
-                    final event = memberEvents[member]?[d];
+                    final AmsLeaveEventEntity? event = rowEvents[rowKey]?[d];
                     final date = DateTime(widget.month.year, widget.month.month, d);
                     final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
                     
@@ -368,9 +379,16 @@ class _AmsCalendarState extends State<AmsCalendar> {
                                     color: Color(event.colorHex),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
-                                  child: event.halfLabel != null
-                                      ? const Center(child: Text('1/2', style: TextStyle(color: Colors.white, fontSize: 8)))
-                                      : null,
+                                  child: Center(
+                                    child: Text(
+                                      event.type == 'birthday'
+                                          ? 'B'
+                                          : (event.type == 'holiday'
+                                              ? 'H'
+                                              : (event.halfLabel != null ? '1/2' : '1')),
+                                      style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w700),
+                                    ),
+                                  ),
                                 ),
                               ),
                             )
