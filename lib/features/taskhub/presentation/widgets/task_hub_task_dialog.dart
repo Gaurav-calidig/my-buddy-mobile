@@ -5,6 +5,7 @@ import 'package:core/core/theme/app_colors.dart';
 import 'package:core/core/utils/utils.dart';
 import 'package:core/core/widgets/custom_video_player.dart';
 import 'package:core/core/widgets/document_viewer.dart';
+import 'package:core/features/taskhub/domain/entities/sprint_entity.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
 import 'package:core/features/taskhub/domain/usecases/create_attachment_metadata_usecase.dart';
@@ -49,6 +50,8 @@ class TaskHubTaskDialog extends StatefulWidget {
     required this.columns,
     required this.defaultColumnId,
     required this.allTasks,
+    required this.sprints,
+    this.initialSprintId,
     this.task,
   });
 
@@ -57,6 +60,8 @@ class TaskHubTaskDialog extends StatefulWidget {
   final List<BoardColumnEntity> columns;
   final int defaultColumnId;
   final List<TaskEntity> allTasks;
+  final List<SprintEntity> sprints;
+  final int? initialSprintId;
   final TaskEntity? task;
 
   bool get isCreate => task == null;
@@ -70,9 +75,11 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
   final _getAttachmentsUseCase = sl<GetAttachmentsUseCase>();
   final _getLinksUseCase = sl<GetLinksUseCase>();
   final _getCommentsUseCase = sl<GetCommentsUseCase>();
-  final _createAttachmentUploadUrlUseCase = sl<CreateAttachmentUploadUrlUseCase>();
+  final _createAttachmentUploadUrlUseCase =
+      sl<CreateAttachmentUploadUrlUseCase>();
   final _uploadToPresignedUrlUseCase = sl<UploadToPresignedUrlUseCase>();
-  final _createAttachmentMetadataUseCase = sl<CreateAttachmentMetadataUseCase>();
+  final _createAttachmentMetadataUseCase =
+      sl<CreateAttachmentMetadataUseCase>();
   final _createTaskUseCase = sl<CreateTaskUseCase>();
   final _updateTaskUseCase = sl<UpdateTaskUseCase>();
   final _deleteTaskUseCase = sl<DeleteTaskUseCase>();
@@ -92,6 +99,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
   String? _assigneeId;
   DateTime? _dueDate;
   late int _columnId;
+  int? _sprintId;
 
   List<TaskAssigneeEntity> _assignees = const [];
   List<TaskAttachmentEntity> _attachments = const [];
@@ -100,10 +108,31 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
 
   final List<PlatformFile> _stagedAttachments = [];
 
+  int? _normalizeSprintId(int? id) {
+    // In Sprint board, we use `-1` to represent backlog/no-sprint.
+    if (widget.boardType == TaskBoardType.sprint) {
+      final v = id ?? -1;
+      if (v == -1) return -1;
+      if (widget.sprints.any((s) => s.id == v)) return v;
+      return -1;
+    }
+
+    // In Kanban board, keep null unless it matches an existing sprint.
+    if (id == null) return null;
+    if (id == -1) return -1;
+    if (widget.sprints.any((s) => s.id == id)) return id;
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
     _columnId = widget.defaultColumnId;
+    if (widget.boardType == TaskBoardType.sprint) {
+      _sprintId = widget.initialSprintId ?? -1;
+    } else {
+      _sprintId = widget.initialSprintId;
+    }
 
     final existing = widget.task;
     if (existing != null) {
@@ -120,6 +149,11 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
       _assigneeId = (existing.assignee ?? '').trim().isEmpty
           ? null
           : existing.assignee;
+      if (widget.boardType == TaskBoardType.sprint) {
+        _sprintId = existing.sprintId ?? -1;
+      } else {
+        _sprintId = existing.sprintId;
+      }
     }
 
     _loadAssignees();
@@ -243,6 +277,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
           ticketType: _ticketType.apiValue,
           position: 0,
           dueDateIso: _dueDate?.toUtc().toIso8601String(),
+          sprintId: _sprintId,
         );
 
         try {
@@ -277,6 +312,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
           ticketType: _ticketType.apiValue,
           columnId: _columnId,
           dueDate: _dueDate?.toUtc().toIso8601String(),
+          sprintId: _sprintId,
         );
 
         try {
@@ -284,7 +320,9 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
         } catch (e) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Task updated, but attachment upload failed: $e')),
+              SnackBar(
+                content: Text('Task updated, but attachment upload failed: $e'),
+              ),
             );
           }
         }
@@ -390,9 +428,9 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not download file')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Could not download file')));
     }
   }
 
@@ -438,9 +476,9 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
       await _reloadDetails();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -525,14 +563,14 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
       view.devicePixelRatio,
     );
     final dialogWidth = maxWidth < 720 ? maxWidth - 24 : 980.0;
-    
+
     // Stable height that doesn't change with keyboard
     final availableHeight = (maxHeight * 0.9).clamp(300.0, 900.0);
-    
+
     // Calculate how much we can push up without hitting the top
     final topMargin = (maxHeight - availableHeight) / 2;
-    final pushAmount = viewInsets.bottom > 0 
-        ? (viewInsets.bottom - 20).clamp(0.0, topMargin - 12) 
+    final pushAmount = viewInsets.bottom > 0
+        ? (viewInsets.bottom - 20).clamp(0.0, topMargin - 12)
         : 0.0;
 
     return AnimatedPadding(
@@ -584,7 +622,9 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                             ),
                             const Spacer(),
                             IconButton(
-                              onPressed: _busy ? null : () => Navigator.of(context).maybePop(),
+                              onPressed: _busy
+                                  ? null
+                                  : () => Navigator.of(context).maybePop(),
                               icon: const Icon(
                                 Icons.close,
                                 color: AppColors.kcDarkTextMuted,
@@ -639,10 +679,26 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                                 value: _columnId,
                                 items: widget.columns.map((c) => c.id).toList(),
                                 labelFor: (id) => widget.columns
-                                    .firstWhere((c) => c.id == id,
-                                        orElse: () => widget.columns.first)
+                                    .firstWhere(
+                                      (c) => c.id == id,
+                                      orElse: () => widget.columns.first,
+                                    )
                                     .name,
                                 onChanged: (v) => setState(() => _columnId = v),
+                              ),
+                              _dropdown<int?>(
+                                label: 'Sprint',
+                                value: _normalizeSprintId(_sprintId),
+                                items: [-1, ...widget.sprints.map((s) => s.id)],
+                                labelFor: (id) => id == -1
+                                    ? 'Backlog (No Sprint)'
+                                    : widget.sprints
+                                          .firstWhere(
+                                            (s) => s.id == id,
+                                            orElse: () => widget.sprints.first,
+                                          )
+                                          .name,
+                                onChanged: (v) => setState(() => _sprintId = v),
                               ),
                             ];
 
@@ -679,6 +735,8 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                                 Row(
                                   children: [
                                     Expanded(child: items[4]),
+                                    const SizedBox(width: 12),
+                                    Expanded(child: items[5]),
                                   ],
                                 ),
                               ],
@@ -714,7 +772,9 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                                           fileName: f.name,
                                           fileSize: f.size,
                                           localPath: f.path,
-                                          contentType: lookupMimeType(f.path ?? ''),
+                                          contentType: lookupMimeType(
+                                            f.path ?? '',
+                                          ),
                                           trailing: IconButton(
                                             onPressed: () => setState(
                                               () =>
@@ -746,15 +806,27 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               IconButton(
-                                                onPressed: () => _downloadFile(a.filePath, a.fileName),
-                                                icon: const Icon(Icons.download_rounded, size: 20),
-                                                color: AppColors.kcDarkTextMuted,
+                                                onPressed: () => _downloadFile(
+                                                  a.filePath,
+                                                  a.fileName,
+                                                ),
+                                                icon: const Icon(
+                                                  Icons.download_rounded,
+                                                  size: 20,
+                                                ),
+                                                color:
+                                                    AppColors.kcDarkTextMuted,
                                                 splashRadius: 18,
                                               ),
                                               IconButton(
-                                                onPressed: () => _deleteAttachment(a.id),
-                                                icon: const Icon(Icons.close, size: 20),
-                                                color: AppColors.kcDarkTextMuted,
+                                                onPressed: () =>
+                                                    _deleteAttachment(a.id),
+                                                icon: const Icon(
+                                                  Icons.close,
+                                                  size: 20,
+                                                ),
+                                                color:
+                                                    AppColors.kcDarkTextMuted,
                                                 splashRadius: 18,
                                               ),
                                             ],
@@ -1049,7 +1121,9 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                   )
                   .toList(growable: false),
               onChanged: (v) {
-                if (v != null) onChanged(v);
+                if (v != null || null is T) {
+                  onChanged(v as T);
+                }
               },
             ),
           ),
@@ -1262,11 +1336,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.link,
-            size: 18,
-            color: AppColors.kcDarkPrimarySoft,
-          ),
+          const Icon(Icons.link, size: 18, color: AppColors.kcDarkPrimarySoft),
           const SizedBox(width: 10),
           Text(
             displayId,
@@ -1315,9 +1385,15 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
       );
       // Re-load to refresh links
       final results = await Future.wait([
-        _getAttachmentsUseCase(projectId: widget.project.id, taskId: widget.task!.id),
+        _getAttachmentsUseCase(
+          projectId: widget.project.id,
+          taskId: widget.task!.id,
+        ),
         _getLinksUseCase(projectId: widget.project.id, taskId: widget.task!.id),
-        _getCommentsUseCase(projectId: widget.project.id, taskId: widget.task!.id),
+        _getCommentsUseCase(
+          projectId: widget.project.id,
+          taskId: widget.task!.id,
+        ),
       ]);
       if (mounted) {
         setState(() {
@@ -1330,9 +1406,9 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
     } catch (e) {
       if (mounted) {
         setState(() => _busy = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete link: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to delete link: $e')));
       }
     }
   }
@@ -1491,16 +1567,21 @@ class _AttachmentRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final kb = (fileSize / 1024).round();
-    
-    // Improved detection using contentType first, then extension
-    final isImage = (contentType?.startsWith('image/') ?? false) || 
-                   AppUtils.getFileTypeFromUrl(url ?? localPath ?? fileName) == 'image';
-    final isVideo = (contentType?.startsWith('video/') ?? false) || 
-                   AppUtils.getFileTypeFromUrl(url ?? localPath ?? fileName) == 'video';
-    final isPdf = (contentType == 'application/pdf') || 
-                  AppUtils.getFileTypeFromUrl(url ?? localPath ?? fileName) == 'pdf';
 
-    final type = isImage ? 'image' : (isVideo ? 'video' : (isPdf ? 'pdf' : 'unknown'));
+    // Improved detection using contentType first, then extension
+    final isImage =
+        (contentType?.startsWith('image/') ?? false) ||
+        AppUtils.getFileTypeFromUrl(url ?? localPath ?? fileName) == 'image';
+    final isVideo =
+        (contentType?.startsWith('video/') ?? false) ||
+        AppUtils.getFileTypeFromUrl(url ?? localPath ?? fileName) == 'video';
+    final isPdf =
+        (contentType == 'application/pdf') ||
+        AppUtils.getFileTypeFromUrl(url ?? localPath ?? fileName) == 'pdf';
+
+    final type = isImage
+        ? 'image'
+        : (isVideo ? 'video' : (isPdf ? 'pdf' : 'unknown'));
 
     return InkWell(
       onTap: (url == null && localPath == null)
@@ -1521,10 +1602,17 @@ class _AttachmentRow extends StatelessWidget {
                             ? Image.file(File(localPath!))
                             : Image.network(
                                 url!,
-                                loadingBuilder: (_, child, progress) => progress == null 
-                                    ? child 
-                                    : const CircularProgressIndicator(color: Colors.white),
-                                errorBuilder: (_, _, _) => const Icon(Icons.broken_image, color: Colors.white, size: 64),
+                                loadingBuilder: (_, child, progress) =>
+                                    progress == null
+                                    ? child
+                                    : const CircularProgressIndicator(
+                                        color: Colors.white,
+                                      ),
+                                errorBuilder: (_, _, _) => const Icon(
+                                  Icons.broken_image,
+                                  color: Colors.white,
+                                  size: 64,
+                                ),
                               ),
                       ),
                     ),
@@ -1536,9 +1624,7 @@ class _AttachmentRow extends StatelessWidget {
                     builder: (_) => Scaffold(
                       appBar: AppBar(title: Text(fileName)),
                       backgroundColor: Colors.black,
-                      body: Center(
-                        child: CustomVideoPlayer(videoUrl: url!),
-                      ),
+                      body: Center(child: CustomVideoPlayer(videoUrl: url!)),
                     ),
                   ),
                 );
@@ -1652,10 +1738,7 @@ class _AttachmentRow extends StatelessWidget {
 }
 
 class _SearchTaskDialog extends StatefulWidget {
-  const _SearchTaskDialog({
-    required this.tasks,
-    required this.projectPrefix,
-  });
+  const _SearchTaskDialog({required this.tasks, required this.projectPrefix});
 
   final List<TaskEntity> tasks;
   final String projectPrefix;
@@ -1717,7 +1800,10 @@ class _SearchTaskDialogState extends State<_SearchTaskDialog> {
               decoration: InputDecoration(
                 hintText: 'Search by title or number...',
                 hintStyle: const TextStyle(color: AppColors.kcDarkTextMuted),
-                prefixIcon: const Icon(Icons.search, color: AppColors.kcDarkTextMuted),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: AppColors.kcDarkTextMuted,
+                ),
                 filled: true,
                 fillColor: AppColors.kcDarkInputAlt,
                 border: OutlineInputBorder(
@@ -1743,7 +1829,8 @@ class _SearchTaskDialogState extends State<_SearchTaskDialog> {
                         itemCount: _filtered.length,
                         itemBuilder: (ctx, i) {
                           final t = _filtered[i];
-                          final ticket = '${widget.projectPrefix}-${t.taskNumber}';
+                          final ticket =
+                              '${widget.projectPrefix}-${t.taskNumber}';
                           return ListTile(
                             onTap: () => Navigator.of(ctx).pop(t),
                             title: Text(

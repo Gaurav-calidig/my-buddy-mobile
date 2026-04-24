@@ -10,7 +10,12 @@ class GetTasksUseCase {
   Future<List<TaskEntity>> call({
     required int projectId,
     required TaskBoardType boardType,
+    int? sprintId,
   }) {
-    return repository.getTasks(projectId: projectId, boardType: boardType);
+    return repository.getTasks(
+      projectId: projectId,
+      boardType: boardType,
+      sprintId: sprintId,
+    );
   }
 }

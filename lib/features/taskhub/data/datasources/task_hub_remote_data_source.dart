@@ -17,6 +17,7 @@ abstract class TaskHubRemoteDataSource {
   Future<List<TaskModel>> getTasks({
     required int projectId,
     required TaskBoardType boardType,
+    int? sprintId,
   });
 
   Future<List<BoardColumnModel>> getBoardColumns({
@@ -37,6 +38,7 @@ abstract class TaskHubRemoteDataSource {
     required String ticketType,
     required int position,
     String? dueDateIso,
+    int? sprintId,
   });
 
   Future<List<TaskAttachmentModel>> getAttachments({
@@ -101,6 +103,7 @@ abstract class TaskHubRemoteDataSource {
     String? priority,
     String? ticketType,
     String? title,
+    int? sprintId,
   });
 
   Future<void> deleteAttachment({
@@ -183,11 +186,16 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
   Future<List<TaskModel>> getTasks({
     required int projectId,
     required TaskBoardType boardType,
+    int? sprintId,
   }) async {
     try {
+      final query = {
+        'boardType': boardType.apiValue,
+        if (sprintId != null) 'sprintId': sprintId == -1 ? 'null' : sprintId,
+      };
       final response = await apiService.get(
         ApiRoutes.projectTasks(projectId),
-        query: {'boardType': boardType.apiValue},
+        query: query,
       );
 
       if (response.data != null && response.data is List) {
@@ -270,6 +278,7 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
     required String ticketType,
     required int position,
     String? dueDateIso,
+    int? sprintId,
   }) async {
     try {
       final payload = <String, dynamic>{
@@ -283,6 +292,7 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
         'ticketType': ticketType,
         if (dueDateIso != null && dueDateIso.trim().isNotEmpty)
           'dueDate': dueDateIso,
+        if (sprintId != null) 'sprintId': sprintId == -1 ? null : sprintId,
       };
 
       final response = await apiService.post(
@@ -506,6 +516,7 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
     String? priority,
     String? ticketType,
     String? title,
+    int? sprintId,
   }) async {
     try {
       final payload = <String, dynamic>{
@@ -516,6 +527,7 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
         if (priority != null) 'priority': priority,
         if (ticketType != null) 'ticketType': ticketType,
         if (title != null) 'title': title,
+        if (sprintId != null) 'sprintId': sprintId == -1 ? null : sprintId,
       };
 
       final response = await apiService.patch(

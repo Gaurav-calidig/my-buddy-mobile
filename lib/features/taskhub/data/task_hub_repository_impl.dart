@@ -18,7 +18,12 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
   Future<List<TaskEntity>> getTasks({
     required int projectId,
     required TaskBoardType boardType,
-  }) => remoteDataSource.getTasks(projectId: projectId, boardType: boardType);
+    int? sprintId,
+  }) => remoteDataSource.getTasks(
+        projectId: projectId,
+        boardType: boardType,
+        sprintId: sprintId,
+      );
 
   @override
   Future<List<BoardColumnEntity>> getBoardColumns({
@@ -42,6 +47,7 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     required String ticketType,
     required int position,
     String? dueDateIso,
+    int? sprintId,
   }) => remoteDataSource.createTask(
         projectId: projectId,
         boardType: boardType,
@@ -53,6 +59,7 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
         ticketType: ticketType,
         position: position,
         dueDateIso: dueDateIso,
+        sprintId: sprintId,
       );
 
   @override
@@ -153,6 +160,7 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     String? priority,
     String? ticketType,
     String? title,
+    int? sprintId,
   }) => remoteDataSource.updateTask(
         projectId: projectId,
         taskId: taskId,
@@ -163,6 +171,7 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
         priority: priority,
         ticketType: ticketType,
         title: title,
+        sprintId: sprintId,
       );
 
   @override

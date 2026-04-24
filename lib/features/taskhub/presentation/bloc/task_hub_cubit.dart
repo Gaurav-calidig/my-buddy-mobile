@@ -4,6 +4,7 @@ import 'package:core/features/projects/domain/entities/project_entity.dart';
 import 'package:core/features/taskhub/domain/entities/board_column_entity.dart';
 import 'package:core/features/taskhub/domain/entities/task_entity.dart';
 import 'package:core/features/taskhub/domain/entities/task_assignee_entity.dart';
+import 'package:core/features/taskhub/domain/entities/sprint_entity.dart';
 import 'package:core/features/taskhub/domain/enums/task_board_type.dart';
 import 'package:core/features/taskhub/domain/enums/task_priority.dart';
 import 'package:core/features/taskhub/domain/usecases/get_board_columns_usecase.dart';
@@ -14,6 +15,7 @@ import 'package:core/features/taskhub/domain/usecases/reorder_board_columns_usec
 import 'package:core/features/taskhub/domain/usecases/create_board_column_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/delete_board_column_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/move_task_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/sprint_usecases.dart';
 import 'package:core/features/taskhub/presentation/bloc/task_hub_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -28,15 +30,17 @@ class TaskHubCubit extends Cubit<TaskHubState> {
     required CreateBoardColumnUseCase createBoardColumnUseCase,
     required DeleteBoardColumnUseCase deleteBoardColumnUseCase,
     required MoveTaskUseCase moveTaskUseCase,
-  })  : _getBoardColumnsUseCase = getBoardColumnsUseCase,
-        _getTasksUseCase = getTasksUseCase,
-        _getProjectAssigneesUseCase = getProjectAssigneesUseCase,
-        _updateTaskUseCase = updateTaskUseCase,
-        _reorderBoardColumnsUseCase = reorderBoardColumnsUseCase,
-        _createBoardColumnUseCase = createBoardColumnUseCase,
-        _deleteBoardColumnUseCase = deleteBoardColumnUseCase,
-        _moveTaskUseCase = moveTaskUseCase,
-        super(TaskHubState.initial()) {
+    required GetSprintsUseCase getSprintsUseCase,
+  }) : _getBoardColumnsUseCase = getBoardColumnsUseCase,
+       _getTasksUseCase = getTasksUseCase,
+       _getProjectAssigneesUseCase = getProjectAssigneesUseCase,
+       _updateTaskUseCase = updateTaskUseCase,
+       _reorderBoardColumnsUseCase = reorderBoardColumnsUseCase,
+       _createBoardColumnUseCase = createBoardColumnUseCase,
+       _deleteBoardColumnUseCase = deleteBoardColumnUseCase,
+       _moveTaskUseCase = moveTaskUseCase,
+       _getSprintsUseCase = getSprintsUseCase,
+       super(TaskHubState.initial()) {
     load(boardType: TaskBoardType.kanban);
   }
 
@@ -49,24 +53,59 @@ class TaskHubCubit extends Cubit<TaskHubState> {
   final CreateBoardColumnUseCase _createBoardColumnUseCase;
   final DeleteBoardColumnUseCase _deleteBoardColumnUseCase;
   final MoveTaskUseCase _moveTaskUseCase;
+  final GetSprintsUseCase _getSprintsUseCase;
 
-  Future<void> load({required TaskBoardType boardType}) async {
-    emit(state.copyWith(status: TaskHubLoadStatus.loading, boardType: boardType));
+  List<TaskEntity> _applySprintFilter({
+    required List<TaskEntity> tasks,
+    required TaskBoardType boardType,
+    required int? selectedSprintId,
+  }) {
+    if (boardType != TaskBoardType.sprint) return tasks;
+    if (selectedSprintId == null) return tasks; // All Sprints
+    if (selectedSprintId == -1) {
+      // Backlog
+      return tasks
+          .where(
+            (t) => t.sprintId == null || t.sprintId == 0 || t.sprintId == -1,
+          )
+          .toList(growable: false);
+    }
+    return tasks
+        .where((t) => t.sprintId == selectedSprintId)
+        .toList(growable: false);
+  }
+
+  Future<void> load({required TaskBoardType boardType, int? sprintId}) async {
+    final effectiveSprintId = sprintId ?? state.selectedSprintId;
+    emit(
+      state.copyWith(
+        status: TaskHubLoadStatus.loading,
+        boardType: boardType,
+        selectedSprintId: effectiveSprintId,
+      ),
+    );
 
     try {
       final results = await Future.wait([
-        _getBoardColumnsUseCase(
+        _getBoardColumnsUseCase(projectId: project.id, boardType: boardType),
+        _getTasksUseCase(
           projectId: project.id,
           boardType: boardType,
+          sprintId: effectiveSprintId,
         ),
-        _getTasksUseCase(projectId: project.id, boardType: boardType),
         _getProjectAssigneesUseCase(projectId: project.id),
+        _getSprintsUseCase(project.id),
       ]);
 
       final columns = (results[0] as List<BoardColumnEntity>)
         ..sort((a, b) => a.position.compareTo(b.position));
-      final tasks = results[1] as List<TaskEntity>;
+      final tasks = _applySprintFilter(
+        tasks: results[1] as List<TaskEntity>,
+        boardType: boardType,
+        selectedSprintId: effectiveSprintId,
+      );
       final assignees = results[2] as List<TaskAssigneeEntity>;
+      final sprints = results[3] as List<SprintEntity>;
 
       final assigneeById = <String, String>{};
       for (final a in assignees) {
@@ -97,6 +136,7 @@ class TaskHubCubit extends Cubit<TaskHubState> {
           columns: List<BoardColumnEntity>.unmodifiable(columns),
           tasksByColumnId: _freezeTasks(tasksByColumnId),
           assigneeById: Map<String, String>.unmodifiable(assigneeById),
+          sprints: List<SprintEntity>.unmodifiable(sprints),
           errorMessage: null,
         ),
       );
@@ -108,9 +148,22 @@ class TaskHubCubit extends Cubit<TaskHubState> {
           columns: const [],
           tasksByColumnId: const {},
           assigneeById: const {},
+          sprints: const [],
         ),
       );
     }
+  }
+
+  void setSearchQuery(String query) {
+    emit(state.copyWith(searchQuery: query));
+  }
+
+  void setFilter(String filter) {
+    emit(state.copyWith(filterValue: filter));
+  }
+
+  void setSelectedSprintId(int? sprintId) {
+    load(boardType: state.boardType, sprintId: sprintId);
   }
 
   void addTaskLocal({
@@ -161,6 +214,7 @@ class TaskHubCubit extends Cubit<TaskHubState> {
     String? priority,
     String? ticketType,
     String? title,
+    int? sprintId,
   }) async {
     try {
       await _updateTaskUseCase(
@@ -173,6 +227,7 @@ class TaskHubCubit extends Cubit<TaskHubState> {
         priority: priority,
         ticketType: ticketType,
         title: title,
+        sprintId: sprintId,
       );
       await load(boardType: state.boardType);
     } catch (e) {
@@ -190,15 +245,19 @@ class TaskHubCubit extends Cubit<TaskHubState> {
       final sorted = List<BoardColumnEntity>.from(updated)
         ..sort((a, b) => a.position.compareTo(b.position));
 
-      emit(state.copyWith(
-        status: TaskHubLoadStatus.loaded,
-        columns: List<BoardColumnEntity>.unmodifiable(sorted),
-      ));
+      emit(
+        state.copyWith(
+          status: TaskHubLoadStatus.loaded,
+          columns: List<BoardColumnEntity>.unmodifiable(sorted),
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        status: TaskHubLoadStatus.error,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          status: TaskHubLoadStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -212,10 +271,12 @@ class TaskHubCubit extends Cubit<TaskHubState> {
       );
       await load(boardType: state.boardType);
     } catch (e) {
-      emit(state.copyWith(
-        status: TaskHubLoadStatus.error,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          status: TaskHubLoadStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -228,10 +289,12 @@ class TaskHubCubit extends Cubit<TaskHubState> {
       );
       await load(boardType: state.boardType);
     } catch (e) {
-      emit(state.copyWith(
-        status: TaskHubLoadStatus.error,
-        errorMessage: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          status: TaskHubLoadStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
@@ -261,4 +324,3 @@ class TaskHubCubit extends Cubit<TaskHubState> {
     return Map<int, List<TaskEntity>>.unmodifiable(out);
   }
 }
-

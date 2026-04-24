@@ -5,6 +5,7 @@ import 'package:core/core/theme/app_colors.dart';
 import 'package:core/core/dependency_injection/injection_container.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
 import 'package:core/features/taskhub/domain/entities/board_column_entity.dart';
+import 'package:core/features/taskhub/domain/entities/sprint_entity.dart';
 import 'package:core/features/taskhub/domain/entities/task_entity.dart';
 import 'package:core/features/taskhub/domain/enums/task_board_type.dart';
 import 'package:core/features/taskhub/presentation/bloc/task_hub_cubit.dart';
@@ -15,6 +16,7 @@ import 'package:core/features/taskhub/presentation/widgets/manage_states_dialog.
 import 'package:core/features/taskhub/presentation/widgets/manage_sprints_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
 class TaskHubScreen extends StatefulWidget {
   const TaskHubScreen({super.key, required this.project});
@@ -99,7 +101,7 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
     super.dispose();
   }
 
-  void _onSettings() {
+  void _onSettings(BuildContext context) {
     showDialog(
       context: context,
       builder: (ctx) => BlocProvider.value(
@@ -109,20 +111,21 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
     );
   }
 
-  void _onManageSprints() async {
+  void _onManageSprints(BuildContext context) async {
     await showDialog(
       context: context,
       builder: (ctx) => ManageSprintsDialog(projectId: widget.project.id),
     );
     if (!mounted) return;
-    context.read<TaskHubCubit>().load(boardType: context.read<TaskHubCubit>().state.boardType);
+    context.read<TaskHubCubit>().load(
+      boardType: context.read<TaskHubCubit>().state.boardType,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) =>
-          TaskHubCubit(
+      create: (_) => TaskHubCubit(
         project: widget.project,
         getBoardColumnsUseCase: sl(),
         getTasksUseCase: sl(),
@@ -132,136 +135,152 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
         createBoardColumnUseCase: sl(),
         deleteBoardColumnUseCase: sl(),
         moveTaskUseCase: sl(),
+        getSprintsUseCase: sl(),
       ),
-      child: BlocBuilder<TaskHubCubit, TaskHubState>(
-        builder: (context, state) {
-          return Scaffold(
-            backgroundColor: AppColors.kcDarkPage,
-            body: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.kcDarkGradientTop,
-                    AppColors.kcDarkGradientBottom,
-                  ],
-                ),
-              ),
-              child: SafeArea(
-                child: Column(
-                  children: [
-                    _HeaderBar(
-                      projectName: widget.project.name,
-                      searchController: _searchController,
-                      filterValue: _taskFilter,
-                      boardType: state.boardType,
-                      onBack: () => Navigator.of(context).pop(),
-                      onSearchChanged: (_) => setState(() {}),
-                      onFilterChanged: (v) => setState(() => _taskFilter = v),
-                      onBoardTypeChanged: (t) =>
-                          context.read<TaskHubCubit>().load(boardType: t),
-                      onExport: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Export not implemented yet.'),
-                          ),
-                        );
-                      },
-                      onSettings: _onSettings,
-                      onManageSprints: _onManageSprints,
+      child: Builder(
+        builder: (context) {
+          return BlocBuilder<TaskHubCubit, TaskHubState>(
+            builder: (context, state) {
+              return Scaffold(
+                backgroundColor: AppColors.kcDarkPage,
+                body: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.kcDarkGradientTop,
+                        AppColors.kcDarkGradientBottom,
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final isMobile = constraints.maxWidth < 720;
-                          final columnWidth = isMobile
-                              ? max(
-                                  260.0,
-                                  min(320.0, constraints.maxWidth - 56),
-                                )
-                              : 360.0;
-
-                          if (state.status == TaskHubLoadStatus.loading ||
-                              state.status == TaskHubLoadStatus.idle) {
-                            return const Center(
-                              child: CircularProgressIndicator(
-                                color: AppColors.kcDarkPrimary,
+                  ),
+                  child: SafeArea(
+                    child: Column(
+                      children: [
+                        _HeaderBar(
+                          projectName: widget.project.name,
+                          searchController: _searchController,
+                          filterValue: _taskFilter,
+                          boardType: state.boardType,
+                          sprints: state.sprints,
+                          selectedSprintId: state.selectedSprintId,
+                          onBack: () => Navigator.of(context).pop(),
+                          onSearchChanged: (_) => setState(() {}),
+                          onFilterChanged: (v) =>
+                              setState(() => _taskFilter = v),
+                          onBoardTypeChanged: (t) =>
+                              context.read<TaskHubCubit>().load(boardType: t),
+                          onSprintChanged: (id) => context
+                              .read<TaskHubCubit>()
+                              .setSelectedSprintId(id),
+                          onExport: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Export not implemented yet.'),
                               ),
                             );
-                          }
+                          },
+                          onSettings: () => _onSettings(context),
+                          onManageSprints: () => _onManageSprints(context),
+                        ),
+                        const SizedBox(height: 12),
+                        Expanded(
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isMobile = constraints.maxWidth < 720;
+                              final columnWidth = isMobile
+                                  ? max(
+                                      260.0,
+                                      min(320.0, constraints.maxWidth - 56),
+                                    )
+                                  : 360.0;
 
-                          if (state.status == TaskHubLoadStatus.error) {
-                            return _ErrorState(
-                              message:
-                                  state.errorMessage ?? 'Failed to load tasks.',
-                              onRetry: () => context.read<TaskHubCubit>().load(
-                                boardType: state.boardType,
-                              ),
-                            );
-                          }
+                              if (state.status == TaskHubLoadStatus.loading ||
+                                  state.status == TaskHubLoadStatus.initial) {
+                                return const Center(
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.kcDarkPrimary,
+                                  ),
+                                );
+                              }
 
-                          final columns = state.columns
-                              .map(
-                                (col) => _buildStatusColumn(
-                                  context: context,
-                                  column: col,
-                                  tasks:
-                                      state.tasksByColumnId[col.id] ?? const [],
-                                ),
-                              )
-                              .toList(growable: false);
+                              if (state.status == TaskHubLoadStatus.error) {
+                                return _ErrorState(
+                                  message:
+                                      state.errorMessage ??
+                                      'Failed to load tasks.',
+                                  onRetry: () => context
+                                      .read<TaskHubCubit>()
+                                      .load(boardType: state.boardType),
+                                );
+                              }
 
-                          return Scrollbar(
-                            thumbVisibility: true,
-                            controller: _horizontalController,
-                            child: ValueListenableBuilder<Offset?>(
-                              valueListenable: _dragGlobalPosition,
-                              builder: (context, dragPos, child) {
-                                if (dragPos != null) {
-                                  WidgetsBinding.instance.addPostFrameCallback(
-                                    (_) => _maybeAutoScrollHorizontal(dragPos),
-                                  );
-                                }
-                                return child!;
-                              },
-                              child: SingleChildScrollView(
-                                key: _boardKey,
+                              final columns = state.columns
+                                  .map(
+                                    (col) => _buildStatusColumn(
+                                      context: context,
+                                      column: col,
+                                      tasks:
+                                          state.tasksByColumnId[col.id] ??
+                                          const [],
+                                    ),
+                                  )
+                                  .toList(growable: false);
+
+                              return Scrollbar(
+                                thumbVisibility: true,
                                 controller: _horizontalController,
-                                scrollDirection: Axis.horizontal,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
+                                child: ValueListenableBuilder<Offset?>(
+                                  valueListenable: _dragGlobalPosition,
+                                  builder: (context, dragPos, child) {
+                                    if (dragPos != null) {
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback(
+                                            (_) => _maybeAutoScrollHorizontal(
+                                              dragPos,
+                                            ),
+                                          );
+                                    }
+                                    return child!;
+                                  },
+                                  child: SingleChildScrollView(
+                                    key: _boardKey,
+                                    controller: _horizontalController,
+                                    scrollDirection: Axis.horizontal,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        for (
+                                          int i = 0;
+                                          i < columns.length;
+                                          i++
+                                        ) ...[
+                                          SizedBox(
+                                            width: columnWidth,
+                                            child: columns[i],
+                                          ),
+                                          if (i != columns.length - 1)
+                                            const SizedBox(width: 16),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                                child: Row(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.stretch,
-                                  children: [
-                                    for (
-                                      int i = 0;
-                                      i < columns.length;
-                                      i++
-                                    ) ...[
-                                      SizedBox(
-                                        width: columnWidth,
-                                        child: columns[i],
-                                      ),
-                                      if (i != columns.length - 1)
-                                        const SizedBox(width: 16),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                  ],
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
           );
         },
       ),
@@ -296,7 +315,9 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
       onDragPositionChanged: _handleDragPosition,
       onAddPressed: () async {
         final cubit = context.read<TaskHubCubit>();
-        final allTasks = cubit.state.tasksByColumnId.values.expand((e) => e).toList();
+        final allTasks = cubit.state.tasksByColumnId.values
+            .expand((e) => e)
+            .toList();
         final created = await showDialog<TaskEntity>(
           context: context,
           builder: (ctx) => TaskHubTaskDialog(
@@ -305,6 +326,8 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
             columns: cubit.state.columns,
             defaultColumnId: column.id,
             allTasks: allTasks,
+            sprints: cubit.state.sprints,
+            initialSprintId: cubit.state.selectedSprintId,
           ),
         );
         if (!mounted || created == null) return;
@@ -319,7 +342,9 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
       },
       onTaskTapped: (task) async {
         final cubit = context.read<TaskHubCubit>();
-        final allTasks = cubit.state.tasksByColumnId.values.expand((e) => e).toList();
+        final allTasks = cubit.state.tasksByColumnId.values
+            .expand((e) => e)
+            .toList();
         final result = await showDialog<dynamic>(
           context: context,
           builder: (ctx) => TaskHubTaskDialog(
@@ -328,6 +353,8 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
             columns: cubit.state.columns,
             defaultColumnId: column.id,
             allTasks: allTasks,
+            sprints: cubit.state.sprints,
+            initialSprintId: cubit.state.selectedSprintId,
             task: task,
           ),
         );
@@ -348,10 +375,13 @@ class _HeaderBar extends StatelessWidget {
     required this.searchController,
     required this.filterValue,
     required this.boardType,
+    required this.sprints,
+    this.selectedSprintId,
     required this.onBack,
     required this.onSearchChanged,
     required this.onFilterChanged,
     required this.onBoardTypeChanged,
+    required this.onSprintChanged,
     required this.onExport,
     required this.onSettings,
     required this.onManageSprints,
@@ -361,10 +391,13 @@ class _HeaderBar extends StatelessWidget {
   final TextEditingController searchController;
   final String filterValue;
   final TaskBoardType boardType;
+  final List<SprintEntity> sprints;
+  final int? selectedSprintId;
   final VoidCallback onBack;
   final ValueChanged<String> onSearchChanged;
   final ValueChanged<String> onFilterChanged;
   final ValueChanged<TaskBoardType> onBoardTypeChanged;
+  final ValueChanged<int?> onSprintChanged;
   final VoidCallback onExport;
   final VoidCallback onSettings;
   final VoidCallback onManageSprints;
@@ -376,6 +409,15 @@ class _HeaderBar extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 720;
+        SprintEntity? selectedSprint;
+        if (selectedSprintId != null && selectedSprintId! > 0) {
+          for (final s in sprints) {
+            if (s.id == selectedSprintId) {
+              selectedSprint = s;
+              break;
+            }
+          }
+        }
 
         final titleRow = Row(
           children: [
@@ -444,30 +486,94 @@ class _HeaderBar extends StatelessWidget {
           ),
         );
 
-        final controls = Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            _DarkDropdown(
-              value: filterValue,
-              items: const ['All Tasks', 'Assigned to me'],
-              onChanged: onFilterChanged,
-            ),
-            _DarkButton(
-              label: 'Export XLSX',
-              icon: Icons.download,
-              onPressed: onExport,
-            ),
-            if (boardType == TaskBoardType.sprint)
-              _DarkButton(
-                label: 'Manage Sprints',
-                icon: Icons.date_range,
-                onPressed: onManageSprints,
+        Widget controls;
+        if (isMobile) {
+          controls = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _DarkDropdown(
+                      value: filterValue,
+                      items: const ['All Tasks', 'Assigned to me'],
+                      onChanged: onFilterChanged,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _DarkButton(
+                      label: 'Export XLSX',
+                      icon: Icons.download,
+                      onPressed: onExport,
+                    ),
+                  ),
+                ],
               ),
-            _BoardTypeDropdown(value: boardType, onChanged: onBoardTypeChanged),
-          ],
-        );
+              if (boardType == TaskBoardType.sprint) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _SprintDropdown(
+                        selectedId: selectedSprintId,
+                        sprints: sprints,
+                        onChanged: onSprintChanged,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _DarkButton(
+                        label: 'Manage Sprints',
+                        icon: Icons.settings,
+                        onPressed: onManageSprints,
+                      ),
+                    ),
+                  ],
+                ),
+                if (selectedSprint != null) ...[
+                  const SizedBox(height: 12),
+                  _SelectedSprintDetails(sprint: selectedSprint),
+                ],
+              ],
+              const SizedBox(height: 12),
+              _BoardTypeDropdown(
+                value: boardType,
+                onChanged: onBoardTypeChanged,
+              ),
+            ],
+          );
+        } else {
+          controls = Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _DarkDropdown(
+                value: filterValue,
+                items: const ['All Tasks', 'Assigned to me'],
+                onChanged: onFilterChanged,
+              ),
+              _DarkButton(
+                label: 'Export XLSX',
+                icon: Icons.download,
+                onPressed: onExport,
+              ),
+              if (boardType == TaskBoardType.sprint)
+                _SprintControls(
+                  selectedId: selectedSprintId,
+                  sprints: sprints,
+                  selectedSprint: selectedSprint,
+                  onSprintChanged: onSprintChanged,
+                  onManageSprints: onManageSprints,
+                ),
+              _BoardTypeDropdown(
+                value: boardType,
+                onChanged: onBoardTypeChanged,
+              ),
+            ],
+          );
+        }
 
         if (isMobile) {
           return Padding(
@@ -520,6 +626,53 @@ class _HeaderBar extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _SprintControls extends StatelessWidget {
+  const _SprintControls({
+    required this.selectedId,
+    required this.sprints,
+    required this.selectedSprint,
+    required this.onSprintChanged,
+    required this.onManageSprints,
+  });
+
+  final int? selectedId;
+  final List<SprintEntity> sprints;
+  final SprintEntity? selectedSprint;
+  final ValueChanged<int?> onSprintChanged;
+  final VoidCallback onManageSprints;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _SprintDropdown(
+              selectedId: selectedId,
+              sprints: sprints,
+              onChanged: onSprintChanged,
+            ),
+            _DarkButton(
+              label: 'Manage Sprints',
+              icon: Icons.settings,
+              onPressed: onManageSprints,
+            ),
+          ],
+        ),
+        if (selectedSprint != null) ...[
+          const SizedBox(height: 10),
+          _SelectedSprintDetails(sprint: selectedSprint!),
+        ],
+      ],
     );
   }
 }
@@ -607,6 +760,128 @@ class _ErrorState extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _SprintDropdown extends StatelessWidget {
+  const _SprintDropdown({
+    required this.selectedId,
+    required this.sprints,
+    required this.onChanged,
+  });
+
+  final int? selectedId;
+  final List<SprintEntity> sprints;
+  final ValueChanged<int?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    const border = AppColors.kcDarkBorderSoft;
+    final bool hasSelectedSprint =
+        selectedId == null ||
+        selectedId == -1 ||
+        sprints.any((s) => s.id == selectedId);
+    final int? effectiveSelectedId = hasSelectedSprint ? selectedId : null;
+
+    return Container(
+      height: 42,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: AppColors.kcDarkInputAlt,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: border.withValues(alpha: 0.5)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int?>(
+          value: effectiveSelectedId,
+          dropdownColor: AppColors.kcDarkCard,
+          iconEnabledColor: AppColors.kcDarkTextMuted,
+          style: const TextStyle(
+            color: AppColors.kcDarkTextPrimary,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+          items: [
+            const DropdownMenuItem<int?>(
+              value: null,
+              child: Text('All Sprints'),
+            ),
+            const DropdownMenuItem<int?>(value: -1, child: Text('Backlog')),
+            ...sprints.map(
+              (s) => DropdownMenuItem<int?>(value: s.id, child: Text(s.name)),
+            ),
+          ],
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectedSprintDetails extends StatelessWidget {
+  const _SelectedSprintDetails({required this.sprint});
+
+  final SprintEntity sprint;
+
+  String get _status {
+    final raw = sprint.status == 'planning' ? 'planned' : sprint.status;
+    if (raw != 'planned' && raw != 'active' && raw != 'completed') {
+      return 'planned';
+    }
+    return raw;
+  }
+
+  String get _dateRange {
+    final start = DateFormat('dd/MM/yyyy').format(sprint.startDate);
+    final end = DateFormat('dd/MM/yyyy').format(sprint.endDate);
+    return '$start - $end';
+  }
+
+  (Color bg, Color fg, Color border) get _statusStyle {
+    switch (_status) {
+      case 'active':
+        return (Colors.green.shade600, Colors.white, Colors.green.shade600);
+      case 'completed':
+        return (
+          AppColors.kcDarkTextMuted.withValues(alpha: 0.35),
+          AppColors.kcDarkTextPrimary,
+          AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
+        );
+      case 'planned':
+      default:
+        return (AppColors.kcDarkPrimary, Colors.white, AppColors.kcDarkPrimary);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final style = _statusStyle;
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: style.$1,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: style.$3),
+          ),
+          child: Text(
+            _status,
+            style: TextStyle(color: style.$2, fontWeight: FontWeight.w900),
+          ),
+        ),
+        Text(
+          _dateRange,
+          style: const TextStyle(
+            color: AppColors.kcDarkTextMuted,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

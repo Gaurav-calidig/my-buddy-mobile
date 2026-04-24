@@ -11,6 +11,7 @@ abstract class TaskHubRepository {
   Future<List<TaskEntity>> getTasks({
     required int projectId,
     required TaskBoardType boardType,
+    int? sprintId,
   });
 
   Future<List<BoardColumnEntity>> getBoardColumns({
@@ -31,6 +32,7 @@ abstract class TaskHubRepository {
     required String ticketType,
     required int position,
     String? dueDateIso,
+    int? sprintId,
   });
 
   Future<List<TaskAttachmentEntity>> getAttachments({
@@ -95,6 +97,7 @@ abstract class TaskHubRepository {
     String? priority,
     String? ticketType,
     String? title,
+    int? sprintId,
   });
 
   Future<void> deleteAttachment({

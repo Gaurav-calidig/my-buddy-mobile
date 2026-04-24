@@ -23,36 +23,24 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
   List<SprintEntity> _sprints = [];
   bool _loading = true;
 
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _goalController = TextEditingController();
-  SprintEntity? _editingSprint;
-  bool _showForm = false;
-  DateTime _startDate = DateTime.now();
-  DateTime _endDate = DateTime.now().add(const Duration(days: 7));
-  String _status = 'active';
-
   @override
   void initState() {
     super.initState();
     _loadSprints();
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _goalController.dispose();
-    super.dispose();
-  }
-
   Future<void> _loadSprints() async {
+    if (!mounted) return;
     setState(() => _loading = true);
     try {
       final results = await _getSprintsUseCase(widget.projectId);
+      if (!mounted) return;
       setState(() {
         _sprints = results;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() => _loading = false);
       if (mounted) {
         ScaffoldMessenger.of(
@@ -62,70 +50,386 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
     }
   }
 
-  void _startCreate() {
-    setState(() {
-      _editingSprint = null;
-      _nameController.text = '';
-      _goalController.text = '';
-      _startDate = DateTime.now();
-      _endDate = DateTime.now().add(const Duration(days: 7));
-      _status = 'planned';
-      _showForm = true;
-    });
-  }
+  Future<void> _showAddEditDialog([SprintEntity? sprint]) async {
+    final nameController = TextEditingController(text: sprint?.name ?? '');
+    final goalController = TextEditingController(text: sprint?.goal ?? '');
+    DateTime? startDate = sprint?.startDate;
+    DateTime? endDate = sprint?.endDate;
+    String status = (sprint?.status ?? 'planned') == 'planning'
+        ? 'planned'
+        : (sprint?.status ?? 'planned');
+    if (status != 'planned' && status != 'active' && status != 'completed') {
+      status = 'planned';
+    }
 
-  void _startEdit(SprintEntity sprint) {
-    setState(() {
-      _editingSprint = sprint;
-      _nameController.text = sprint.name;
-      _goalController.text = sprint.goal;
-      _startDate = sprint.startDate;
-      _endDate = sprint.endDate;
-      _status = _normalizeStatus(sprint.status);
-      _showForm = true;
-    });
-  }
+    final startController = TextEditingController(
+      text: startDate == null ? '' : DateFormat('dd/MM/yyyy').format(startDate),
+    );
+    final endController = TextEditingController(
+      text: endDate == null ? '' : DateFormat('dd/MM/yyyy').format(endDate),
+    );
 
-  void _cancelForm() {
-    setState(() {
-      _editingSprint = null;
-      _showForm = false;
-    });
-  }
-
-  Future<void> _saveSprint() async {
-    final name = _nameController.text.trim();
-    if (name.isEmpty) return;
-
+    bool? result;
     try {
-      final sprint = _editingSprint;
-      if (sprint == null) {
-        await _createSprintUseCase(
-          projectId: widget.projectId,
-          name: name,
-          startDate: _startDate,
-          endDate: _endDate,
-          goal: _goalController.text.trim(),
-          status: _status,
-        );
-      } else {
-        await _updateSprintUseCase(
-          projectId: widget.projectId,
-          sprintId: sprint.id,
-          name: name,
-          startDate: _startDate,
-          endDate: _endDate,
-          goal: _goalController.text.trim(),
-          status: _status,
-        );
-      }
-      await _loadSprints();
-      if (mounted) _cancelForm();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error saving sprint: $e')));
+      result = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => StatefulBuilder(
+          builder: (ctx, setLocalState) {
+            Widget label(String text) {
+              return Text(
+                text,
+                style: const TextStyle(
+                  color: AppColors.kcDarkTextSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              );
+            }
+
+            InputDecoration decoration({
+              required String hintText,
+              Widget? suffixIcon,
+            }) {
+              return InputDecoration(
+                hintText: hintText,
+                hintStyle: const TextStyle(color: AppColors.kcDarkTextMuted),
+                filled: true,
+                fillColor: AppColors.kcDarkInputAlt,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(
+                    color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.kcDarkPrimary),
+                ),
+                suffixIcon: suffixIcon,
+              );
+            }
+
+            Widget field({
+              required String labelText,
+              required TextEditingController controller,
+              required String hintText,
+              int? minLines,
+              int? maxLines = 1,
+              bool readOnly = false,
+              VoidCallback? onTap,
+              Widget? suffixIcon,
+            }) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  label(labelText),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: controller,
+                    readOnly: readOnly,
+                    onTap: onTap,
+                    style: const TextStyle(
+                      color: AppColors.kcDarkTextPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    minLines: minLines,
+                    maxLines: maxLines,
+                    decoration: decoration(
+                      hintText: hintText,
+                      suffixIcon: suffixIcon,
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            Future<void> pickDate({
+              required DateTime? initial,
+              required ValueChanged<DateTime> onPicked,
+            }) async {
+              final picked = await showDatePicker(
+                context: ctx,
+                initialDate: initial ?? DateTime.now(),
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2100),
+                builder: (context, child) {
+                  return Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: const ColorScheme.dark(
+                        primary: AppColors.kcDarkPrimary,
+                        surface: AppColors.kcDarkCard,
+                      ),
+                    ),
+                    child: child!,
+                  );
+                },
+              );
+              if (picked != null) onPicked(picked);
+            }
+
+            return Dialog(
+              backgroundColor: AppColors.kcDarkSurface,
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 40,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 560),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Manage Sprints',
+                            style: TextStyle(
+                              color: AppColors.kcDarkTextPrimary,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'Outfit',
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.close,
+                              color: AppColors.kcDarkTextMuted,
+                            ),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
+                      const Divider(
+                        color: AppColors.kcDarkBorderSoft,
+                        height: 1,
+                      ),
+                      Flexible(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.only(top: 14, bottom: 6),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                sprint == null ? 'New Sprint' : 'Edit Sprint',
+                                style: const TextStyle(
+                                  color: AppColors.kcDarkTextPrimary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              field(
+                                labelText: 'Name',
+                                controller: nameController,
+                                hintText: 'Sprint name',
+                              ),
+                              const SizedBox(height: 12),
+                              field(
+                                labelText: 'Goal (optional)',
+                                controller: goalController,
+                                hintText: 'Sprint goal',
+                                minLines: 3,
+                                maxLines: 3,
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: field(
+                                      labelText: 'Start Date',
+                                      controller: startController,
+                                      hintText: 'dd/mm/yyyy',
+                                      readOnly: true,
+                                      suffixIcon: const Icon(
+                                        Icons.calendar_today_rounded,
+                                        size: 18,
+                                        color: AppColors.kcDarkTextMuted,
+                                      ),
+                                      onTap: () => pickDate(
+                                        initial: startDate,
+                                        onPicked: (d) {
+                                          setLocalState(() {
+                                            startDate = d;
+                                            startController.text = DateFormat(
+                                              'dd/MM/yyyy',
+                                            ).format(d);
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: field(
+                                      labelText: 'End Date',
+                                      controller: endController,
+                                      hintText: 'dd/mm/yyyy',
+                                      readOnly: true,
+                                      suffixIcon: const Icon(
+                                        Icons.calendar_today_rounded,
+                                        size: 18,
+                                        color: AppColors.kcDarkTextMuted,
+                                      ),
+                                      onTap: () => pickDate(
+                                        initial: endDate,
+                                        onPicked: (d) {
+                                          setLocalState(() {
+                                            endDate = d;
+                                            endController.text = DateFormat(
+                                              'dd/MM/yyyy',
+                                            ).format(d);
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  label('Status'),
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    height: 44,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.kcDarkInputAlt,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: AppColors.kcDarkBorderSoft
+                                            .withValues(alpha: 0.55),
+                                      ),
+                                    ),
+                                    child: DropdownButtonHideUnderline(
+                                      child: DropdownButton<String>(
+                                        value: status,
+                                        dropdownColor: AppColors.kcDarkCard,
+                                        iconEnabledColor:
+                                            AppColors.kcDarkTextMuted,
+                                        style: const TextStyle(
+                                          color: AppColors.kcDarkTextPrimary,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                        isExpanded: true,
+                                        items: const [
+                                          DropdownMenuItem(
+                                            value: 'planned',
+                                            child: Text('Planning'),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'active',
+                                            child: Text('Active'),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'completed',
+                                            child: Text('Completed'),
+                                          ),
+                                        ],
+                                        onChanged: (v) {
+                                          if (v == null) return;
+                                          setLocalState(() => status = v);
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      final name = nameController.text.trim();
+                                      if (name.isEmpty) return;
+                                      if (startDate == null ||
+                                          endDate == null) {
+                                        return;
+                                      }
+                                      Navigator.pop(ctx, true);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.kcDarkPrimary,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      sprint == null ? 'Create' : 'Update',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor:
+                                          AppColors.kcDarkTextSecondary,
+                                    ),
+                                    child: const Text('Cancel'),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    } finally {
+      nameController.dispose();
+      goalController.dispose();
+      startController.dispose();
+      endController.dispose();
+    }
+
+    if (result == true) {
+      try {
+        if (sprint == null) {
+          await _createSprintUseCase(
+            projectId: widget.projectId,
+            name: nameController.text,
+            startDate: startDate ?? DateTime.now(),
+            endDate: endDate ?? DateTime.now().add(const Duration(days: 7)),
+            goal: goalController.text,
+            status: status,
+          );
+        } else {
+          await _updateSprintUseCase(
+            projectId: widget.projectId,
+            sprintId: sprint.id,
+            name: nameController.text,
+            startDate: startDate ?? DateTime.now(),
+            endDate: endDate ?? DateTime.now().add(const Duration(days: 7)),
+            goal: goalController.text,
+            status: status,
+          );
+        }
+        if (!mounted) return;
+        _loadSprints();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error saving sprint: $e')));
+        }
       }
     }
   }
@@ -139,10 +443,7 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
           'Delete Sprint',
           style: TextStyle(color: AppColors.kcDarkTextPrimary),
         ),
-        content: Text(
-          'Are you sure you want to delete ${sprint.name}?',
-          style: const TextStyle(color: AppColors.kcDarkTextMuted),
-        ),
+        content: Text('Are you sure you want to delete ${sprint.name}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -163,6 +464,7 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
           projectId: widget.projectId,
           sprintId: sprint.id,
         );
+        if (!mounted) return;
         _loadSprints();
       } catch (e) {
         if (mounted) {
@@ -174,286 +476,17 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
     }
   }
 
-  Widget _label(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        color: AppColors.kcDarkTextSecondary,
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
-      ),
-    );
-  }
-
-  Widget _field({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    int? minLines,
-    int? maxLines = 1,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _label(label),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          style: const TextStyle(color: AppColors.kcDarkTextPrimary),
-          minLines: minLines,
-          maxLines: maxLines,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: const TextStyle(color: AppColors.kcDarkTextMuted),
-            filled: true,
-            fillColor: AppColors.kcDarkInputAlt,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(
-                color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.kcDarkPrimary),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _pickDate({
-    required DateTime initial,
-    required ValueChanged<DateTime> onPicked,
-  }) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppColors.kcDarkPrimary,
-              surface: AppColors.kcDarkCard,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-    if (picked != null) onPicked(picked);
-  }
-
-  Widget _dateField({
-    required String label,
-    required DateTime value,
-    required VoidCallback onTap,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _label(label),
-        const SizedBox(height: 6),
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
-          child: Container(
-            height: 44,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: AppColors.kcDarkInputAlt,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
-              ),
-            ),
-            alignment: Alignment.centerLeft,
-            child: Text(
-              DateFormat('dd/MM/yyyy').format(value),
-              style: const TextStyle(
-                color: AppColors.kcDarkTextPrimary,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _statusDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _label('Status'),
-        const SizedBox(height: 6),
-        Container(
-          height: 44,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: AppColors.kcDarkInputAlt,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
-            ),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _status,
-              dropdownColor: AppColors.kcDarkCard,
-              iconEnabledColor: AppColors.kcDarkTextMuted,
-              style: const TextStyle(
-                color: AppColors.kcDarkTextPrimary,
-                fontWeight: FontWeight.w700,
-              ),
-              isExpanded: true,
-              items: const [
-                DropdownMenuItem(value: 'active', child: Text('Active')),
-                DropdownMenuItem(value: 'completed', child: Text('Completed')),
-                DropdownMenuItem(value: 'planned', child: Text('Planning')),
-              ],
-              onChanged: (v) {
-                if (v == null) return;
-                setState(() => _status = v);
-              },
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  String _normalizeStatus(String status) {
-    if (status == 'planning') return 'planned';
-    if (status != 'active' && status != 'completed' && status != 'planned') {
-      return 'active';
-    }
-    return status;
-  }
-
-  Color _statusPillColor(String status) {
-    final normalized = _normalizeStatus(status);
-    switch (normalized) {
-      case 'completed':
-        return Colors.green.shade600;
-      case 'planned':
-        return AppColors.kcDarkTextMuted.withValues(alpha: 0.65);
-      case 'active':
-      default:
-        return AppColors.kcDarkPrimary;
-    }
-  }
-
-  String _statusLabel(String status) {
-    final normalized = _normalizeStatus(status);
-    switch (normalized) {
-      case 'completed':
-        return 'completed';
-      case 'planned':
-        return 'planned';
-      case 'active':
-      default:
-        return 'active';
-    }
-  }
-
-  Widget _sprintRow(SprintEntity sprint) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        sprint.name,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.kcDarkTextPrimary,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _statusPillColor(sprint.status),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        _statusLabel(sprint.status),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '${DateFormat('dd/MM/yyyy').format(sprint.startDate)} - ${DateFormat('dd/MM/yyyy').format(sprint.endDate)}',
-                  style: const TextStyle(color: AppColors.kcDarkTextMuted),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                tooltip: 'Edit sprint',
-                icon: const Icon(
-                  Icons.edit,
-                  size: 18,
-                  color: AppColors.kcDarkTextMuted,
-                ),
-                onPressed: () => _startEdit(sprint),
-              ),
-              IconButton(
-                tooltip: 'Delete sprint',
-                icon: const Icon(
-                  Icons.delete,
-                  size: 18,
-                  color: AppColors.kcDarkTextMuted,
-                ),
-                onPressed: () => _deleteSprint(sprint),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: AppColors.kcDarkSurface,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 560, maxHeight: 680),
+        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 600),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+          padding: const EdgeInsets.all(24),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -462,9 +495,8 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                     'Manage Sprints',
                     style: TextStyle(
                       color: AppColors.kcDarkTextPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      fontFamily: 'Outfit',
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   IconButton(
@@ -476,159 +508,83 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                   ),
                 ],
               ),
-              const Divider(color: AppColors.kcDarkBorderSoft, height: 1),
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.only(top: 14, bottom: 6),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 20),
+              if (_loading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_sprints.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(
+                    child: Text(
+                      'No sprints found',
+                      style: TextStyle(color: AppColors.kcDarkTextMuted),
+                    ),
+                  ),
+                )
+              else
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: _sprints.length,
+                    separatorBuilder: (context, index) =>
+                        const Divider(color: AppColors.kcDarkBorderSoft),
+                    itemBuilder: (context, index) {
+                      final sprint = _sprints[index];
+                      return ListTile(
+                        title: Text(
+                          sprint.name,
+                          style: const TextStyle(
+                            color: AppColors.kcDarkTextPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${DateFormat('MMM d').format(sprint.startDate)} - ${DateFormat('MMM d').format(sprint.endDate)}\nGoal: ${sprint.goal}',
+                          style: const TextStyle(
+                            color: AppColors.kcDarkTextMuted,
+                          ),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (_sprints.isEmpty) ...[
-                              const Text(
-                                'No sprints yet. Create one to get started.',
-                                style: TextStyle(
-                                  color: AppColors.kcDarkTextMuted,
-                                ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.edit,
+                                size: 18,
+                                color: AppColors.kcDarkPrimary,
                               ),
-                              const SizedBox(height: 14),
-                              OutlinedButton.icon(
-                                onPressed: _startCreate,
-                                icon: const Icon(Icons.add),
-                                label: const Text('New Sprint'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.kcDarkTextPrimary,
-                                  side: BorderSide(
-                                    color: AppColors.kcDarkBorderSoft
-                                        .withValues(alpha: 0.8),
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
+                              onPressed: () => _showAddEditDialog(sprint),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete,
+                                size: 18,
+                                color: Colors.redAccent,
                               ),
-                            ] else ...[
-                              for (final sprint in _sprints) ...[
-                                _sprintRow(sprint),
-                                const Divider(
-                                  color: AppColors.kcDarkBorderSoft,
-                                  height: 1,
-                                ),
-                              ],
-                              const SizedBox(height: 14),
-                              OutlinedButton.icon(
-                                onPressed: _startCreate,
-                                icon: const Icon(Icons.add),
-                                label: const Text('New Sprint'),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.kcDarkTextPrimary,
-                                  side: BorderSide(
-                                    color: AppColors.kcDarkBorderSoft
-                                        .withValues(alpha: 0.8),
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                              ),
-                            ],
-                            if (_showForm) ...[
-                              const SizedBox(height: 18),
-                              const Divider(
-                                color: AppColors.kcDarkBorderSoft,
-                                height: 1,
-                              ),
-                              const SizedBox(height: 14),
-                              Text(
-                                _editingSprint == null
-                                    ? 'New Sprint'
-                                    : 'Edit Sprint',
-                                style: const TextStyle(
-                                  color: AppColors.kcDarkTextPrimary,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              _field(
-                                controller: _nameController,
-                                label: 'Name',
-                                hint: 'Sprint name',
-                              ),
-                              const SizedBox(height: 12),
-                              _field(
-                                controller: _goalController,
-                                label: 'Goal (optional)',
-                                hint: 'Sprint goal',
-                                minLines: 3,
-                                maxLines: 3,
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _dateField(
-                                      label: 'Start Date',
-                                      value: _startDate,
-                                      onTap: () => _pickDate(
-                                        initial: _startDate,
-                                        onPicked: (d) =>
-                                            setState(() => _startDate = d),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: _dateField(
-                                      label: 'End Date',
-                                      value: _endDate,
-                                      onTap: () => _pickDate(
-                                        initial: _endDate,
-                                        onPicked: (d) =>
-                                            setState(() => _endDate = d),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              _statusDropdown(),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  ElevatedButton(
-                                    onPressed: _saveSprint,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.kcDarkPrimary,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      _editingSprint == null
-                                          ? 'Create'
-                                          : 'Update',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  TextButton(
-                                    onPressed: _cancelForm,
-                                    style: TextButton.styleFrom(
-                                      foregroundColor:
-                                          AppColors.kcDarkTextSecondary,
-                                    ),
-                                    child: const Text('Cancel'),
-                                  ),
-                                ],
-                              ),
-                            ],
+                              onPressed: () => _deleteSprint(sprint),
+                            ),
                           ],
                         ),
-                      ),
+                      );
+                    },
+                  ),
+                ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () => _showAddEditDialog(),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Create New Sprint'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.kcDarkPrimary,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
               ),
             ],
           ),

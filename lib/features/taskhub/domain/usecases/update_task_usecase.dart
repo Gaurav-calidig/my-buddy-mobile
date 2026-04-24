@@ -16,6 +16,7 @@ class UpdateTaskUseCase {
     String? priority,
     String? ticketType,
     String? title,
+    int? sprintId,
   }) {
     return repository.updateTask(
       projectId: projectId,
@@ -27,6 +28,7 @@ class UpdateTaskUseCase {
       priority: priority,
       ticketType: ticketType,
       title: title,
+      sprintId: sprintId,
     );
   }
 }

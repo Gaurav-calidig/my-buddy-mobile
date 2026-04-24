@@ -18,6 +18,7 @@ class CreateTaskUseCase {
     required String ticketType,
     required int position,
     String? dueDateIso,
+    int? sprintId,
   }) {
     return repository.createTask(
       projectId: projectId,
@@ -30,6 +31,7 @@ class CreateTaskUseCase {
       ticketType: ticketType,
       position: position,
       dueDateIso: dueDateIso,
+      sprintId: sprintId,
     );
   }
 }
