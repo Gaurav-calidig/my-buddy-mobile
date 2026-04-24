@@ -1,5 +1,7 @@
 import 'package:core/features/attendance/domain/entities/attendance_entities.dart';
+import 'package:core/features/attendance/domain/entities/attendance_leave_stats_entity.dart';
 import 'package:core/features/attendance/domain/entities/leave_request_entity.dart';
+import 'package:core/features/attendance/domain/usecases/get_attendance_leave_stats_usecase.dart';
 import 'package:core/core/network/api_routes.dart';
 import 'package:core/core/network/api_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,8 +10,12 @@ import 'attendance_event.dart';
 import 'attendance_state.dart';
 
 class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
-  AttendanceBloc({required ApiService apiService})
+  AttendanceBloc({
+    required ApiService apiService,
+    required GetAttendanceLeaveStatsUseCase getAttendanceLeaveStatsUseCase,
+  })
       : _apiService = apiService,
+        _getAttendanceLeaveStatsUseCase = getAttendanceLeaveStatsUseCase,
         super(AttendanceState.initial()) {
     on<AttendanceStarted>(_onStarted);
     on<AttendanceMonthChanged>(_onMonthChanged);
@@ -24,6 +30,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
   }
 
   final ApiService _apiService;
+  final GetAttendanceLeaveStatsUseCase _getAttendanceLeaveStatsUseCase;
 
   Future<void> _onStarted(
     AttendanceStarted event,
@@ -32,30 +39,91 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     emit(state.copyWith(isLoading: true, clearError: true, clearSuccessMessage: true));
     final DateTime month = DateTime(2026, 4);
     final List<AmsCalendarDayEntity> days = await _buildMonthDays(month);
+    final AttendanceLeaveStatsEntity? leaveStats = await _safeFetchLeaveStats();
 
     emit(
       state.copyWith(
         isLoading: false,
         month: month,
-        stats: const <AmsStatEntity>[
-          AmsStatEntity(label: 'Total Used', value: '1', caption: 'days this FY'),
-          AmsStatEntity(label: 'Pending Approval', value: '1', caption: 'requests'),
-          AmsStatEntity(label: 'On Leave Today', value: '0', caption: 'members'),
-          AmsStatEntity(label: 'On Leave This Month', value: '1', caption: 'members'),
-        ],
-        summary: const AmsLeaveSummaryEntity(
-          allocated: 7,
-          used: 1,
-          balance: 6,
-          casual: '0.5 (2 pending)',
-          sick: '1',
-        ),
+        stats: _buildStats(leaveStats),
+        summary: _buildSummary(leaveStats),
         days: days,
       ),
     );
 
     // Preload leaves so "My Leaves" shows instantly.
     add(const AttendanceLeavesRequested());
+  }
+
+  Future<AttendanceLeaveStatsEntity?> _safeFetchLeaveStats() async {
+    try {
+      return await _getAttendanceLeaveStatsUseCase();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<AmsStatEntity> _buildStats(AttendanceLeaveStatsEntity? stats) {
+    if (stats == null) {
+      return const <AmsStatEntity>[
+        AmsStatEntity(label: 'Total Used', value: '0', caption: 'days this FY'),
+        AmsStatEntity(label: 'Pending Approval', value: '0', caption: 'requests'),
+        AmsStatEntity(label: 'On Leave Today', value: '0', caption: 'members'),
+        AmsStatEntity(label: 'On Leave This Month', value: '0', caption: 'members'),
+      ];
+    }
+    return <AmsStatEntity>[
+      AmsStatEntity(label: 'Total Used', value: stats.totalUsed.toString(), caption: 'days this FY'),
+      AmsStatEntity(label: 'Pending Approval', value: stats.pendingCount.toString(), caption: 'requests'),
+      AmsStatEntity(label: 'On Leave Today', value: stats.todayCount.toString(), caption: 'members'),
+      AmsStatEntity(label: 'On Leave This Month', value: stats.thisMonthCount.toString(), caption: 'members'),
+    ];
+  }
+
+  AmsLeaveSummaryEntity _buildSummary(AttendanceLeaveStatsEntity? stats) {
+    if (stats == null) {
+      return const AmsLeaveSummaryEntity(
+        allocated: 0,
+        used: 0,
+        balance: 0,
+        casual: '0',
+        sick: '0',
+      );
+    }
+
+    final AttendanceLeaveTypeStatsEntity? casual = _findLeaveTypeStats(stats.leaveTypeBreakdown, 'casual');
+    final AttendanceLeaveTypeStatsEntity? sick = _findLeaveTypeStats(stats.leaveTypeBreakdown, 'sick');
+    final int rawBalance = stats.allocated - stats.totalUsed;
+    final int balance = rawBalance < 0 ? 0 : rawBalance;
+
+    return AmsLeaveSummaryEntity(
+      allocated: stats.allocated,
+      used: stats.totalUsed,
+      balance: balance,
+      casual: _formatBreakdown(casual),
+      sick: _formatBreakdown(sick),
+    );
+  }
+
+  AttendanceLeaveTypeStatsEntity? _findLeaveTypeStats(
+    List<AttendanceLeaveTypeStatsEntity> breakdown,
+    String keyword,
+  ) {
+    for (final AttendanceLeaveTypeStatsEntity item in breakdown) {
+      if (item.name.toLowerCase().contains(keyword)) {
+        return item;
+      }
+    }
+    return null;
+  }
+
+  String _formatBreakdown(AttendanceLeaveTypeStatsEntity? item) {
+    if (item == null) return '0';
+    final String usedText = item.used == item.used.toInt() ? item.used.toInt().toString() : item.used.toString();
+    if (item.pending > 0) {
+      return '$usedText (${item.pending} pending)';
+    }
+    return usedText;
   }
 
   Future<void> _onMonthChanged(
