@@ -8,6 +8,7 @@ import 'package:core/core/utils/shared_pref.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:core/features/auth/presentation/bloc/auth_state.dart';
 import 'package:core/features/onboarding/presentation/widgets/onboarding_widgets.dart';
+import 'package:core/core/widgets/overlay_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -201,7 +202,14 @@ class _OnboardingTestScreenState extends State<OnboardingTestScreen> {
               });
             }
           },
-          child: body,
+          child: BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, state) {
+              return OverlayLoader(
+                isLoading: state is AuthLoading,
+                child: body,
+              );
+            },
+          ),
         ),
       ),
     );

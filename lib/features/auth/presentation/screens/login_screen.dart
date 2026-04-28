@@ -1,6 +1,7 @@
 import 'package:core/core/dependency_injection/injection_container.dart';
 import 'package:core/core/navigation/app_routes.dart';
 import 'package:core/core/utils/utils.dart';
+import 'package:core/core/widgets/overlay_loader.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:core/features/auth/presentation/bloc/auth_event.dart';
 import 'package:core/features/auth/presentation/bloc/auth_state.dart';
@@ -27,59 +28,57 @@ class LoginScreen extends StatelessWidget {
               AppUtils.showToast('Error: ${state.error}');
             }
           },
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Center(
-              child: BlocBuilder<AuthBloc, AuthState>(
-                builder: (context, state) {
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.account_circle, size: 80, color: Colors.blue),
-                      const SizedBox(height: 32),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              side: const BorderSide(color: Colors.grey),
+          child: BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, state) {
+              return OverlayLoader(
+                isLoading: state is AuthLoading,
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.account_circle, size: 80, color: Colors.blue),
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: const BorderSide(color: Colors.grey),
+                              ),
+                            ),
+                            onPressed: () {
+                              context.read<AuthBloc>().add(
+                                const SignInWithGoogle(),
+                              );
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.g_mobiledata, color: Colors.black, size: 32),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Sign in with Google',
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          onPressed: () {
-                            context.read<AuthBloc>().add(
-                              const SignInWithGoogle(),
-                            );
-                          },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Icon(Icons.g_mobiledata, color: Colors.black, size: 32),
-                              SizedBox(width: 8),
-                              Text(
-                                'Sign in with Google',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
-                      ),
-                      if (state is AuthLoading)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 24),
-                          child: CircularProgressIndicator(),
-                        ),
-                    ],
-                  );
-                },
-              ),
-            ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),

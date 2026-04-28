@@ -3,6 +3,7 @@ import 'package:core/core/dependency_injection/injection_container.dart';
 import 'package:core/core/utils/utils.dart';
 import 'package:core/core/widgets/custom_text_field.dart';
 import 'package:core/core/widgets/url_screen.dart';
+import 'package:core/core/widgets/overlay_loader.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:core/features/auth/presentation/bloc/auth_event.dart';
 import 'package:core/features/auth/presentation/bloc/auth_state.dart';
@@ -91,74 +92,77 @@ class _SignUpScreenState extends State<SignUpScreen> {
               AppUtils.showToast('Error: ${state.error}');
             }
           },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                InputField(controller: nameController, hintText: 'Name'),
-                const SizedBox(height: 16),
-                InputField(controller: emailController, hintText: 'Email'),
-                const SizedBox(height: 16),
-                InputField(
-                  controller: passwordController,
-                  hintText: 'Password',
-                  obscureText: true,
-                ),
-                const SizedBox(height: 16),
-                InputField(
-                  controller: confirmPasswordController,
-                  hintText: 'Confirm Password',
-                  obscureText: true,
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Checkbox(
-                      value: _acceptedTerms,
-                      onChanged: (value) {
-                        setState(() => _acceptedTerms = value ?? false);
-                      },
-                    ),
-                    Expanded(
-                      child: Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
+          child: BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, state) {
+              final isLoading = state is AuthLoading;
+              return OverlayLoader(
+                isLoading: isLoading,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      InputField(controller: nameController, hintText: 'Name'),
+                      const SizedBox(height: 16),
+                      InputField(controller: emailController, hintText: 'Email'),
+                      const SizedBox(height: 16),
+                      InputField(
+                        controller: passwordController,
+                        hintText: 'Password',
+                        obscureText: true,
+                      ),
+                      const SizedBox(height: 16),
+                      InputField(
+                        controller: confirmPasswordController,
+                        hintText: 'Confirm Password',
+                        obscureText: true,
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('I agree to the '),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const UrlScreen(
-                                    title: 'Terms & Conditions',
-                                    url: AppConstants.termsConditionsUrl,
-                                  ),
-                                ),
-                              );
+                          Checkbox(
+                            value: _acceptedTerms,
+                            onChanged: (value) {
+                              setState(() => _acceptedTerms = value ?? false);
                             },
-                            child: const Text('Terms & Conditions'),
+                          ),
+                          Expanded(
+                            child: Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                const Text('I agree to the '),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const UrlScreen(
+                                          title: 'Terms & Conditions',
+                                          url: AppConstants.termsConditionsUrl,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text('Terms & Conditions'),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                BlocBuilder<AuthBloc, AuthState>(
-                  builder: (context, state) {
-                    final isLoading = state is AuthLoading;
-                    return SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: isLoading ? null : () => _submit(context),
-                        child: Text(isLoading ? 'Creating...' : 'Create account'),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : () => _submit(context),
+                          child: Text(isLoading ? 'Creating...' : 'Create account'),
+                        ),
                       ),
-                    );
-                  },
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              );
+            },
           ),
         ),
       ),

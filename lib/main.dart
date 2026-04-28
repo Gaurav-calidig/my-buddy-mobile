@@ -31,6 +31,7 @@ import 'package:core/features/splash/presentation/screens/splash_screen.dart';
 import 'package:core/features/splash/presentation/screens/update_required_screen.dart';
 import 'package:core/features/workmanager/service/workmanager_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -59,7 +60,7 @@ Future<void> main() async {
       await _initializeApplication();
       runApp(
         DevicePreview(
-          enabled: true,
+          enabled: kDebugMode,
           builder: (context) => const MyApp(),
         ),
        // MyApp(),
@@ -118,10 +119,10 @@ Future<void> _initializeOptionalServices() async {
   if (FeatureFlags.enableFirebase) {
     try {
       await FirebaseInitializer.ensureInitialized();
-      final remoteConfig = RemoteConfigService();
-      await remoteConfig.init();
-      log("android build version : ${remoteConfig.androidBuildVersion}");
-      log("android build number : ${remoteConfig.androidBuildNumber}");
+      // final remoteConfig = RemoteConfigService();
+      // await remoteConfig.init();
+      // log("android build version : ${remoteConfig.androidBuildVersion}");
+      // log("android build number : ${remoteConfig.androidBuildNumber}");
     } catch (error, stackTrace) {
       log('Firebase init failed: $error', stackTrace: stackTrace);
     }

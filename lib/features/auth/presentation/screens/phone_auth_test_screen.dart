@@ -1,8 +1,9 @@
-﻿import 'package:core/core/dependency_injection/injection_container.dart';
+import 'package:core/core/dependency_injection/injection_container.dart';
 import 'package:core/core/widgets/custom_text_field.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:core/features/auth/presentation/bloc/auth_event.dart';
 import 'package:core/features/auth/presentation/bloc/auth_state.dart';
+import 'package:core/core/widgets/overlay_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -52,11 +53,13 @@ class _PhoneAuthTestScreenState extends State<PhoneAuthTestScreen> {
         builder: (context, state) {
           final isLoading = state is AuthLoading;
 
-          return Scaffold(
-            appBar: AppBar(title: const Text('Phone Auth Test')),
-            body: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
+          return OverlayLoader(
+            isLoading: isLoading,
+            child: Scaffold(
+              appBar: AppBar(title: const Text('Phone Auth Test')),
+              body: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
                 children: [
                   InputField(
                     controller: phoneController,
@@ -74,9 +77,7 @@ class _PhoneAuthTestScreenState extends State<PhoneAuthTestScreen> {
                                   SendOtpRequested(phoneNumber: phone),
                                 );
                           },
-                    child: isLoading
-                        ? const CircularProgressIndicator()
-                        : const Text('Send OTP'),
+                    child: const Text('Send OTP'),
                   ),
                   if ((verificationId ?? '').isNotEmpty) ...[
                     const SizedBox(height: 16),
@@ -101,13 +102,12 @@ class _PhoneAuthTestScreenState extends State<PhoneAuthTestScreen> {
                                     ),
                                   );
                             },
-                      child: isLoading
-                          ? const CircularProgressIndicator()
-                          : const Text('Verify OTP'),
+                      child: const Text('Verify OTP'),
                     ),
                   ],
                 ],
               ),
+            ),
             ),
           );
         },

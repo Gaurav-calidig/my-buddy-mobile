@@ -1,4 +1,3 @@
-import 'package:core/core/dependency_injection/injection_container.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:core/features/auth/presentation/bloc/auth_event.dart';
 import 'package:flutter/material.dart';
@@ -11,9 +10,7 @@ class OnboardingBottomCta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-          create: (_) => sl<AuthBloc>(),
-      child: Padding(
+    return Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -90,7 +87,6 @@ class OnboardingBottomCta extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 }
