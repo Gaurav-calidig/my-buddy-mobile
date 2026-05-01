@@ -16,6 +16,9 @@ class TaskEntity extends Equatable {
   final int position;
   final DateTime? dueDate;
   final int? sprintId;
+  final DateTime? createdAt;
+  final String? createdById;
+  final DateTime? updatedAt;
 
   const TaskEntity({
     required this.id,
@@ -31,6 +34,9 @@ class TaskEntity extends Equatable {
     this.descriptionHtml,
     this.dueDate,
     this.sprintId,
+    this.createdAt,
+    this.createdById,
+    this.updatedAt,
   });
 
   TaskEntity copyWith({
@@ -47,6 +53,9 @@ class TaskEntity extends Equatable {
     int? position,
     DateTime? dueDate,
     int? sprintId,
+    DateTime? createdAt,
+    String? createdById,
+    DateTime? updatedAt,
   }) {
     return TaskEntity(
       id: id ?? this.id,
@@ -62,6 +71,9 @@ class TaskEntity extends Equatable {
       position: position ?? this.position,
       dueDate: dueDate ?? this.dueDate,
       sprintId: sprintId ?? this.sprintId,
+      createdAt: createdAt ?? this.createdAt,
+      createdById: createdById ?? this.createdById,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -80,5 +92,8 @@ class TaskEntity extends Equatable {
         position,
         dueDate,
         sprintId,
+        createdAt,
+        createdById,
+        updatedAt,
       ];
 }

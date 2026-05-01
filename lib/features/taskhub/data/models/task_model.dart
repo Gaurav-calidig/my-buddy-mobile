@@ -17,6 +17,9 @@ class TaskModel extends TaskEntity {
     super.descriptionHtml,
     super.dueDate,
     super.sprintId,
+    super.createdAt,
+    super.createdById,
+    super.updatedAt,
   });
 
   factory TaskModel.fromJson(Map<String, dynamic> json) {
@@ -52,6 +55,13 @@ class TaskModel extends TaskEntity {
           ? DateTime.tryParse(json['dueDate'].toString())
           : null,
       sprintId: (json['sprintId'] as num?)?.toInt(),
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString())
+          : null,
+      createdById: json['createdById']?.toString(),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.tryParse(json['updatedAt'].toString())
+          : null,
     );
   }
 }

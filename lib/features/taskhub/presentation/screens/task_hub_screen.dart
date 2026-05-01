@@ -14,6 +14,7 @@ import 'package:core/features/taskhub/presentation/widgets/task_status_column.da
 import 'package:core/features/taskhub/presentation/widgets/task_hub_task_dialog.dart';
 import 'package:core/features/taskhub/presentation/widgets/manage_states_dialog.dart';
 import 'package:core/features/taskhub/presentation/widgets/manage_sprints_dialog.dart';
+import 'package:core/features/taskhub/presentation/widgets/export_tasks_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -174,9 +175,14 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
                               .read<TaskHubCubit>()
                               .setSelectedSprintId(id),
                           onExport: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Export not implemented yet.'),
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => ExportTasksDialog(
+                                columns: state.columns,
+                                tasksByColumnId: state.tasksByColumnId,
+                                project: widget.project,
+                                sprints: state.sprints,
+                                assigneeById: state.assigneeById,
                               ),
                             );
                           },

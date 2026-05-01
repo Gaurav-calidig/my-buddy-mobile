@@ -92,6 +92,9 @@ dependencies:
   flutter_onboarding_slider: ^1.0.11
   gal: 2.3.2
   secure_application: ^4.1.0
+  excel: ^4.0.6
+  path_provider: ^2.1.5
+  open_filex: ^4.7.0
 dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_test:
