@@ -338,33 +338,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        const Color(0xFF7E8BFF),
-                        const Color(0xFFCD5AFF),
-                        const Color(0xFFFF5DB0),
-                        const Color(0xFFFF5C4D),
-                        const Color(0xFFFF8A00),
-                        const Color(0xFFB8DB3B),
-                        const Color(0xFF27C766),
-                        const Color(0xFF27C3BE),
-                        const Color(0xFF3CA4FF),
-                        const Color(0xFF4C6FFF),
-                      ].map((c) => Padding(
-                        padding: const EdgeInsets.only(right: 10),
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedColor = c),
-                          child: Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              color: c,
-                              shape: BoxShape.circle,
-                              border: _selectedColor == c ? Border.all(color: Colors.white, width: 2) : null,
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          const Color(0xFF7E8BFF),
+                          const Color(0xFFCD5AFF),
+                          const Color(0xFFFF5DB0),
+                          const Color(0xFFFF5C4D),
+                          const Color(0xFFFF8A00),
+                          const Color(0xFFB8DB3B),
+                          const Color(0xFF27C766),
+                          const Color(0xFF27C3BE),
+                          const Color(0xFF3CA4FF),
+                          const Color(0xFF4C6FFF),
+                        ].map((c) => Padding(
+                          padding: const EdgeInsets.only(right: 10),
+                          child: GestureDetector(
+                            onTap: () => setState(() => _selectedColor = c),
+                            child: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                color: c,
+                                shape: BoxShape.circle,
+                                border: _selectedColor == c ? Border.all(color: Colors.white, width: 2) : null,
+                              ),
                             ),
                           ),
-                        ),
-                      )).toList(),
+                        )).toList(),
+                      ),
                     ),
                     if (tagState.isTagsLoading && tagState.updatingTagId == null && tagState.tags.isEmpty)
                       const Center(
