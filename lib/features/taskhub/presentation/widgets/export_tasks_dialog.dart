@@ -169,54 +169,43 @@ class _ExportTasksDialogState extends State<ExportTasksDialog> {
       final fileBytes = excel.save();
       if (fileBytes == null) throw Exception('Failed to generate Excel file');
 
-      // 1. Determine Save Path
-      Directory? directory;
-      if (Platform.isAndroid) {
-        // Try to get Downloads directory on Android
-        directory = await getDownloadsDirectory();
-      }
-      
-      // Fallback to Application Documents or Temp if Downloads is not available (e.g. iOS)
-      directory ??= await getApplicationDocumentsDirectory();
-
+      // 1. Save to a temporary file (safe and fast for sharing/opening)
+      final tempDir = await getTemporaryDirectory();
       final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
       final fileName = 'Tasks_${widget.project.name.replaceAll(' ', '_')}_$timestamp.xlsx';
-      final file = File('${directory.path}/$fileName');
+      final file = File('${tempDir.path}/$fileName');
       await file.writeAsBytes(fileBytes);
 
       if (mounted) {
-        // 2. Notify and Open with fallback
+        // 2. Open Share Sheet immediately (Best for Android visibility and iOS "Save to Files")
+        await Share.shareXFiles(
+          [XFile(file.path)],
+          subject: 'Task Export - ${widget.project.name}',
+        );
+
+        if (!mounted) return;
+
+        // 3. Show Snackbar with "Open" action as a shortcut
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('File saved to: $fileName'),
+            content: Text('File exported: $fileName'),
             action: SnackBarAction(
               label: 'Open',
               onPressed: () async {
                 try {
                   final result = await OpenFilex.open(file.path);
-                  if (result.type != ResultType.done && mounted) {
-                    // Fallback to share if open fails
+                  // If no app found to open the file, or error occurs, trigger share sheet as fallback
+                  if (result.type == ResultType.noAppToOpen || result.type == ResultType.error) {
                     await Share.shareXFiles([XFile(file.path)]);
                   }
                 } catch (_) {
-                  // Fallback to share if plugin is not registered (MissingPluginException)
-                  if (mounted) {
-                    await Share.shareXFiles([XFile(file.path)]);
-                  }
+                  await Share.shareXFiles([XFile(file.path)]);
                 }
               },
             ),
             duration: const Duration(seconds: 8),
           ),
         );
-
-        // 3. For iOS, we still show the Share sheet as it's the only way to "Save to Files" or move it out of the app
-        if (Platform.isIOS) {
-          await Share.shareXFiles(
-            [XFile(file.path)],
-            subject: 'Task Export - ${widget.project.name}',
-          );
-        }
 
         if (mounted) {
           Navigator.pop(context);
