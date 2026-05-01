@@ -15,20 +15,27 @@ class AmsFyDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? const Color(0xFF0E1A34) : AppColors.kcLightCard;
+    final borderColor = isDark ? AppColors.kcDarkPrimarySoft : AppColors.kcPrimaryColor;
+    final dropdownBg = isDark ? AppColors.kcBackgroundColorDark : AppColors.kcLightCard;
+    final iconColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final textColor = isDark ? Colors.white : AppColors.kcLightTitle;
+
     final String safeValue = items.contains(value) ? value : (items.isNotEmpty ? items.first : value);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFF0E1A34),
+        color: bg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.kcDarkPrimarySoft),
+        border: Border.all(color: borderColor),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: safeValue.isEmpty ? (items.isNotEmpty ? items.first : null) : safeValue,
-          dropdownColor: AppColors.kcBackgroundColorDark,
-          iconEnabledColor: Colors.white,
-          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+          dropdownColor: dropdownBg,
+          iconEnabledColor: iconColor,
+          style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.w700),
           items: items
               .map((String fy) => DropdownMenuItem<String>(
                     value: fy,

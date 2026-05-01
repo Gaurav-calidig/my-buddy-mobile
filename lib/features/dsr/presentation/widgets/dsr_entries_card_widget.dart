@@ -19,28 +19,34 @@ class DsrEntriesCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+    final dividerColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+    final mutedColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextSecondary;
+    final faintColor = isDark ? AppColors.kcDarkTextFaint : AppColors.kcLightTextMuted;
+
     return DsrCardShell(
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text('Entries for $dateLabel', style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+            Text('Entries for $dateLabel', style: TextStyle(color: titleColor, fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
-            const Divider(color: AppColors.kcDarkBorderSoft, height: 1),
+            Divider(color: dividerColor, height: 1),
             const SizedBox(height: 10),
-            const Row(
+            Row(
               children: <Widget>[
-                Expanded(child: Text('Project & Description', style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 12, fontWeight: FontWeight.w600))),
-                SizedBox(width: 130, child: Text('Hours / Status', textAlign: TextAlign.center, style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 12, fontWeight: FontWeight.w600))),
-                SizedBox(width: 70, child: Text('Actions', textAlign: TextAlign.center, style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 12, fontWeight: FontWeight.w600))),
+                Expanded(child: Text('Project & Description', style: TextStyle(color: mutedColor, fontSize: 12, fontWeight: FontWeight.w600))),
+                SizedBox(width: 130, child: Text('Hours / Status', textAlign: TextAlign.center, style: TextStyle(color: mutedColor, fontSize: 12, fontWeight: FontWeight.w600))),
+                SizedBox(width: 70, child: Text('Actions', textAlign: TextAlign.center, style: TextStyle(color: mutedColor, fontSize: 12, fontWeight: FontWeight.w600))),
               ],
             ),
             const SizedBox(height: 8),
             if (entries.isEmpty)
-              const SizedBox(
+              SizedBox(
                 height: 90,
-                child: Center(child: Text('No DSR entries found for selected date.', textAlign: TextAlign.center, style: TextStyle(color: AppColors.kcDarkTextFaint, height: 1.35))),
+                child: Center(child: Text('No DSR entries found for selected date.', textAlign: TextAlign.center, style: TextStyle(color: faintColor, height: 1.35))),
               )
             else
               ...List<Widget>.generate(entries.length, (int index) {

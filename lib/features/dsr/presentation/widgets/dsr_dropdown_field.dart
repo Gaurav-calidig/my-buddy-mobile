@@ -17,25 +17,32 @@ class DsrDropdownField<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dropdownBg = isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightCard;
+    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+    final fillColor = isDark ? AppColors.kcDarkInput : AppColors.kcLightInput;
+    final borderColor = isDark ? AppColors.kcDarkBorderStrong : AppColors.kcLightBorder;
+    final focusedBorderColor = isDark ? AppColors.kcDarkPrimarySoft : AppColors.kcPrimaryColor;
+
     final T? safeValue = items.contains(value) ? value : null;
     return DropdownButtonFormField<T>(
       initialValue: safeValue,
       onChanged: onChanged,
       icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.kcGreyColor),
-      dropdownColor: AppColors.kcDarkInputAlt,
-      style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 14),
+      dropdownColor: dropdownBg,
+      style: TextStyle(color: textColor, fontSize: 14),
       decoration: InputDecoration(
         isDense: true,
         filled: true,
-        fillColor: AppColors.kcDarkInput,
+        fillColor: fillColor,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: AppColors.kcDarkBorderStrong),
+          borderSide: BorderSide(color: borderColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: AppColors.kcDarkPrimarySoft),
+          borderSide: BorderSide(color: focusedBorderColor),
         ),
       ),
       hint: Text(hintText, style: const TextStyle(color: AppColors.kcGreyColor)),

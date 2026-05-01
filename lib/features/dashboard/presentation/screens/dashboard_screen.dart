@@ -27,33 +27,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-           drawer: const TemplateFeatureDrawer(),
+      drawer: const TemplateFeatureDrawer(),
       appBar: const CustomAppBar(title: 'Dashboard'),
       body: Container(
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom],
-          ),
+        decoration: BoxDecoration(
+          gradient: isDark
+              ? const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom],
+                )
+              : LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: <Color>[
+                    AppColors.kcLightPage,
+                    AppColors.kcLightPage.withValues(alpha: 0.95),
+                  ],
+                ),
         ),
         child: BlocBuilder<DashboardBloc, DashboardState>(
           builder: (context, state) {
             if (state.isLoading) {
-              return const Center(
+              return Center(
                 child: SizedBox(
                   width: 28,
                   height: 28,
-                  child: CircularProgressIndicator(strokeWidth: 2.4),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    color: isDark ? Colors.white : AppColors.kcPrimaryColor,
+                  ),
                 ),
               );
             }
-      
+
             final highlights = state.highlights;
             final amsOverview = state.amsLeaveOverview;
-      
+
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
               child: Column(
@@ -87,8 +102,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 8),
                     Text(
                       state.errorMessage!,
-                      style: const TextStyle(
-                        color: AppColors.kcDarkErrorText,
+                      style: TextStyle(
+                        color: isDark ? AppColors.kcDarkErrorText : AppColors.kcErrorColor,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),

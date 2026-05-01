@@ -56,17 +56,24 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             }
           }
 
+          final bgColor = ProjectTheme.getBg(context);
+          final panelColor = ProjectTheme.getPanel(context);
+          final borderColor = ProjectTheme.getBorder(context);
+          final textPrimary = ProjectTheme.getTextPrimary(context);
+          final textMuted = ProjectTheme.getTextMuted(context);
+          final accentColor = ProjectTheme.getAccent(context);
+
           return DefaultTabController(
             length: tabs.length,
             child: Scaffold(
-              backgroundColor: kBg,
+              backgroundColor: bgColor,
               body: SafeArea(
                 child: Column(
                   children: [
-                    _buildHeader(context),
-                    _buildTabBar(tabs),
+                    _buildHeader(context, panelColor, borderColor, textPrimary, textMuted),
+                    _buildTabBar(tabs, panelColor, textPrimary, textMuted, accentColor),
                     Expanded(
-                      child: _buildBody(state, showDeleted)),
+                      child: _buildBody(state, showDeleted, accentColor)),
                   ],
                 ),
               ),
@@ -77,9 +84,9 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     );
   }
 
-  Widget _buildBody(ProjectDetailState state, bool showDeleted) {
+  Widget _buildBody(ProjectDetailState state, bool showDeleted, Color accentColor) {
     if (state is ProjectDetailLoading || state is ProjectDetailInitial) {
-      return const Center(child: CircularProgressIndicator(color: kAccent));
+      return Center(child: CircularProgressIndicator(color: accentColor));
     }
     if (state is ProjectDetailError) {
       return ErrorView(message: state.message);
@@ -106,13 +113,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     return const SizedBox();
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, Color panelColor, Color borderColor, Color textPrimary, Color textMuted) {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 12, 16, 8),
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: kPanel,
-        border: Border(bottom: BorderSide(color: kBorder)),
+      decoration: BoxDecoration(
+        color: panelColor,
+        border: Border(bottom: BorderSide(color: borderColor)),
       ),
       child: Row(
         children: [
@@ -121,7 +128,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
               children: [
                 IconButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.arrow_back_ios_new, color: kTextPrimary, size: 20),
+                  icon: Icon(Icons.arrow_back_ios_new, color: textPrimary, size: 20),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 ),
@@ -133,8 +140,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                     children: [
                       Text(
                         widget.project.name,
-                        style: const TextStyle(
-                          color: kTextPrimary,
+                        style: TextStyle(
+                          color: textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
                           fontFamily: 'Outfit',
@@ -145,8 +152,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       if (widget.project.prefix.isNotEmpty)
                         Text(
                           widget.project.prefix,
-                          style: const TextStyle(
-                            color: kTextMuted,
+                          style: TextStyle(
+                            color: textMuted,
                             fontSize: 12,
                           ),
                           maxLines: 1,
@@ -174,19 +181,19 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     );
   }
 
-  Widget _buildTabBar(List<String> tabs) {
+  Widget _buildTabBar(List<String> tabs, Color panelColor, Color textPrimary, Color textMuted, Color accentColor) {
     return Container(
-      color: kPanel,
+      color: panelColor,
       child: TabBar(
         isScrollable: true,
-        labelColor: kTextPrimary,
-        unselectedLabelColor: kTextMuted,
+        labelColor: textPrimary,
+        unselectedLabelColor: textMuted,
         labelStyle: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
         ),
         unselectedLabelStyle: const TextStyle(fontSize: 13),
-        indicatorColor: kAccent,
+        indicatorColor: accentColor,
         indicatorWeight: 2,
         tabAlignment: TabAlignment.start,
         tabs: tabs.map((t) => Tab(text: t)).toList(),

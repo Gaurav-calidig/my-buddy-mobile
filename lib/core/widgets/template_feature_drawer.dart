@@ -5,6 +5,7 @@ import 'package:core/core/navigation/app_routes.dart';
 import 'package:core/core/utils/shared_pref.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:core/core/theme/app_colors.dart';
 
 class TemplateFeatureDrawer extends StatefulWidget {
   const TemplateFeatureDrawer({super.key});
@@ -17,14 +18,6 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
   String userName = 'User Name';
   String userEmail = 'user@example.com';
   bool _showProfileMenu = false;
-
-  static const Color _drawerBg = Color(0xFF031234);
-  static const Color _divider = Color(0x1FFFFFFF);
-  static const Color _panelBorder = Color(0x26000000);
-  static const Color _title = Color(0xFFEAF0FF);
-  static const Color _muted = Color(0xFF9FB1D5);
-  static const Color _activeBg = Color(0xFF1B2A49);
-  static const Color _activeIcon = Color(0xFF8DB4FF);
 
   @override
   void initState() {
@@ -90,13 +83,17 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
     String title,
     String route,
     String currentRoute,
+    Color activeBg,
+    Color activeIcon,
+    Color titleColor,
+    Color mutedColor,
   ) {
     final bool isActive = currentRoute == route;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: isActive ? _activeBg : Colors.transparent,
+        color: isActive ? activeBg : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
@@ -107,12 +104,12 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
         leading: Icon(
           icon,
           size: 17,
-          color: isActive ? _activeIcon : _muted,
+          color: isActive ? activeIcon : mutedColor,
         ),
         title: Text(
           title,
           style: TextStyle(
-            color: isActive ? _title : _title.withValues(alpha: 0.92),
+            color: isActive ? titleColor : titleColor.withValues(alpha: 0.92),
             fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
             fontSize: 14,
           ),
@@ -125,6 +122,18 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final drawerBg = isDark ? const Color(0xFF031234) : AppColors.kcLightPage;
+    final dividerColor = isDark ? const Color(0x1FFFFFFF) : AppColors.kcLightBorder;
+    final panelBorderColor = isDark ? const Color(0x26000000) : AppColors.kcLightBorder;
+    final titleColor = isDark ? const Color(0xFFEAF0FF) : AppColors.kcLightTitle;
+    final mutedColor = isDark ? const Color(0xFF9FB1D5) : AppColors.kcLightTextSecondary;
+    final activeBg = isDark ? const Color(0xFF1B2A49) : AppColors.kcPrimaryColor.withValues(alpha: 0.1);
+    final activeIcon = isDark ? const Color(0xFF8DB4FF) : AppColors.kcPrimaryColor;
+    final profileCardBg = isDark ? const Color(0xFF0E1E40) : AppColors.kcLightInput;
+
     final String currentRoute =
         AppRouter.router.routeInformationProvider.value.uri.path;
     final String initials = userName.isNotEmpty ? userName[0].toUpperCase() : 'U';
@@ -132,11 +141,11 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
     return Drawer(
       width: 258,
       elevation: 0,
-      backgroundColor: _drawerBg,
+      backgroundColor: drawerBg,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Container(
-        decoration: const BoxDecoration(
-          border: Border(right: BorderSide(color: _panelBorder, width: 1)),
+        decoration: BoxDecoration(
+          border: Border(right: BorderSide(color: panelBorderColor, width: 1)),
         ),
         child: SafeArea(
           bottom: false,
@@ -150,30 +159,31 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                       width: 22,
                       height: 22,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2D75FF),
+                        color: AppColors.kcPrimaryColor,
                         borderRadius: BorderRadius.circular(7),
                       ),
                       child: const Icon(Icons.circle_outlined, size: 12, color: Colors.white),
                     ),
                     const SizedBox(width: 8),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
                           Text(
                             'SecureOps',
                             style: TextStyle(
-                              color: _title,
+                              color: titleColor,
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               height: 1.05,
+                              fontFamily: 'Outfit',
                             ),
                           ),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text(
                             'v1.0.0',
                             style: TextStyle(
-                              color: _muted,
+                              color: mutedColor,
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                             ),
@@ -186,16 +196,16 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
               ),
               InkWell(
                 onTap: () => Scaffold.of(context).closeDrawer(),
-                child: const Padding(
-                  padding: EdgeInsets.fromLTRB(10, 8, 10, 10),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
                   child: Row(
                     children: <Widget>[
-                      Icon(Icons.first_page, color: _muted, size: 16),
-                      SizedBox(width: 8),
+                      Icon(Icons.first_page, color: mutedColor, size: 16),
+                      const SizedBox(width: 8),
                       Text(
                         'Collapse',
                         style: TextStyle(
-                          color: _title,
+                          color: titleColor,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -204,17 +214,17 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                   ),
                 ),
               ),
-              const Divider(height: 1, color: _divider),
+              Divider(height: 1, color: dividerColor),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
                   children: <Widget>[
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(0, 0, 0, 10),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 0, 0, 10),
                       child: Text(
                         'Navigation',
                         style: TextStyle(
-                          color: _muted,
+                          color: mutedColor,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -226,6 +236,10 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                       'Dashboard',
                       AppRoutes.dashboard,
                       currentRoute,
+                      activeBg,
+                      activeIcon,
+                      titleColor,
+                      mutedColor,
                     ),
                     _buildMenuItem(
                       context,
@@ -233,6 +247,10 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                       'Projects',
                       AppRoutes.projects,
                       currentRoute,
+                      activeBg,
+                      activeIcon,
+                      titleColor,
+                      mutedColor,
                     ),
                     _buildMenuItem(
                       context,
@@ -240,6 +258,10 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                       'My DSR',
                       AppRoutes.myDsr,
                       currentRoute,
+                      activeBg,
+                      activeIcon,
+                      titleColor,
+                      mutedColor,
                     ),
                     _buildMenuItem(
                       context,
@@ -247,6 +269,10 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                       'Capacity Planner',
                       AppRoutes.capacityPlanner,
                       currentRoute,
+                      activeBg,
+                      activeIcon,
+                      titleColor,
+                      mutedColor,
                     ),
                     _buildMenuItem(
                       context,
@@ -254,19 +280,23 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                       'Attendance',
                       AppRoutes.attendance,
                       currentRoute,
+                      activeBg,
+                      activeIcon,
+                      titleColor,
+                      mutedColor,
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1, color: _divider),
+              Divider(height: 1, color: dividerColor),
               if (_showProfileMenu)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(8, 10, 8, 0),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0E1E40),
+                      color: profileCardBg,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: _divider),
+                      border: Border.all(color: dividerColor),
                     ),
                     child: Column(
                       children: <Widget>[
@@ -276,11 +306,11 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                             children: <Widget>[
                               CircleAvatar(
                                 radius: 12,
-                                backgroundColor: const Color(0xFF1C4FA3),
+                                backgroundColor: isDark ? const Color(0xFF1C4FA3) : AppColors.kcPrimaryColor.withValues(alpha: 0.1),
                                 child: Text(
                                   initials,
-                                  style: const TextStyle(
-                                    color: Color(0xFFCFE0FF),
+                                  style: TextStyle(
+                                    color: isDark ? const Color(0xFFCFE0FF) : AppColors.kcPrimaryColor,
                                     fontWeight: FontWeight.w700,
                                     fontSize: 10,
                                   ),
@@ -295,8 +325,8 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                                       userName,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: _title,
+                                      style: TextStyle(
+                                        color: titleColor,
                                         fontWeight: FontWeight.w700,
                                         fontSize: 13,
                                       ),
@@ -306,8 +336,8 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                                       userEmail,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: _muted,
+                                      style: TextStyle(
+                                        color: mutedColor,
                                         fontSize: 11,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -318,16 +348,16 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                             ],
                           ),
                         ),
-                        const Divider(height: 1, color: _divider),
+                        Divider(height: 1, color: dividerColor),
                         ListTile(
                           dense: true,
                           minLeadingWidth: 18,
                           horizontalTitleGap: 10,
-                          leading: const Icon(Icons.settings, color: _title, size: 16),
-                          title: const Text(
+                          leading: Icon(Icons.settings, color: titleColor, size: 16),
+                          title: Text(
                             'Settings',
                             style: TextStyle(
-                              color: _title,
+                              color: titleColor,
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
                             ),
@@ -338,11 +368,11 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                           dense: true,
                           minLeadingWidth: 18,
                           horizontalTitleGap: 10,
-                          leading: const Icon(Icons.logout, color: _title, size: 16),
-                          title: const Text(
+                          leading: Icon(Icons.logout, color: titleColor, size: 16),
+                          title: Text(
                             'Log out',
                             style: TextStyle(
-                              color: _title,
+                              color: titleColor,
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
                             ),
@@ -361,11 +391,11 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                     children: <Widget>[
                       CircleAvatar(
                         radius: 12,
-                        backgroundColor: const Color(0xFF1C4FA3),
+                        backgroundColor: isDark ? const Color(0xFF1C4FA3) : AppColors.kcPrimaryColor.withValues(alpha: 0.1),
                         child: Text(
                           initials,
-                          style: const TextStyle(
-                            color: Color(0xFFCFE0FF),
+                          style: TextStyle(
+                            color: isDark ? const Color(0xFFCFE0FF) : AppColors.kcPrimaryColor,
                             fontWeight: FontWeight.w700,
                             fontSize: 10,
                           ),
@@ -380,8 +410,8 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                               userName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: _title,
+                              style: TextStyle(
+                                color: titleColor,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
                               ),
@@ -391,8 +421,8 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                               userEmail,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: _muted,
+                              style: TextStyle(
+                                color: mutedColor,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -402,7 +432,7 @@ class _TemplateFeatureDrawerState extends State<TemplateFeatureDrawer> {
                       ),
                       Icon(
                         Icons.unfold_more,
-                        color: _muted.withValues(alpha: 0.9),
+                        color: mutedColor.withValues(alpha: 0.9),
                         size: 16,
                       ),
                     ],

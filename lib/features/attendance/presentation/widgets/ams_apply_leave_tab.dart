@@ -114,18 +114,23 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
   }
 
   void _showValidationError(String message) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dialogBg = isDark ? AppColors.kcBackgroundColorDark : AppColors.kcLightCard;
+    final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final bodyColor = isDark ? Colors.white70 : AppColors.kcLightTextSecondary;
+
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          backgroundColor: AppColors.kcBackgroundColorDark,
+          backgroundColor: dialogBg,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: const Text('Validation Error', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          content: Text(message, style: const TextStyle(color: Colors.white70)),
+          title: Text('Validation Error', style: TextStyle(color: titleColor, fontWeight: FontWeight.bold)),
+          content: Text(message, style: TextStyle(color: bodyColor)),
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('OK', style: TextStyle(color: AppColors.kcDarkPrimarySoft)),
+              child: const Text('OK', style: TextStyle(color: AppColors.kcPrimaryColor)),
             ),
           ],
         );
@@ -178,75 +183,91 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
     );
   }
 
-  InputDecoration _dec(String hint) {
+  InputDecoration _dec(String hint, {required bool isDark}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: AppColors.kcDarkTextMuted),
+      hintStyle: TextStyle(color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted),
       filled: true,
-      fillColor: const Color(0xFF0C1730),
+      fillColor: isDark ? const Color(0xFF0C1730) : AppColors.kcLightInput,
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(4),
-        borderSide: const BorderSide(color: AppColors.kcDarkBorderStrong),
+        borderSide: BorderSide(color: isDark ? AppColors.kcDarkBorderStrong : AppColors.kcLightBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(4),
-        borderSide: const BorderSide(color: AppColors.kcDarkPrimarySoft),
+        borderSide: const BorderSide(color: AppColors.kcPrimaryColor),
       ),
     );
   }
 
-  Widget _label(String text) => Padding(
+  Widget _label(String text, {required bool isDark}) => Padding(
         padding: const EdgeInsets.only(bottom: 6),
-        child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: isDark ? Colors.white : AppColors.kcLightTitle,
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+          ),
+        ),
       );
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? AppColors.kcDarkCard : AppColors.kcLightCard;
+    final borderColor = isDark ? AppColors.kcDarkBorderStrong : AppColors.kcLightBorder;
+    final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final secondaryColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
+    final dropdownBg = isDark ? AppColors.kcBackgroundColorDark : AppColors.kcLightCard;
+    final valueColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final inputFill = isDark ? const Color(0xFF0C1730) : AppColors.kcLightInput;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.kcDarkCard,
+        color: cardBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.kcDarkBorderStrong),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
             children: <Widget>[
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Apply for Leave',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20),
+                  style: TextStyle(color: titleColor, fontWeight: FontWeight.w700, fontSize: 20),
                 ),
               ),
               if (widget.onClose != null)
                 IconButton(
                   onPressed: widget.onClose,
-                  icon: const Icon(Icons.close, color: AppColors.kcDarkTextSecondary),
+                  icon: Icon(Icons.close, color: secondaryColor),
                   tooltip: 'Cancel',
                 ),
             ],
           ),
           const SizedBox(height: 14),
-          _label('Leave Type'),
+          _label('Leave Type', isDark: isDark),
           DropdownButtonFormField<int>(
             initialValue: _leaveTypeId,
-            hint: const Text(
+            hint: Text(
               'Select leave type',
-              style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 15),
+              style: TextStyle(color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted, fontSize: 15),
             ),
-            dropdownColor: AppColors.kcBackgroundColorDark,
-            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-            iconEnabledColor: AppColors.kcDarkTextSecondary,
-            decoration: _dec(''),
+            dropdownColor: dropdownBg,
+            style: TextStyle(color: valueColor, fontSize: 13, fontWeight: FontWeight.w600),
+            iconEnabledColor: secondaryColor,
+            decoration: _dec('', isDark: isDark),
             items: widget.leaveTypes
                 .map((Map<String, dynamic> item) => DropdownMenuItem<int>(
                       value: item['id'] as int,
-                      child: Text(item['name'].toString(), style: const TextStyle(color: Colors.white)),
+                      child: Text(item['name'].toString(), style: TextStyle(color: valueColor)),
                     ))
                 .toList(growable: false),
             onChanged: (int? v) => setState(() => _leaveTypeId = v),
@@ -258,7 +279,7 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    _label('Start Date'),
+                    _label('Start Date', isDark: isDark),
                     TextFormField(
                       controller: _startController,
                       readOnly: true,
@@ -266,8 +287,8 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
                         await _pickDate(_startController);
                         _triggerCalculateDaysIfReady();
                       },
-                      style: const TextStyle(color: Colors.white),
-                      decoration: _dec('dd-mm-yyyy'),
+                      style: TextStyle(color: valueColor),
+                      decoration: _dec('dd-mm-yyyy', isDark: isDark),
                     ),
                   ],
                 ),
@@ -277,15 +298,15 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    _label('Start Half'),
+                    _label('Start Half', isDark: isDark),
                     DropdownButtonFormField<String>(
                       initialValue: _startHalf,
-                      dropdownColor: AppColors.kcBackgroundColorDark,
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-                      iconEnabledColor: AppColors.kcDarkTextSecondary,
-                      decoration: _dec('Full Day'),
+                      dropdownColor: dropdownBg,
+                      style: TextStyle(color: valueColor, fontSize: 13, fontWeight: FontWeight.w600),
+                      iconEnabledColor: secondaryColor,
+                      decoration: _dec('Full Day', isDark: isDark),
                       items: const <String>['full_day', 'first_half', 'second_half']
-                          .map((String s) => DropdownMenuItem<String>(value: s, child: Text(_halfLabel[s] ?? s, style: const TextStyle(color: Colors.white))))
+                          .map((String s) => DropdownMenuItem<String>(value: s, child: Text(_halfLabel[s] ?? s, style: TextStyle(color: valueColor))))
                           .toList(growable: false),
                       onChanged: (String? v) {
                         setState(() => _startHalf = v ?? 'full_day');
@@ -304,7 +325,7 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    _label('End Date'),
+                    _label('End Date', isDark: isDark),
                     TextFormField(
                       controller: _endController,
                       readOnly: true,
@@ -312,8 +333,8 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
                         await _pickDate(_endController);
                         _triggerCalculateDaysIfReady();
                       },
-                      style: const TextStyle(color: Colors.white),
-                      decoration: _dec('dd-mm-yyyy'),
+                      style: TextStyle(color: valueColor),
+                      decoration: _dec('dd-mm-yyyy', isDark: isDark),
                     ),
                   ],
                 ),
@@ -323,15 +344,15 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    _label('End Half'),
+                    _label('End Half', isDark: isDark),
                     DropdownButtonFormField<String>(
                       initialValue: _endHalf,
-                      dropdownColor: AppColors.kcBackgroundColorDark,
-                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
-                      iconEnabledColor: AppColors.kcDarkTextSecondary,
-                      decoration: _dec('Full Day'),
+                      dropdownColor: dropdownBg,
+                      style: TextStyle(color: valueColor, fontSize: 13, fontWeight: FontWeight.w600),
+                      iconEnabledColor: secondaryColor,
+                      decoration: _dec('Full Day', isDark: isDark),
                       items: const <String>['full_day', 'first_half', 'second_half']
-                          .map((String s) => DropdownMenuItem<String>(value: s, child: Text(_halfLabel[s] ?? s, style: const TextStyle(color: Colors.white))))
+                          .map((String s) => DropdownMenuItem<String>(value: s, child: Text(_halfLabel[s] ?? s, style: TextStyle(color: valueColor))))
                           .toList(growable: false),
                       onChanged: (String? v) {
                         setState(() => _endHalf = v ?? 'full_day');
@@ -348,34 +369,34 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
             decoration: BoxDecoration(
-              color: const Color(0xFF0C1730),
+              color: inputFill,
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: AppColors.kcDarkBorderStrong),
+              border: Border.all(color: borderColor),
             ),
             child: widget.isCalculatingDays
-                ? const Row(
+                ? Row(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
-                      SizedBox(width: 8),
-                      Text('Calculating leave days...', style: TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 12)),
+                      const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2)),
+                      const SizedBox(width: 8),
+                      Text('Calculating leave days...', style: TextStyle(color: secondaryColor, fontSize: 12)),
                     ],
                   )
                 : Text(
                     widget.calculatedTotalDays == null
                         ? 'Select start and end date to calculate leave days.'
                         : 'Total days: ${widget.calculatedTotalDays} | Holidays: ${widget.calculatedHolidayCount ?? 0} | Weekends: ${widget.calculatedWeekendCount ?? 0}',
-                    style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 12),
+                    style: TextStyle(color: secondaryColor, fontSize: 12),
                   ),
           ),
           const SizedBox(height: 10),
-          _label('Reason'),
+          _label('Reason', isDark: isDark),
           TextFormField(
             controller: _reasonController,
             minLines: 2,
             maxLines: 3,
-            style: const TextStyle(color: Colors.white),
-            decoration: _dec('Optional reason'),
+            style: TextStyle(color: valueColor),
+            decoration: _dec('Optional reason', isDark: isDark),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -383,13 +404,13 @@ class _AmsApplyLeaveTabState extends State<AmsApplyLeaveTab> {
             child: ElevatedButton(
               onPressed: widget.isSubmitting ? null : _submit,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.kcDarkPrimarySoft,
-                foregroundColor: AppColors.kcDarkTextPrimary,
+                backgroundColor: AppColors.kcPrimaryColor,
+                foregroundColor: Colors.white,
                 minimumSize: const Size.fromHeight(40),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
               ),
               child: widget.isSubmitting
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : Text(_leaveId == null ? 'Submit Leave Request' : 'Update Leave Request'),
             ),
           ),

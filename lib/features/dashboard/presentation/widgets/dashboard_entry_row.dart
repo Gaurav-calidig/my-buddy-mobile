@@ -19,6 +19,11 @@ class DashboardEntryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final rowStyle = DashboardTableRowStyle.style(context);
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft.withValues(alpha: 0.45) : AppColors.kcLightBorder;
+    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+
     final displayDateTime = _formatToLocalDateTime(dateTime);
     final splitDateTime = displayDateTime.split(',');
     final hasDateAndTime = splitDateTime.length >= 2;
@@ -28,24 +33,24 @@ class DashboardEntryRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.45))),
+        border: Border(top: BorderSide(color: borderColor)),
       ),
       child: Row(
         children: <Widget>[
-          SizedBox(width: 78, child: Text(member, style: DashboardTableRowStyle.style)),
+          SizedBox(width: 78, child: Text(member, style: rowStyle)),
           Expanded(
             child: hasDateAndTime
                 ? RichText(
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     text: TextSpan(
-                      style: DashboardTableRowStyle.style,
+                      style: rowStyle,
                       children: <InlineSpan>[
                         TextSpan(text: '$datePart, '),
                         TextSpan(
                           text: timePart,
-                          style: const TextStyle(
-                            color: AppColors.kcDarkTextPrimary,
+                          style: TextStyle(
+                            color: textColor,
                             fontWeight: FontWeight.w700,
                             fontSize: 11,
                           ),
@@ -53,14 +58,14 @@ class DashboardEntryRow extends StatelessWidget {
                       ],
                     ),
                   )
-                : Text(displayDateTime, style: DashboardTableRowStyle.style),
+                : Text(displayDateTime, style: rowStyle),
           ),
-          Expanded(child: Text(project, style: DashboardTableRowStyle.style, overflow: TextOverflow.ellipsis)),
+          Expanded(child: Text(project, style: rowStyle, overflow: TextOverflow.ellipsis)),
           SizedBox(
             width: 40,
             child: Text(
               hours,
-              style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 11, fontWeight: FontWeight.w700),
+              style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.w700),
               textAlign: TextAlign.right,
             ),
           ),

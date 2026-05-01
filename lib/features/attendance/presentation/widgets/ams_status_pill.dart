@@ -6,16 +6,30 @@ class AmsStatusPill extends StatelessWidget {
 
   final String status;
 
-  Color _bg() {
+  Color _bg(bool isDark) {
     switch (status.toLowerCase()) {
       case 'approved':
-        return const Color(0xFF2F65C8);
+        return isDark ? const Color(0xFF2F65C8) : const Color(0xFFE3F2FD);
       case 'pending':
-        return const Color(0xFF344055);
+        return isDark ? const Color(0xFF344055) : const Color(0xFFF5F5F5);
       case 'rejected':
-        return const Color(0xFF7A2F2F);
+        return isDark ? const Color(0xFF7A2F2F) : const Color(0xFFFFEBEE);
       default:
-        return AppColors.kcDarkReadOnlyBg;
+        return isDark ? AppColors.kcDarkReadOnlyBg : AppColors.kcLightInput;
+    }
+  }
+
+  Color _text(bool isDark) {
+    if (isDark) return Colors.white;
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return const Color(0xFF1976D2);
+      case 'pending':
+        return AppColors.kcLightTextSecondary;
+      case 'rejected':
+        return const Color(0xFFD32F2F);
+      default:
+        return AppColors.kcLightTextMuted;
     }
   }
 
@@ -27,16 +41,19 @@ class AmsStatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final borderColor = isDark ? AppColors.kcDarkBorderStrong : AppColors.kcLightBorder;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: _bg(),
+        color: _bg(isDark),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.kcDarkBorderStrong),
+        border: Border.all(color: borderColor),
       ),
       child: Text(
         _label(),
-        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+        style: TextStyle(color: _text(isDark), fontSize: 11, fontWeight: FontWeight.w700),
       ),
     );
   }

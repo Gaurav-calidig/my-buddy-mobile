@@ -9,7 +9,7 @@ class TaskEntity extends Equatable {
   final int taskNumber;
   final String title;
   final String? descriptionHtml;
-  final String? assignee;
+  final String? assigneeId;
   final TaskPriority priority;
   final String ticketType;
   final TaskBoardType boardType;
@@ -30,7 +30,7 @@ class TaskEntity extends Equatable {
     required this.ticketType,
     required this.boardType,
     required this.position,
-    this.assignee,
+    this.assigneeId,
     this.descriptionHtml,
     this.dueDate,
     this.sprintId,
@@ -46,7 +46,7 @@ class TaskEntity extends Equatable {
     int? taskNumber,
     String? title,
     String? descriptionHtml,
-    String? assignee,
+    String? assigneeId,
     TaskPriority? priority,
     String? ticketType,
     TaskBoardType? boardType,
@@ -64,7 +64,7 @@ class TaskEntity extends Equatable {
       taskNumber: taskNumber ?? this.taskNumber,
       title: title ?? this.title,
       descriptionHtml: descriptionHtml ?? this.descriptionHtml,
-      assignee: assignee ?? this.assignee,
+      assigneeId: assigneeId ?? this.assigneeId,
       priority: priority ?? this.priority,
       ticketType: ticketType ?? this.ticketType,
       boardType: boardType ?? this.boardType,
@@ -85,7 +85,7 @@ class TaskEntity extends Equatable {
         taskNumber,
         title,
         descriptionHtml,
-        assignee,
+        assigneeId,
         priority,
         ticketType,
         boardType,

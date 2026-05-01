@@ -9,13 +9,21 @@ class DsrTodayEntryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+    final faintColor = isDark ? AppColors.kcDarkTextFaint : AppColors.kcLightTextMuted;
+    final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final secondaryColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.kcDarkInputAlt,
+        color: bg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.kcDarkBorderSoft),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -26,12 +34,12 @@ class DsrTodayEntryTile extends StatelessWidget {
               children: <Widget>[
                 Text(
                   entry.project,
-                  style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: textColor, fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   entry.description.isEmpty ? 'No description provided.' : entry.description,
-                  style: const TextStyle(color: AppColors.kcDarkTextFaint, fontSize: 12),
+                  style: TextStyle(color: faintColor, fontSize: 12),
                 ),
               ],
             ),
@@ -42,13 +50,13 @@ class DsrTodayEntryTile extends StatelessWidget {
             children: <Widget>[
               Text(
                 '${entry.hours.toStringAsFixed(1)}h',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                style: TextStyle(color: titleColor, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 4),
               Text(
                 entry.status,
-                style: const TextStyle(
-                  color: AppColors.kcDarkTextSecondary,
+                style: TextStyle(
+                  color: secondaryColor,
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),

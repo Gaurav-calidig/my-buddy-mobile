@@ -8,11 +8,14 @@ class DsrLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         label,
-        style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontWeight: FontWeight.w500),
+        style: TextStyle(color: color, fontWeight: FontWeight.w500),
       ),
     );
   }

@@ -7,19 +7,23 @@ class ThemeCubit extends Cubit<ThemeMode> {
   static const _themeKey = "theme_mode";
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
-  ThemeCubit() : super(ThemeMode.light) {
+  ThemeCubit() : super(ThemeMode.dark) {
     _loadTheme();
   }
 
   /// Toggle between light and dark theme
   void toggleTheme() {
     if (state == ThemeMode.light) {
-      emit(ThemeMode.dark);
-      _saveTheme(ThemeMode.dark);
+      updateTheme(ThemeMode.dark);
     } else {
-      emit(ThemeMode.light);
-      _saveTheme(ThemeMode.light);
+      updateTheme(ThemeMode.light);
     }
+  }
+
+  /// Update theme to a specific mode
+  void updateTheme(ThemeMode mode) {
+    emit(mode);
+    _saveTheme(mode);
   }
 
   /// Save theme securely

@@ -45,6 +45,10 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final pageBg = isDark ? const Color(0xFF0E1A34) : AppColors.kcLightPage;
+
     return BlocProvider(
       create: (context) => sl<ProjectBloc>()..add(FetchProjects()),
       child: BlocBuilder<ProjectBloc, ProjectState>(
@@ -53,7 +57,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
             drawer: const TemplateFeatureDrawer(),
             appBar: const CustomAppBar(title: 'Projects'),
             body: Container(
-              color: const Color(0xFF0E1A34),
+              color: pageBg,
               child: ProjectsView(
                 searchController: _searchController,
                 showArchived: _showArchived,
@@ -96,42 +100,38 @@ class ProjectsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color panel = AppColors.kcBackgroundColorDark;
-    const Color border = AppColors.kcSecondaryColorDark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final panel = isDark ? AppColors.kcBackgroundColorDark : AppColors.kcLightCard;
+    final border = isDark ? AppColors.kcSecondaryColorDark : AppColors.kcLightBorder;
+    final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final subTitleColor = isDark ? const Color(0xFFA9BDE1) : AppColors.kcLightTextSecondary;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          // const Text(
-          //   'Projects',
-          //   style: TextStyle(
-          //     color: Colors.white,
-          //     fontSize: 32,
-          //     fontWeight: FontWeight.bold,
-          //     fontFamily: 'Outfit',
-          //   ),
-          // ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Manage your projects and teams',
             style: TextStyle(
-              color: Color(0xFFA9BDE1),
+              color: subTitleColor,
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 16),
-          _buildControlsRow(context, border),
+          _buildControlsRow(context, border, isDark, titleColor),
           const SizedBox(height: 16),
-          Expanded(child: _buildContent(panel, border)),
+          Expanded(child: _buildContent(panel, border, isDark)),
         ],
       ),
     );
   }
 
-  Widget _buildControlsRow(BuildContext context, Color border) {
+  Widget _buildControlsRow(BuildContext context, Color border, bool isDark, Color titleColor) {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         final isSuperAdmin = authState is AuthSuccess &&
@@ -140,28 +140,30 @@ class ProjectsView extends StatelessWidget {
         return LayoutBuilder(
           builder: (context, constraints) {
             final bool isSmall = constraints.maxWidth < 600;
+            final inputBg = isDark ? const Color(0xFF0F1A33) : AppColors.kcLightInput;
+            final hintColor = isDark ? const Color(0xFF8EA5CD) : AppColors.kcLightTextMuted;
 
             final searchBar = Container(
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFF0F1A33),
+                color: inputBg,
                 border: Border.all(color: border.withValues(alpha: 0.65)),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: TextField(
                 controller: searchController,
                 onChanged: onSearchChanged,
-                style: const TextStyle(color: Color(0xFFDCE8FF), fontSize: 15),
-                decoration: const InputDecoration(
+                style: TextStyle(color: isDark ? const Color(0xFFDCE8FF) : AppColors.kcLightTitle, fontSize: 15),
+                decoration: InputDecoration(
                   border: InputBorder.none,
                   prefixIcon: Icon(
                     Icons.search,
                     size: 18,
-                    color: Color(0xFF7F95BE),
+                    color: isDark ? const Color(0xFF7F95BE) : AppColors.kcLightTextSecondary,
                   ),
                   hintText: 'Search projects...',
-                  hintStyle: TextStyle(color: Color(0xFF8EA5CD), fontSize: 15),
-                  contentPadding: EdgeInsets.symmetric(
+                  hintStyle: TextStyle(color: hintColor, fontSize: 15),
+                  contentPadding: const EdgeInsets.symmetric(
                     vertical: 10,
                     horizontal: 8,
                   ),
@@ -197,7 +199,7 @@ class ProjectsView extends StatelessWidget {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2D75FF),
+                      backgroundColor: AppColors.kcPrimaryColor,
                       minimumSize: const Size(0, 40),
                       padding: EdgeInsets.symmetric(horizontal: isSmall ? 12 : 16),
                       shape: RoundedRectangleBorder(
@@ -221,14 +223,19 @@ class ProjectsView extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    side: const BorderSide(color: Color(0xFF5F82C7), width: 1.2),
+                    side: BorderSide(
+                      color: isDark ? const Color(0xFF5F82C7) : AppColors.kcLightBorderMid,
+                      width: 1.2,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   isSmall ? 'Archived' : 'Show\nArchived',
-                  style: const TextStyle(
-                      color: Color(0xFFB7C8E8), fontSize: 12, height: 1.0),
+                  style: TextStyle(
+                      color: isDark ? const Color(0xFFB7C8E8) : AppColors.kcLightTextSecondary,
+                      fontSize: 12,
+                      height: 1.0),
                 ),
               ],
             );
@@ -240,12 +247,14 @@ class ProjectsView extends StatelessWidget {
                   icon: Icons.grid_view_rounded,
                   active: !isListView,
                   onTap: () => onViewChanged(false),
+                  isDark: isDark,
                 ),
                 const SizedBox(width: 6),
                 _viewToggle(
                   icon: Icons.menu,
                   active: isListView,
                   onTap: () => onViewChanged(true),
+                  isDark: isDark,
                 ),
               ],
             );
@@ -289,10 +298,10 @@ class ProjectsView extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(Color panel, Color border) {
+  Widget _buildContent(Color panel, Color border, bool isDark) {
     if (state is ProjectLoading || state is ProjectInitial) {
       return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF2D75FF)),
+        child: CircularProgressIndicator(color: AppColors.kcPrimaryColor),
       );
     } else if (state is ProjectError) {
       return Center(
@@ -318,6 +327,7 @@ class ProjectsView extends StatelessWidget {
     required IconData icon,
     required bool active,
     required VoidCallback onTap,
+    required bool isDark,
   }) {
     return InkWell(
       onTap: onTap,
@@ -326,18 +336,18 @@ class ProjectsView extends StatelessWidget {
         width: 34,
         height: 34,
         decoration: BoxDecoration(
-          color: active ? const Color(0xFF2D75FF) : const Color(0xFF0F1A33),
+          color: active ? AppColors.kcPrimaryColor : (isDark ? const Color(0xFF0F1A33) : AppColors.kcLightInput),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: active
-                ? const Color(0xFF2D75FF)
-                : const Color(0xFF4A5D86).withValues(alpha: 0.7),
+                ? AppColors.kcPrimaryColor
+                : (isDark ? const Color(0xFF4A5D86) : AppColors.kcLightBorder).withValues(alpha: 0.7),
           ),
         ),
         child: Icon(
           icon,
           size: 16,
-          color: active ? Colors.white : const Color(0xFF88A0CB),
+          color: active ? Colors.white : (isDark ? const Color(0xFF88A0CB) : AppColors.kcLightTextSecondary),
         ),
       ),
     );

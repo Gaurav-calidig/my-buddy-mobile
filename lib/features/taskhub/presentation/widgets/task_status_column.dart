@@ -9,22 +9,22 @@ class TaskStatusColumn extends StatefulWidget {
     super.key,
     required this.column,
     required this.tasks,
+    required this.onAddTask,
+    required this.onMoveTask,
+    this.onDragPositionChanged,
+    required this.onTaskTap,
     required this.projectPrefix,
     required this.assigneeById,
-    required this.onAddPressed,
-    required this.onTaskDropped,
-    this.onDragPositionChanged,
-    required this.onTaskTapped,
   });
 
   final BoardColumnEntity column;
   final List<TaskEntity> tasks;
+  final VoidCallback onAddTask;
+  final void Function(int taskId, int toColumnId, int toPosition) onMoveTask;
+  final ValueChanged<Offset?>? onDragPositionChanged;
+  final ValueChanged<TaskEntity> onTaskTap;
   final String projectPrefix;
   final Map<String, String> assigneeById;
-  final VoidCallback onAddPressed;
-  final void Function(TaskEntity task, int position) onTaskDropped;
-  final ValueChanged<Offset?>? onDragPositionChanged;
-  final ValueChanged<TaskEntity> onTaskTapped;
 
   @override
   State<TaskStatusColumn> createState() => _TaskStatusColumnState();
@@ -48,7 +48,13 @@ class _TaskStatusColumnState extends State<TaskStatusColumn> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final title = widget.column.name;
+
+    final titleColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+    final cardBg = isDark ? AppColors.kcDarkCardSoft : AppColors.kcLightCard;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,21 +63,21 @@ class _TaskStatusColumnState extends State<TaskStatusColumn> {
           children: [
             Text(
               title,
-              style: const TextStyle(
-                color: AppColors.kcDarkTextPrimary,
+              style: TextStyle(
+                color: titleColor,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
                 fontFamily: 'Outfit',
               ),
             ),
             const SizedBox(width: 10),
-            _CountPill(count: widget.tasks.length),
+            _CountPill(count: widget.tasks.length, isDark: isDark),
             const Spacer(),
             IconButton(
-              onPressed: widget.onAddPressed,
-              icon: const Icon(
+              onPressed: widget.onAddTask,
+              icon: Icon(
                 Icons.add,
-                color: AppColors.kcDarkTextPrimary,
+                color: titleColor,
                 size: 18,
               ),
               splashRadius: 18,
@@ -89,24 +95,24 @@ class _TaskStatusColumnState extends State<TaskStatusColumn> {
             onLeave: (_) => setState(() => _hovering = false),
             onAcceptWithDetails: (details) {
               setState(() => _hovering = false);
-              widget.onTaskDropped(details.data, widget.tasks.length);
+              widget.onMoveTask(details.data.id, widget.column.id, widget.tasks.length);
             },
             builder: (context, candidates, rejects) {
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 120),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.kcDarkCardSoft,
+                  color: cardBg,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: _hovering
-                        ? AppColors.kcDarkPrimary.withValues(alpha: 0.85)
-                        : AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
+                        ? AppColors.kcPrimaryColor.withValues(alpha: 0.85)
+                        : borderColor.withValues(alpha: 0.55),
                     width: _hovering ? 1.4 : 1,
                   ),
                 ),
                 child: widget.tasks.isEmpty
-                    ? _EmptyHint(columnName: widget.column.name)
+                    ? _EmptyHint(columnName: widget.column.name, isDark: isDark)
                     : Scrollbar(
                         thumbVisibility: true,
                         controller: _scrollController,
@@ -119,7 +125,7 @@ class _TaskStatusColumnState extends State<TaskStatusColumn> {
                               const SizedBox(height: 12),
                           itemBuilder: (context, i) => DragTarget<TaskEntity>(
                             onAcceptWithDetails: (details) {
-                              widget.onTaskDropped(details.data, i);
+                              widget.onMoveTask(details.data.id, widget.column.id, i);
                             },
                             builder: (context, candidates, rejects) {
                               final isTargeted = candidates.isNotEmpty;
@@ -131,16 +137,16 @@ class _TaskStatusColumnState extends State<TaskStatusColumn> {
                                       height: 4,
                                       margin: const EdgeInsets.only(bottom: 8),
                                       decoration: BoxDecoration(
-                                        color: AppColors.kcDarkPrimary,
+                                        color: AppColors.kcPrimaryColor,
                                         borderRadius: BorderRadius.circular(2),
                                       ),
                                     ),
                                   TaskTicketCard(
                                     task: widget.tasks[i],
                                     projectPrefix: widget.projectPrefix,
-                                    assigneeLabel: widget.assigneeById[widget.tasks[i].assignee],
+                                    assigneeLabel: widget.assigneeById[widget.tasks[i].assigneeId],
                                     onDragPositionChanged: widget.onDragPositionChanged,
-                                    onTap: () => widget.onTaskTapped(widget.tasks[i]),
+                                    onTap: () => widget.onTaskTap(widget.tasks[i]),
                                   ),
                                 ],
                               );
@@ -158,25 +164,26 @@ class _TaskStatusColumnState extends State<TaskStatusColumn> {
 }
 
 class _CountPill extends StatelessWidget {
-  const _CountPill({required this.count});
+  const _CountPill({required this.count, required this.isDark});
 
   final int count;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.kcDarkSurface,
+        color: isDark ? AppColors.kcDarkSurface : AppColors.kcLightInput,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.6),
+          color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder).withValues(alpha: 0.6),
         ),
       ),
       child: Text(
         '$count',
-        style: const TextStyle(
-          color: AppColors.kcDarkTextPrimary,
+        style: TextStyle(
+          color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
           fontWeight: FontWeight.w700,
           fontSize: 12,
         ),
@@ -186,9 +193,10 @@ class _CountPill extends StatelessWidget {
 }
 
 class _EmptyHint extends StatelessWidget {
-  const _EmptyHint({required this.columnName});
+  const _EmptyHint({required this.columnName, required this.isDark});
 
   final String columnName;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
@@ -196,8 +204,8 @@ class _EmptyHint extends StatelessWidget {
       child: Text(
         'Drop a task here to move to $columnName.',
         textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: AppColors.kcDarkTextSecondary,
+        style: TextStyle(
+          color: isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary,
           fontSize: 13,
           fontWeight: FontWeight.w600,
         ),

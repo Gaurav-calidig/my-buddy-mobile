@@ -42,20 +42,24 @@ class _AmsCalendarState extends State<AmsCalendar> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? AppColors.kcDarkCard : AppColors.kcLightCard;
+    final borderColor = isDark ? AppColors.kcDarkBorderStrong : AppColors.kcLightBorder;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.kcDarkCard,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.kcDarkBorderStrong),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          _buildHeader(),
+          _buildHeader(isDark),
           const SizedBox(height: 12),
-          _buildLegend(),
+          _buildLegend(isDark),
           const SizedBox(height: 16),
           if (widget.isLoading)
             const SizedBox(
@@ -64,28 +68,31 @@ class _AmsCalendarState extends State<AmsCalendar> {
             )
           else
           if (widget.viewMode == AmsCalendarViewMode.monthly)
-            _buildMonthlyView()
+            _buildMonthlyView(isDark)
           else
-            _buildGridView(),
+            _buildGridView(isDark),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isDark) {
+    final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final borderColor = isDark ? AppColors.kcDarkBorderStrong : AppColors.kcLightBorder;
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          _NavBtn(icon: Icons.chevron_left, onTap: widget.onPrev),
+          _NavBtn(icon: Icons.chevron_left, onTap: widget.onPrev, isDark: isDark),
           const SizedBox(width: 8),
           Text(
             _monthLabel(widget.month),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+            style: TextStyle(color: titleColor, fontWeight: FontWeight.w700, fontSize: 16),
           ),
           const SizedBox(width: 8),
-          _NavBtn(icon: Icons.chevron_right, onTap: widget.onNext),
+          _NavBtn(icon: Icons.chevron_right, onTap: widget.onNext, isDark: isDark),
           const SizedBox(width: 12),
           InkWell(
             onTap: widget.onToday,
@@ -94,22 +101,24 @@ class _AmsCalendarState extends State<AmsCalendar> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: AppColors.kcDarkBorderStrong),
+                border: Border.all(color: borderColor),
               ),
-              child: const Text('Today', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+              child: Text('Today', style: TextStyle(color: titleColor, fontSize: 12, fontWeight: FontWeight.w600)),
             ),
           ),
           const SizedBox(width: 12),
           _ViewToggle(
             currentMode: widget.viewMode,
             onChanged: widget.onViewModeChanged,
+            isDark: isDark,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildLegend() {
+  Widget _buildLegend(bool isDark) {
+    final labelColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
     const Map<String, Color> legendColors = <String, Color>{
       'Approved': Color(0xFF3F7BE0),
       'Pending': Color(0xFFC49C2B),
@@ -121,7 +130,7 @@ class _AmsCalendarState extends State<AmsCalendar> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: <Widget>[
-          const Text('Today', style: TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 12)),
+          Text('Today', style: TextStyle(color: labelColor, fontSize: 12)),
           const SizedBox(width: 12),
           ...widget.legend.map((String item) => Padding(
                 padding: const EdgeInsets.only(right: 10),
@@ -137,7 +146,7 @@ class _AmsCalendarState extends State<AmsCalendar> {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Text(item, style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 11)),
+                    Text(item, style: TextStyle(color: labelColor, fontSize: 11)),
                   ],
                 ),
               )),
@@ -146,7 +155,8 @@ class _AmsCalendarState extends State<AmsCalendar> {
     );
   }
 
-  Widget _buildMonthlyView() {
+  Widget _buildMonthlyView(bool isDark) {
+    final labelColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
     const List<String> weekdays = <String>['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     return Column(
       children: <Widget>[
@@ -156,7 +166,7 @@ class _AmsCalendarState extends State<AmsCalendar> {
                     child: Text(
                       day,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 11, fontWeight: FontWeight.w700),
+                      style: TextStyle(color: labelColor, fontSize: 11, fontWeight: FontWeight.w700),
                     ),
                   ))
               .toList(growable: false),
@@ -168,7 +178,7 @@ class _AmsCalendarState extends State<AmsCalendar> {
           return IntrinsicHeight(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: row.map((AmsCalendarDayEntity cell) => Expanded(child: _buildMonthlyCell(cell))).toList(),
+              children: row.map((AmsCalendarDayEntity cell) => Expanded(child: _buildMonthlyCell(cell, isDark))).toList(),
             ),
           );
         }),
@@ -176,14 +186,21 @@ class _AmsCalendarState extends State<AmsCalendar> {
     );
   }
 
-  Widget _buildMonthlyCell(AmsCalendarDayEntity cell) {
+  Widget _buildMonthlyCell(AmsCalendarDayEntity cell, bool isDark) {
     final bool isCurrentMonth = cell.isInCurrentMonth;
+    final cellBg = isDark 
+        ? (isCurrentMonth ? const Color(0xFF101B35) : const Color(0xFF0D172F))
+        : (isCurrentMonth ? Colors.white : AppColors.kcLightInput.withValues(alpha: 0.5));
+    final textColor = isDark 
+        ? (isCurrentMonth ? Colors.white : Colors.white24)
+        : (isCurrentMonth ? AppColors.kcLightTitle : AppColors.kcLightTextMuted);
+
     return Container(
       margin: const EdgeInsets.all(1),
-      padding: const EdgeInsets.fromLTRB(4, 4, 4, 6), // Increased bottom padding
-      constraints: const BoxConstraints(minHeight: 65), // Added minHeight for better structure
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 6),
+      constraints: const BoxConstraints(minHeight: 65),
       decoration: BoxDecoration(
-        color: isCurrentMonth ? const Color(0xFF101B35) : const Color(0xFF0D172F),
+        color: cellBg,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: _isToday(cell.date) ? AppColors.kcPrimaryColor.withValues(alpha: 0.5) : Colors.transparent,
@@ -197,7 +214,7 @@ class _AmsCalendarState extends State<AmsCalendar> {
           Text(
             '${cell.date.day}',
             style: TextStyle(
-              color: isCurrentMonth ? Colors.white : Colors.white24,
+              color: textColor,
               fontSize: 10,
               fontWeight: FontWeight.w700,
             ),
@@ -261,8 +278,12 @@ class _AmsCalendarState extends State<AmsCalendar> {
     );
   }
 
-  Widget _buildGridView() {
-    // Group all monthly events (leave + holiday + birthday) by row key.
+  Widget _buildGridView(bool isDark) {
+    final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final borderColor = isDark ? AppColors.kcDarkBorderStrong : AppColors.kcLightBorder;
+    final rowBorder = isDark ? const Color(0xFF1B253D) : AppColors.kcLightBorder;
+    final labelColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
+
     final Map<String, Map<int, AmsLeaveEventEntity>> rowEvents = <String, Map<int, AmsLeaveEventEntity>>{};
     final Map<String, String> rowLabels = <String, String>{};
     for (final day in widget.days) {
@@ -292,43 +313,38 @@ class _AmsCalendarState extends State<AmsCalendar> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Fixed Column (Member names)
         Column(
           children: [
-            // Header Corner
             Container(
               width: 100,
               height: 35,
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppColors.kcDarkBorderStrong)),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: borderColor)),
               ),
-              child: const Text('Member', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+              child: Text('Member', style: TextStyle(color: titleColor, fontSize: 11, fontWeight: FontWeight.bold)),
             ),
-            // Member list
             ...rows.map((String rowKey) => Container(
               width: 100,
               height: 35,
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFF1B253D))),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: rowBorder)),
               ),
               child: Text(
                 rowLabels[rowKey] ?? rowKey,
-                style: const TextStyle(color: Colors.white, fontSize: 10),
+                style: TextStyle(color: titleColor, fontSize: 10),
                 overflow: TextOverflow.ellipsis,
               ),
             )),
           ],
         ),
-        // Scrollable Grid Part (Day headers + Cells)
         Expanded(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Day Numbers Header Row
                 Row(
                   children: dayNumbers.map((d) {
                     final date = DateTime(widget.month.year, widget.month.month, d);
@@ -338,20 +354,19 @@ class _AmsCalendarState extends State<AmsCalendar> {
                       height: 35,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        border: const Border(bottom: BorderSide(color: AppColors.kcDarkBorderStrong)),
-                        color: isWeekend ? Colors.white.withValues(alpha: 0.05) : null,
+                        border: Border(bottom: BorderSide(color: borderColor)),
+                        color: isWeekend ? (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)) : null,
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(_weekdayInitial(date.weekday), style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 9)),
-                          Text('$d', style: TextStyle(color: _isToday(date) ? AppColors.kcPrimaryColor : Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                          Text(_weekdayInitial(date.weekday), style: TextStyle(color: labelColor, fontSize: 9)),
+                          Text('$d', style: TextStyle(color: _isToday(date) ? AppColors.kcPrimaryColor : titleColor, fontSize: 10, fontWeight: FontWeight.bold)),
                         ],
                       ),
                     );
                   }).toList(),
                 ),
-                // Data Rows
                 ...rows.map((String rowKey) => Row(
                   children: dayNumbers.map((d) {
                     final AmsLeaveEventEntity? event = rowEvents[rowKey]?[d];
@@ -362,11 +377,11 @@ class _AmsCalendarState extends State<AmsCalendar> {
                       width: 30,
                       height: 35,
                       decoration: BoxDecoration(
-                        border: const Border(
-                          bottom: BorderSide(color: Color(0xFF1B253D)),
-                          right: BorderSide(color: Color(0xFF1B253D)),
+                        border: Border(
+                          bottom: BorderSide(color: rowBorder),
+                          right: BorderSide(color: rowBorder),
                         ),
-                        color: isWeekend ? Colors.white.withValues(alpha: 0.05) : null,
+                        color: isWeekend ? (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.05)) : null,
                       ),
                       child: event != null
                           ? Center(
@@ -414,11 +429,15 @@ class _AmsCalendarState extends State<AmsCalendar> {
   }
 
   Future<void> _showEventDetails(BuildContext context, AmsLeaveEventEntity event) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dialogBg = isDark ? AppColors.kcBackgroundColorDark : AppColors.kcLightCard;
+    final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+
     await showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          backgroundColor: AppColors.kcBackgroundColorDark,
+          backgroundColor: dialogBg,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Row(
             children: [
@@ -428,18 +447,18 @@ class _AmsCalendarState extends State<AmsCalendar> {
                 decoration: BoxDecoration(color: Color(event.colorHex), borderRadius: BorderRadius.circular(2)),
               ),
               const SizedBox(width: 12),
-              const Text('Event Details', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              Text('Event Details', style: TextStyle(color: titleColor, fontWeight: FontWeight.w700)),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              _detailRow('Member', event.name),
-              _detailRow('Status', event.status.toUpperCase()),
+              _detailRow('Member', event.name, isDark),
+              _detailRow('Status', event.status.toUpperCase(), isDark),
               if (event.halfLabel != null && event.halfLabel!.isNotEmpty)
-                _detailRow('Leave Half', event.halfLabel!),
-              _detailRow('Reason', event.reason),
+                _detailRow('Leave Half', event.halfLabel!, isDark),
+              _detailRow('Reason', event.reason, isDark),
             ],
           ),
           actions: <Widget>[
@@ -453,15 +472,15 @@ class _AmsCalendarState extends State<AmsCalendar> {
     );
   }
 
-  Widget _detailRow(String label, String value) {
+  Widget _detailRow(String label, String value, bool isDark) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 12)),
+          Text(label, style: TextStyle(color: isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary, fontSize: 12)),
           const SizedBox(height: 2),
-          Text(value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500)),
+          Text(value, style: TextStyle(color: isDark ? Colors.white : AppColors.kcLightTitle, fontSize: 14, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -469,12 +488,16 @@ class _AmsCalendarState extends State<AmsCalendar> {
 }
 
 class _NavBtn extends StatelessWidget {
-  const _NavBtn({required this.icon, required this.onTap});
+  const _NavBtn({required this.icon, required this.onTap, required this.isDark});
   final IconData icon;
   final VoidCallback onTap;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
+    final borderColor = isDark ? AppColors.kcDarkBorderStrong : AppColors.kcLightBorder;
+    final iconColor = isDark ? Colors.white : AppColors.kcLightTitle;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
@@ -482,27 +505,28 @@ class _NavBtn extends StatelessWidget {
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.kcDarkBorderStrong),
+          border: Border.all(color: borderColor),
         ),
-        child: Icon(icon, size: 20, color: Colors.white),
+        child: Icon(icon, size: 20, color: iconColor),
       ),
     );
   }
 }
 
 class _ViewToggle extends StatelessWidget {
-  const _ViewToggle({required this.currentMode, required this.onChanged});
+  const _ViewToggle({required this.currentMode, required this.onChanged, required this.isDark});
   final AmsCalendarViewMode currentMode;
   final ValueChanged<AmsCalendarViewMode> onChanged;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D172F),
+        color: isDark ? const Color(0xFF0D172F) : AppColors.kcLightInput,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.kcDarkBorderStrong),
+        border: Border.all(color: isDark ? AppColors.kcDarkBorderStrong : AppColors.kcLightBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -516,6 +540,8 @@ class _ViewToggle extends StatelessWidget {
 
   Widget _toggleBtn(IconData icon, String label, AmsCalendarViewMode mode) {
     final bool active = currentMode == mode;
+    final labelColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
+
     return GestureDetector(
       onTap: () => onChanged(mode),
       child: Container(
@@ -526,9 +552,9 @@ class _ViewToggle extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 14, color: active ? Colors.white : AppColors.kcDarkTextSecondary),
+            Icon(icon, size: 14, color: active ? Colors.white : labelColor),
             const SizedBox(width: 4),
-            Text(label, style: TextStyle(color: active ? Colors.white : AppColors.kcDarkTextSecondary, fontSize: 10, fontWeight: FontWeight.w600)),
+            Text(label, style: TextStyle(color: active ? Colors.white : labelColor, fontSize: 10, fontWeight: FontWeight.w600)),
           ],
         ),
       ),

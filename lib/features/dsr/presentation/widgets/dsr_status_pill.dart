@@ -8,15 +8,20 @@ class DsrStatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.kcDarkStatusPill : AppColors.kcLightInput;
+    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.kcDarkStatusPill,
+        color: bg,
         borderRadius: BorderRadius.circular(12),
+        border: isDark ? null : Border.all(color: AppColors.kcLightBorder),
       ),
       child: Text(
         status,
-        style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 10, fontWeight: FontWeight.w700),
+        style: TextStyle(color: textColor, fontSize: 10, fontWeight: FontWeight.w700),
       ),
     );
   }

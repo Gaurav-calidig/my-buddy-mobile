@@ -66,21 +66,26 @@ class _AmsMyLeavesTabState extends State<AmsMyLeavesTab> {
   @override
   Widget build(BuildContext context) {
     final List<LeaveRequestEntity> visible = _filtered();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? AppColors.kcDarkCard : AppColors.kcLightCard;
+    final borderColor = isDark ? AppColors.kcDarkBorderStrong : AppColors.kcLightBorder;
+    final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final mutedColor = isDark ? AppColors.kcDarkTextFaint : AppColors.kcLightTextMuted;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.kcDarkCard,
+        color: cardBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.kcDarkBorderStrong),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
             children: <Widget>[
-              const Text('Leave History', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              Text('Leave History', style: TextStyle(color: titleColor, fontWeight: FontWeight.w700)),
               const Spacer(),
               if (widget.fiscalYears.isNotEmpty)
                 AmsFyDropdown(
@@ -97,9 +102,9 @@ class _AmsMyLeavesTabState extends State<AmsMyLeavesTab> {
               child: Center(child: CircularProgressIndicator(strokeWidth: 2.4)),
             )
           else if (visible.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 18),
-              child: Center(child: Text('No leave requests found.', style: TextStyle(color: AppColors.kcDarkTextFaint))),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              child: Center(child: Text('No leave requests found.', style: TextStyle(color: mutedColor))),
             )
           else
             LayoutBuilder(
@@ -150,14 +155,17 @@ class _WideHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final labelColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
+
+    return Row(
       children: <Widget>[
-        SizedBox(width: 92, child: Text('Type', style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
-        SizedBox(width: 180, child: Text('Dates', style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
-        SizedBox(width: 44, child: Text('Days', textAlign: TextAlign.center, style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
-        SizedBox(width: 96, child: Text('Status', textAlign: TextAlign.center, style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
-        SizedBox(width: 210, child: Text('Reason', overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
-        SizedBox(width: 74, child: Text('Actions', textAlign: TextAlign.center, style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600))),
+        SizedBox(width: 92, child: Text('Type', style: TextStyle(color: labelColor, fontSize: 11, fontWeight: FontWeight.w600))),
+        SizedBox(width: 180, child: Text('Dates', style: TextStyle(color: labelColor, fontSize: 11, fontWeight: FontWeight.w600))),
+        SizedBox(width: 44, child: Text('Days', textAlign: TextAlign.center, style: TextStyle(color: labelColor, fontSize: 11, fontWeight: FontWeight.w600))),
+        SizedBox(width: 96, child: Text('Status', textAlign: TextAlign.center, style: TextStyle(color: labelColor, fontSize: 11, fontWeight: FontWeight.w600))),
+        SizedBox(width: 210, child: Text('Reason', overflow: TextOverflow.ellipsis, style: TextStyle(color: labelColor, fontSize: 11, fontWeight: FontWeight.w600))),
+        SizedBox(width: 74, child: Text('Actions', textAlign: TextAlign.center, style: TextStyle(color: labelColor, fontSize: 11, fontWeight: FontWeight.w600))),
       ],
     );
   }
@@ -187,13 +195,18 @@ class _WideRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String type = item.leaveType?.name ?? 'Leave';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final bodyColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTextPrimary;
+    final secondaryColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
+
     return Row(
       children: <Widget>[
-        SizedBox(width: 92, child: Text(type, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12))),
-        SizedBox(width: 180, child: Text(_dates(), style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 12))),
-        SizedBox(width: 44, child: Text(item.totalDays.toString(), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12))),
+        SizedBox(width: 92, child: Text(type, style: TextStyle(color: titleColor, fontWeight: FontWeight.w700, fontSize: 12))),
+        SizedBox(width: 180, child: Text(_dates(), style: TextStyle(color: bodyColor, fontSize: 12))),
+        SizedBox(width: 44, child: Text(item.totalDays.toString(), textAlign: TextAlign.center, style: TextStyle(color: titleColor, fontWeight: FontWeight.w700, fontSize: 12))),
         SizedBox(width: 96, child: Center(child: AmsStatusPill(status: item.status))),
-        SizedBox(width: 210, child: Text(item.reason, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 12))),
+        SizedBox(width: 210, child: Text(item.reason, overflow: TextOverflow.ellipsis, style: TextStyle(color: secondaryColor, fontSize: 12))),
         SizedBox(
           width: 74,
           child: _ActionButtons(
@@ -223,8 +236,14 @@ class _ActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mutedColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
+    final secondaryColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
+    final dialogBg = isDark ? AppColors.kcBackgroundColorDark : AppColors.kcLightCard;
+    final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+
     if (!isPending) {
-      return const Center(child: Text('-', style: TextStyle(color: AppColors.kcDarkTextMuted)));
+      return Center(child: Text('-', style: TextStyle(color: mutedColor)));
     }
     if (loading) {
       return const Center(child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 1.8)));
@@ -232,7 +251,7 @@ class _ActionButtons extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
-        InkWell(onTap: onEdit, child: const Icon(Icons.edit_outlined, size: 15, color: AppColors.kcDarkTextSecondary)),
+        InkWell(onTap: onEdit, child: Icon(Icons.edit_outlined, size: 15, color: secondaryColor)),
         const SizedBox(width: 8),
         InkWell(
           onTap: () async {
@@ -240,11 +259,11 @@ class _ActionButtons extends StatelessWidget {
                   context: context,
                   builder: (BuildContext dialogContext) {
                     return AlertDialog(
-                      backgroundColor: AppColors.kcBackgroundColorDark,
-                      title: const Text('Cancel leave?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                      content: const Text(
+                      backgroundColor: dialogBg,
+                      title: Text('Cancel leave?', style: TextStyle(color: titleColor, fontWeight: FontWeight.w700)),
+                      content: Text(
                         'Do you want to cancel this leave request?',
-                        style: TextStyle(color: AppColors.kcDarkTextSecondary),
+                        style: TextStyle(color: secondaryColor),
                       ),
                       actions: <Widget>[
                         TextButton(
@@ -264,7 +283,7 @@ class _ActionButtons extends StatelessWidget {
               onCancel();
             }
           },
-          child: const Icon(Icons.close, size: 15, color: AppColors.kcDarkTextSecondary),
+          child: Icon(Icons.close, size: 15, color: secondaryColor),
         ),
       ],
     );

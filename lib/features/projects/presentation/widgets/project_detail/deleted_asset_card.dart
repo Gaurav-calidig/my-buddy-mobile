@@ -13,6 +13,7 @@ class DeletedAssetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textMuted = ProjectTheme.getTextMuted(context);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -43,18 +44,18 @@ class DeletedAssetCard extends StatelessWidget {
             children: [
               Text(
                 asset.name,
-                style: const TextStyle(
-                  color: kTextSecondary,
+                style: TextStyle(
+                  color: ProjectTheme.getTextSecondary(context),
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   decoration: TextDecoration.lineThrough,
-                  decorationColor: kTextMuted,
+                  decorationColor: textMuted,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 asset.value,
-                style: const TextStyle(color: kTextMuted, fontSize: 11),
+                style: TextStyle(color: textMuted, fontSize: 11),
               ),
             ],
           ),
@@ -71,7 +72,7 @@ class DeletedAssetCard extends StatelessWidget {
                     RestoreProjectAsset(projectId: projectId, assetId: asset.id),
                   );
             },
-            color: kAccent,
+            color: ProjectTheme.getAccent(context),
           ),
         ],
       ),

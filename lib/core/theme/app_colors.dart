@@ -94,4 +94,16 @@ class AppColors {
   static const Color kcLeaveApproved = Color(0xFF4E80C8);
   static const Color kcLeavePending = Color(0xFF9B7D2D);
   static const Color kcLeaveRejected = Color(0xFFB24A4A);
+
+  // Shared light module colors
+  static const Color kcLightPage = Color(0xFFF1F5F9);
+  static const Color kcLightCard = Color(0xFFFFFFFF);
+  static const Color kcLightSurface = Color(0xFFFFFFFF);
+  static const Color kcLightInput = Color(0xFFF8FAFC);
+  static const Color kcLightBorder = Color(0xFFE2E8F0);
+  static const Color kcLightBorderMid = Color(0xFFCBD5E1);
+  static const Color kcLightTitle = Color(0xFF0F172A);
+  static const Color kcLightTextPrimary = Color(0xFF1E293B);
+  static const Color kcLightTextSecondary = Color(0xFF64748B);
+  static const Color kcLightTextMuted = Color(0xFF94A3B8);
 }

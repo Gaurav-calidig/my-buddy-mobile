@@ -72,13 +72,13 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
     final local = renderObject.globalToLocal(globalPosition);
     final width = renderObject.size.width;
 
-    const edge = 80.0; // Increased edge sensitivity for smoother start
-    const maxStep = 14.0; // Reduced step for smoother, more controlled scroll
+    const edge = 80.0;
+    const maxStep = 14.0;
 
     double delta = 0;
     if (local.dx < edge) {
       final strength = (edge - local.dx).clamp(0, edge) / edge;
-      delta = -maxStep * pow(strength, 2); // Exponential speed for better feel
+      delta = -maxStep * pow(strength, 2);
     } else if (local.dx > width - edge) {
       final strength = (local.dx - (width - edge)).clamp(0, edge) / edge;
       delta = maxStep * pow(strength, 2);
@@ -98,33 +98,19 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
     _stopScrollTimer();
     _searchController.dispose();
     _horizontalController.dispose();
-    _dragGlobalPosition.dispose();
     super.dispose();
   }
 
-  void _onSettings(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => BlocProvider.value(
-        value: context.read<TaskHubCubit>(),
-        child: const ManageStatesDialog(),
-      ),
-    );
-  }
-
-  void _onManageSprints(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (ctx) => ManageSprintsDialog(projectId: widget.project.id),
-    );
-    if (!mounted) return;
-    context.read<TaskHubCubit>().load(
-      boardType: context.read<TaskHubCubit>().state.boardType,
-    );
+  @override
+  void initState() {
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return BlocProvider(
       create: (_) => TaskHubCubit(
         project: widget.project,
@@ -137,23 +123,32 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
         deleteBoardColumnUseCase: sl(),
         moveTaskUseCase: sl(),
         getSprintsUseCase: sl(),
-      ),
+      )..load(boardType: TaskBoardType.kanban),
       child: Builder(
         builder: (context) {
           return BlocBuilder<TaskHubCubit, TaskHubState>(
             builder: (context, state) {
               return Scaffold(
-                backgroundColor: AppColors.kcDarkPage,
+                backgroundColor: isDark ? AppColors.kcDarkPage : AppColors.kcLightPage,
                 body: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        AppColors.kcDarkGradientTop,
-                        AppColors.kcDarkGradientBottom,
-                      ],
-                    ),
+                  decoration: BoxDecoration(
+                    gradient: isDark
+                        ? const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              AppColors.kcDarkGradientTop,
+                              AppColors.kcDarkGradientBottom,
+                            ],
+                          )
+                        : LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              AppColors.kcLightPage,
+                              AppColors.kcLightPage.withValues(alpha: 0.95),
+                            ],
+                          ),
                   ),
                   child: SafeArea(
                     child: Column(
@@ -203,9 +198,9 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
 
                               if (state.status == TaskHubLoadStatus.loading ||
                                   state.status == TaskHubLoadStatus.initial) {
-                                return const Center(
+                                return Center(
                                   child: CircularProgressIndicator(
-                                    color: AppColors.kcDarkPrimary,
+                                    color: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
                                   ),
                                 );
                               }
@@ -229,6 +224,7 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
                                       tasks:
                                           state.tasksByColumnId[col.id] ??
                                           const [],
+                                      assigneeById: state.assigneeById,
                                     ),
                                   )
                                   .toList(growable: false);
@@ -249,38 +245,37 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
                                     }
                                     return child!;
                                   },
-                                  child: SingleChildScrollView(
+                                  child: ListView.separated(
                                     key: _boardKey,
                                     controller: _horizontalController,
                                     scrollDirection: Axis.horizontal,
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 16,
+                                      vertical: 8,
                                     ),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        for (
-                                          int i = 0;
-                                          i < columns.length;
-                                          i++
-                                        ) ...[
-                                          SizedBox(
-                                            width: columnWidth,
-                                            child: columns[i],
-                                          ),
-                                          if (i != columns.length - 1)
-                                            const SizedBox(width: 16),
-                                        ],
-                                      ],
-                                    ),
+                                    itemCount: columns.length + 1,
+                                    separatorBuilder: (_, __) =>
+                                        const SizedBox(width: 16),
+                                    itemBuilder: (context, index) {
+                                      if (index < columns.length) {
+                                        return SizedBox(
+                                          width: columnWidth,
+                                          child: columns[index],
+                                        );
+                                      }
+                                      return _AddColumnButton(
+                                        width: columnWidth,
+                                        onAdd: () => _onAddColumn(context),
+                                        onManage: () =>
+                                            _onManageColumns(context),
+                                      );
+                                    },
                                   ),
                                 ),
                               );
                             },
                           ),
                         ),
-                        const SizedBox(height: 12),
                       ],
                     ),
                   ),
@@ -297,82 +292,172 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
     required BuildContext context,
     required BoardColumnEntity column,
     required List<TaskEntity> tasks,
+    required Map<String, String> assigneeById,
   }) {
-    final query = _searchController.text.trim().toLowerCase();
-    final filtered = query.isEmpty
-        ? tasks
-        : tasks
-              .where((t) {
-                final ticket =
-                    '${(widget.project.prefix.trim().isEmpty ? 'PRJ' : widget.project.prefix.trim())}-${t.taskNumber}';
-                return ticket.toLowerCase().contains(query) ||
-                    t.title.toLowerCase().contains(query) ||
-                    (t.assignee ?? '').toLowerCase().contains(query);
-              })
-              .toList(growable: false);
+    final filtered = tasks.where((t) {
+      final q = _searchController.text.trim().toLowerCase();
+      if (q.isNotEmpty) {
+        if (!t.title.toLowerCase().contains(q) &&
+            !t.taskNumber.toString().contains(q)) {
+          return false;
+        }
+      }
+      if (_taskFilter == 'Assigned to me') {
+        // Mocking user id for demonstration
+        const myId = 'd8230625-f192-43ba-8e20-0111074a34f8';
+        if (t.assigneeId != myId) return false;
+      }
+      return true;
+    }).toList();
 
     return TaskStatusColumn(
       column: column,
       tasks: filtered,
-      projectPrefix: widget.project.prefix.trim().isEmpty
-          ? 'PRJ'
-          : widget.project.prefix.trim(),
-      assigneeById: context.read<TaskHubCubit>().state.assigneeById,
-      onDragPositionChanged: _handleDragPosition,
-      onAddPressed: () async {
-        final cubit = context.read<TaskHubCubit>();
-        final allTasks = cubit.state.tasksByColumnId.values
-            .expand((e) => e)
-            .toList();
-        final created = await showDialog<TaskEntity>(
-          context: context,
-          builder: (ctx) => TaskHubTaskDialog(
-            project: widget.project,
-            boardType: cubit.state.boardType,
-            columns: cubit.state.columns,
-            defaultColumnId: column.id,
-            allTasks: allTasks,
-            sprints: cubit.state.sprints,
-            initialSprintId: cubit.state.selectedSprintId,
-          ),
-        );
-        if (!mounted || created == null) return;
-        cubit.load(boardType: cubit.state.boardType);
-      },
-      onTaskDropped: (task, position) {
+      onTaskTap: (task) => _onTaskTap(context, task),
+      onAddTask: () => _onAddTask(context, column),
+      onMoveTask: (taskId, toColumnId, toPosition) {
         context.read<TaskHubCubit>().moveTask(
-          taskId: task.id,
-          columnId: column.id,
-          position: position,
+          taskId: taskId,
+          columnId: toColumnId,
+          position: toPosition,
         );
       },
-      onTaskTapped: (task) async {
-        final cubit = context.read<TaskHubCubit>();
-        final allTasks = cubit.state.tasksByColumnId.values
-            .expand((e) => e)
-            .toList();
-        final result = await showDialog<dynamic>(
-          context: context,
-          builder: (ctx) => TaskHubTaskDialog(
-            project: widget.project,
-            boardType: cubit.state.boardType,
-            columns: cubit.state.columns,
-            defaultColumnId: column.id,
-            allTasks: allTasks,
-            sprints: cubit.state.sprints,
-            initialSprintId: cubit.state.selectedSprintId,
-            task: task,
-          ),
-        );
-        if (!mounted) return;
-        if (result != null) {
-          context.read<TaskHubCubit>().load(
-            boardType: context.read<TaskHubCubit>().state.boardType,
-          );
-        }
-      },
+      onDragPositionChanged: _handleDragPosition,
+      projectPrefix: widget.project.name,
+      assigneeById: assigneeById,
     );
   }
+
+  void _onTaskTap(BuildContext context, TaskEntity task) async {
+    final cubit = context.read<TaskHubCubit>();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => BlocProvider.value(
+        value: cubit,
+        child: TaskHubTaskDialog(
+          task: task,
+          project: widget.project,
+          boardType: cubit.state.boardType,
+          columns: cubit.state.columns,
+          defaultColumnId: task.columnId,
+          allTasks: cubit.state.tasksByColumnId.values.expand((x) => x).toList(),
+          sprints: cubit.state.sprints,
+          initialSprintId: task.sprintId,
+        ),
+      ),
+    );
+    if (result == true) {
+      cubit.load(boardType: cubit.state.boardType);
+    }
+  }
+
+  void _onAddTask(BuildContext context, BoardColumnEntity column) async {
+    final cubit = context.read<TaskHubCubit>();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => BlocProvider.value(
+        value: cubit,
+        child: TaskHubTaskDialog(
+          project: widget.project,
+          boardType: cubit.state.boardType,
+          columns: cubit.state.columns,
+          defaultColumnId: column.id,
+          allTasks: cubit.state.tasksByColumnId.values.expand((x) => x).toList(),
+          sprints: cubit.state.sprints,
+          initialSprintId: cubit.state.selectedSprintId == -1
+              ? null
+              : cubit.state.selectedSprintId,
+        ),
+      ),
+    );
+    if (result == true) {
+      cubit.load(boardType: cubit.state.boardType);
+    }
+  }
+
+  void _onAddColumn(BuildContext context) async {
+    final nameController = TextEditingController();
+    final cubit = context.read<TaskHubCubit>();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
+        title: Text(
+          'Add Column',
+          style: TextStyle(color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle),
+        ),
+        content: TextField(
+          controller: nameController,
+          style: TextStyle(color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle),
+          decoration: InputDecoration(
+            hintText: 'Column Name',
+            hintStyle: TextStyle(color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor),
+            ),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(
+              foregroundColor: isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary,
+            ),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && nameController.text.trim().isNotEmpty) {
+      cubit.createColumn(nameController.text.trim());
+    }
+  }
+
+  void _onManageColumns(BuildContext context) async {
+    final cubit = context.read<TaskHubCubit>();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => BlocProvider.value(
+        value: cubit,
+        child: const ManageStatesDialog(),
+      ),
+    );
+    if (result == true) {
+      cubit.load(boardType: cubit.state.boardType);
+    }
+  }
+
+  void _onManageSprints(BuildContext context) async {
+    final cubit = context.read<TaskHubCubit>();
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => BlocProvider.value(
+        value: cubit,
+        child: ManageSprintsDialog(projectId: widget.project.id),
+      ),
+    );
+    if (result == true) {
+      cubit.load(boardType: TaskBoardType.sprint);
+    }
+  }
+
+  void _onSettings(BuildContext context) {}
 }
 
 class _HeaderBar extends StatelessWidget {
@@ -382,7 +467,7 @@ class _HeaderBar extends StatelessWidget {
     required this.filterValue,
     required this.boardType,
     required this.sprints,
-    this.selectedSprintId,
+    required this.selectedSprintId,
     required this.onBack,
     required this.onSearchChanged,
     required this.onFilterChanged,
@@ -410,317 +495,183 @@ class _HeaderBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const border = AppColors.kcDarkBorderSoft;
+    final isMobile = MediaQuery.of(context).size.width < 720;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isMobile = constraints.maxWidth < 720;
-        SprintEntity? selectedSprint;
-        if (selectedSprintId != null && selectedSprintId! > 0) {
-          for (final s in sprints) {
-            if (s.id == selectedSprintId) {
-              selectedSprint = s;
-              break;
-            }
-          }
-        }
+    final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final iconColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final inputBg = isDark ? AppColors.kcDarkInput : AppColors.kcLightInput;
+    final hintColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
 
-        final titleRow = Row(
-          children: [
-            IconButton(
-              onPressed: onBack,
-              icon: const Icon(
-                Icons.arrow_back_ios_new,
-                color: AppColors.kcDarkTextPrimary,
-                size: 18,
-              ),
-              splashRadius: 18,
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                projectName,
-                style: const TextStyle(
-                  color: AppColors.kcDarkTitle,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Outfit',
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            _IconSquareButton(
-              icon: Icons.settings_outlined,
-              onPressed: onSettings,
-            ),
-          ],
-        );
-
-        final search = SizedBox(
-          height: 42,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: AppColors.kcDarkInputAlt,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: border.withValues(alpha: 0.5)),
-            ),
-            child: TextField(
-              controller: searchController,
-              onChanged: onSearchChanged,
-              style: const TextStyle(
-                color: AppColors.kcDarkTextPrimary,
-                fontSize: 14,
-              ),
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 18,
-                  color: AppColors.kcDarkTextMuted,
-                ),
-                hintText: 'Search tasks...',
-                hintStyle: TextStyle(
-                  color: AppColors.kcDarkTextMuted,
-                  fontSize: 14,
-                ),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-              ),
-            ),
-          ),
-        );
-
-        Widget controls;
-        if (isMobile) {
-          controls = Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _DarkDropdown(
-                      value: filterValue,
-                      items: const ['All Tasks', 'Assigned to me'],
-                      onChanged: onFilterChanged,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _DarkButton(
-                      label: 'Export XLSX',
-                      icon: Icons.download,
-                      onPressed: onExport,
-                    ),
-                  ),
-                ],
-              ),
-              if (boardType == TaskBoardType.sprint) ...[
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _SprintDropdown(
-                        selectedId: selectedSprintId,
-                        sprints: sprints,
-                        onChanged: onSprintChanged,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _DarkButton(
-                        label: 'Manage Sprints',
-                        icon: Icons.settings,
-                        onPressed: onManageSprints,
-                      ),
-                    ),
-                  ],
-                ),
-                if (selectedSprint != null) ...[
-                  const SizedBox(height: 12),
-                  _SelectedSprintDetails(sprint: selectedSprint),
-                ],
-              ],
-              const SizedBox(height: 12),
-              _BoardTypeDropdown(
-                value: boardType,
-                onChanged: onBoardTypeChanged,
-              ),
-            ],
-          );
-        } else {
-          controls = Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              _DarkDropdown(
-                value: filterValue,
-                items: const ['All Tasks', 'Assigned to me'],
-                onChanged: onFilterChanged,
-              ),
-              _DarkButton(
-                label: 'Export XLSX',
-                icon: Icons.download,
-                onPressed: onExport,
-              ),
-              if (boardType == TaskBoardType.sprint)
-                _SprintControls(
-                  selectedId: selectedSprintId,
-                  sprints: sprints,
-                  selectedSprint: selectedSprint,
-                  onSprintChanged: onSprintChanged,
-                  onManageSprints: onManageSprints,
-                ),
-              _BoardTypeDropdown(
-                value: boardType,
-                onChanged: onBoardTypeChanged,
-              ),
-            ],
-          );
-        }
-
-        if (isMobile) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(8, 12, 12, 8),
-            child: Column(
-              children: [
-                titleRow,
-                const SizedBox(height: 12),
-                search,
-                const SizedBox(height: 12),
-                Align(alignment: Alignment.centerLeft, child: controls),
-              ],
-            ),
-          );
-        }
-
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(8, 12, 12, 8),
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: onBack,
-                icon: const Icon(
-                  Icons.arrow_back_ios_new,
-                  color: AppColors.kcDarkTextPrimary,
-                  size: 18,
-                ),
-                splashRadius: 18,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                projectName,
-                style: const TextStyle(
-                  color: AppColors.kcDarkTitle,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  fontFamily: 'Outfit',
-                ),
-              ),
-              const Spacer(),
-              SizedBox(width: 420, child: search),
-              const SizedBox(width: 12),
-              controls,
-              const SizedBox(width: 12),
-              _IconSquareButton(
-                icon: Icons.settings_outlined,
-                onPressed: onSettings,
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _SprintControls extends StatelessWidget {
-  const _SprintControls({
-    required this.selectedId,
-    required this.sprints,
-    required this.selectedSprint,
-    required this.onSprintChanged,
-    required this.onManageSprints,
-  });
-
-  final int? selectedId;
-  final List<SprintEntity> sprints;
-  final SprintEntity? selectedSprint;
-  final ValueChanged<int?> onSprintChanged;
-  final VoidCallback onManageSprints;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final titleRow = Row(
       children: [
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            _SprintDropdown(
-              selectedId: selectedId,
-              sprints: sprints,
-              onChanged: onSprintChanged,
-            ),
-            _DarkButton(
-              label: 'Manage Sprints',
-              icon: Icons.settings,
-              onPressed: onManageSprints,
-            ),
-          ],
+        IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: iconColor),
+          onPressed: onBack,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
         ),
-        if (selectedSprint != null) ...[
-          const SizedBox(height: 10),
-          _SelectedSprintDetails(sprint: selectedSprint!),
-        ],
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            projectName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: titleColor,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'Outfit',
+            ),
+          ),
+        ),
+        _IconSquareButton(
+          icon: Icons.more_vert_rounded,
+          onPressed: onSettings,
+        ),
       ],
     );
-  }
-}
 
-class _BoardTypeDropdown extends StatelessWidget {
-  const _BoardTypeDropdown({required this.value, required this.onChanged});
-
-  final TaskBoardType value;
-  final ValueChanged<TaskBoardType> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    const border = AppColors.kcDarkBorderSoft;
-    return Container(
+    final search = Container(
       height: 42,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: AppColors.kcDarkInputAlt,
+        color: inputBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: border.withValues(alpha: 0.5)),
+        border: Border.all(color: borderColor.withValues(alpha: 0.5)),
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<TaskBoardType>(
-          value: value,
-          dropdownColor: AppColors.kcDarkCard,
-          iconEnabledColor: AppColors.kcDarkTextMuted,
-          style: const TextStyle(
-            color: AppColors.kcDarkTextPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-          items: TaskBoardType.values
-              .map(
-                (e) => DropdownMenuItem<TaskBoardType>(
-                  value: e,
-                  child: Text(e.label),
-                ),
-              )
-              .toList(growable: false),
-          onChanged: (v) {
-            if (v != null) onChanged(v);
-          },
+      child: TextField(
+        controller: searchController,
+        onChanged: onSearchChanged,
+        style: TextStyle(color: titleColor, fontSize: 14),
+        decoration: InputDecoration(
+          hintText: 'Search tasks...',
+          hintStyle: TextStyle(color: hintColor, fontSize: 14),
+          prefixIcon: Icon(Icons.search_rounded, size: 18, color: hintColor),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 10),
         ),
+      ),
+    );
+
+    final selectedSprint = selectedSprintId != null && selectedSprintId! > 0
+        ? sprints.firstWhere((s) => s.id == selectedSprintId)
+        : null;
+
+    Widget controls;
+    if (isMobile) {
+      controls = Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _DarkDropdown(
+                  value: filterValue,
+                  items: const ['All Tasks', 'Assigned to me'],
+                  onChanged: onFilterChanged,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _DarkButton(
+                  label: 'Export XLSX',
+                  icon: Icons.download,
+                  onPressed: onExport,
+                ),
+              ),
+            ],
+          ),
+          if (boardType == TaskBoardType.sprint) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _SprintDropdown(
+                    selectedId: selectedSprintId,
+                    sprints: sprints,
+                    onChanged: onSprintChanged,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _DarkButton(
+                    label: 'Manage Sprints',
+                    icon: Icons.settings,
+                    onPressed: onManageSprints,
+                  ),
+                ),
+              ],
+            ),
+            if (selectedSprint != null) ...[
+              const SizedBox(height: 12),
+              _SelectedSprintDetails(sprint: selectedSprint),
+            ],
+          ],
+          const SizedBox(height: 12),
+          _BoardTypeDropdown(
+            value: boardType,
+            onChanged: onBoardTypeChanged,
+          ),
+        ],
+      );
+    } else {
+      controls = Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          _DarkDropdown(
+            value: filterValue,
+            items: const ['All Tasks', 'Assigned to me'],
+            onChanged: onFilterChanged,
+          ),
+          _DarkButton(
+            label: 'Export XLSX',
+            icon: Icons.download,
+            onPressed: onExport,
+          ),
+          if (boardType == TaskBoardType.sprint)
+            _SprintControls(
+              selectedId: selectedSprintId,
+              sprints: sprints,
+              selectedSprint: selectedSprint,
+              onSprintChanged: onSprintChanged,
+              onManageSprints: onManageSprints,
+            ),
+          _BoardTypeDropdown(
+            value: boardType,
+            onChanged: onBoardTypeChanged,
+          ),
+        ],
+      );
+    }
+
+    if (isMobile) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(8, 12, 12, 8),
+        child: Column(
+          children: [
+            titleRow,
+            const SizedBox(height: 12),
+            search,
+            const SizedBox(height: 12),
+            Align(alignment: Alignment.centerLeft, child: controls),
+          ],
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 12, 12, 8),
+      child: Row(
+        children: [
+          Expanded(child: titleRow),
+          const SizedBox(width: 16),
+          Expanded(flex: 2, child: search),
+          const SizedBox(width: 16),
+          controls,
+        ],
       ),
     );
   }
@@ -734,23 +685,22 @@ class _ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.cloud_off_rounded,
-              color: AppColors.kcDarkTextSecondary,
-              size: 30,
-            ),
-            const SizedBox(height: 10),
+            Icon(Icons.error_outline_rounded, size: 48, color: isDark ? Colors.red.shade300 : AppColors.kcErrorColor),
+            const SizedBox(height: 16),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.kcDarkTextSecondary,
+              style: TextStyle(
+                color: isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -758,7 +708,7 @@ class _ErrorState extends StatelessWidget {
             ElevatedButton(
               onPressed: onRetry,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.kcDarkPrimary,
+                backgroundColor: AppColors.kcPrimaryColor,
                 foregroundColor: Colors.white,
               ),
               child: const Text('Retry'),
@@ -783,7 +733,10 @@ class _SprintDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const border = AppColors.kcDarkBorderSoft;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+
     final bool hasSelectedSprint =
         selectedId == null ||
         selectedId == -1 ||
@@ -794,17 +747,17 @@ class _SprintDropdown extends StatelessWidget {
       height: 42,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: AppColors.kcDarkInputAlt,
+        color: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: border.withValues(alpha: 0.5)),
+        border: Border.all(color: borderColor.withValues(alpha: 0.5)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<int?>(
           value: effectiveSelectedId,
-          dropdownColor: AppColors.kcDarkCard,
-          iconEnabledColor: AppColors.kcDarkTextMuted,
-          style: const TextStyle(
-            color: AppColors.kcDarkTextPrimary,
+          dropdownColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
+          iconEnabledColor: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+          style: TextStyle(
+            color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -849,45 +802,160 @@ class _SelectedSprintDetails extends StatelessWidget {
       case 'active':
         return (Colors.green.shade600, Colors.white, Colors.green.shade600);
       case 'completed':
-        return (
-          AppColors.kcDarkTextMuted.withValues(alpha: 0.35),
-          AppColors.kcDarkTextPrimary,
-          AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
-        );
-      case 'planned':
+        return (Colors.blue.shade600, Colors.white, Colors.blue.shade600);
       default:
-        return (AppColors.kcDarkPrimary, Colors.white, AppColors.kcDarkPrimary);
+        return (Colors.orange.shade600, Colors.white, Colors.orange.shade600);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final style = _statusStyle;
-    return Wrap(
-      spacing: 12,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: style.$1,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: style.$3),
-          ),
-          child: Text(
-            _status,
-            style: TextStyle(color: style.$2, fontWeight: FontWeight.w900),
-          ),
+    final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder,
         ),
-        Text(
-          _dateRange,
-          style: const TextStyle(
-            color: AppColors.kcDarkTextMuted,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: style.$1.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: style.$3.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  _status.toUpperCase(),
+                  style: TextStyle(
+                    color: style.$1,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  sprint.name,
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _dateRange,
+            style: TextStyle(
+              color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SprintControls extends StatelessWidget {
+  const _SprintControls({
+    required this.selectedId,
+    required this.sprints,
+    required this.selectedSprint,
+    required this.onSprintChanged,
+    required this.onManageSprints,
+  });
+
+  final int? selectedId;
+  final List<SprintEntity> sprints;
+  final SprintEntity? selectedSprint;
+  final ValueChanged<int?> onSprintChanged;
+  final VoidCallback onManageSprints;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _SprintDropdown(
+          selectedId: selectedId,
+          sprints: sprints,
+          onChanged: onSprintChanged,
+        ),
+        const SizedBox(width: 12),
+        _DarkButton(
+          label: 'Manage Sprints',
+          icon: Icons.settings,
+          onPressed: onManageSprints,
+        ),
+        if (selectedSprint != null) ...[
+          const SizedBox(width: 12),
+          _SelectedSprintDetails(sprint: selectedSprint!),
+        ],
+      ],
+    );
+  }
+}
+
+class _BoardTypeDropdown extends StatelessWidget {
+  const _BoardTypeDropdown({required this.value, required this.onChanged});
+
+  final TaskBoardType value;
+  final ValueChanged<TaskBoardType> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+
+    return Container(
+      height: 42,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: borderColor.withValues(alpha: 0.5)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<TaskBoardType>(
+          value: value,
+          dropdownColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
+          iconEnabledColor: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+          style: TextStyle(
+            color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
+            fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
+          items: TaskBoardType.values
+              .map(
+                (e) => DropdownMenuItem<TaskBoardType>(
+                  value: e,
+                  child: Text(e.name.toUpperCase()),
+                ),
+              )
+              .toList(),
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
         ),
-      ],
+      ),
     );
   }
 }
@@ -905,23 +973,25 @@ class _DarkDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const border = AppColors.kcDarkBorderSoft;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
 
     return Container(
       height: 42,
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
-        color: AppColors.kcDarkInputAlt,
+        color: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: border.withValues(alpha: 0.5)),
+        border: Border.all(color: borderColor.withValues(alpha: 0.5)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
-          dropdownColor: AppColors.kcDarkCard,
-          iconEnabledColor: AppColors.kcDarkTextMuted,
-          style: const TextStyle(
-            color: AppColors.kcDarkTextPrimary,
+          dropdownColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
+          iconEnabledColor: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+          style: TextStyle(
+            color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
             fontWeight: FontWeight.w600,
           ),
           items: items
@@ -949,6 +1019,10 @@ class _DarkButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+
     return SizedBox(
       height: 42,
       child: ElevatedButton.icon(
@@ -956,13 +1030,13 @@ class _DarkButton extends StatelessWidget {
         icon: Icon(icon, size: 18),
         label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.kcDarkInputAlt,
-          foregroundColor: AppColors.kcDarkTextPrimary,
+          backgroundColor: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
+          foregroundColor: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
             side: BorderSide(
-              color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
+              color: borderColor.withValues(alpha: 0.55),
             ),
           ),
         ),
@@ -979,22 +1053,122 @@ class _IconSquareButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 42,
-      height: 42,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.kcDarkTextPrimary,
-          side: BorderSide(
-            color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          padding: EdgeInsets.zero,
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+
+    return InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: borderColor.withValues(alpha: 0.5)),
         ),
-        child: Icon(icon, size: 18),
+        child: Icon(icon, size: 20, color: isDark ? Colors.white : AppColors.kcLightTitle),
+      ),
+    );
+  }
+}
+
+class _AddColumnButton extends StatelessWidget {
+  const _AddColumnButton({
+    required this.width,
+    required this.onAdd,
+    required this.onManage,
+  });
+
+  final double width;
+  final VoidCallback onAdd;
+  final VoidCallback onManage;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+
+    return SizedBox(
+      width: width,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: borderColor),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'ADD COLUMN',
+                    style: TextStyle(
+                      color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: onManage,
+                  icon: Icon(Icons.settings_rounded, size: 20, color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextSecondary),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: InkWell(
+              onTap: onAdd,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.kcDarkInput.withValues(alpha: 0.3) : AppColors.kcLightInput.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: borderColor.withValues(alpha: 0.5),
+                    style: BorderStyle.solid,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.kcPrimaryColor.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.add_rounded,
+                        color: AppColors.kcPrimaryColor,
+                        size: 32,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Add new state',
+                      style: TextStyle(
+                        color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextSecondary,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

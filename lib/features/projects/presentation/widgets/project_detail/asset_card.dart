@@ -32,19 +32,20 @@ class AssetCard extends StatelessWidget {
   }
 
   void _showDeleteConfirmation(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: kPanel,
-        title: const Text('Delete Asset', style: TextStyle(color: kTextPrimary)),
-        content: const Text(
+        backgroundColor: ProjectTheme.getPanel(context),
+        title: Text('Delete Asset', style: TextStyle(color: ProjectTheme.getTextPrimary(context))),
+        content: Text(
           'Are you sure you want to delete this asset?',
-          style: TextStyle(color: kTextMuted),
+          style: TextStyle(color: ProjectTheme.getTextMuted(context)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel', style: TextStyle(color: kTextMuted)),
+            child: Text('Cancel', style: TextStyle(color: ProjectTheme.getTextMuted(context))),
           ),
           TextButton(
             onPressed: () {
@@ -62,11 +63,18 @@ class AssetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final panelColor = ProjectTheme.getPanel(context);
+    final borderColor = ProjectTheme.getBorder(context);
+    final textPrimary = ProjectTheme.getTextPrimary(context);
+    final textMuted = ProjectTheme.getTextMuted(context);
+    final accentColor = ProjectTheme.getAccent(context);
+    final panelLightColor = ProjectTheme.getPanelLight(context);
+
     return Container(
       decoration: BoxDecoration(
-        color: kPanel,
+        color: panelColor,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: kBorder),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         children: [
@@ -88,7 +96,7 @@ class AssetCard extends StatelessWidget {
                         isExpanded
                             ? Icons.keyboard_arrow_down
                             : Icons.keyboard_arrow_right,
-                        color: kTextMuted,
+                        color: textMuted,
                         size: 18,
                       ),
                       Container(
@@ -102,34 +110,26 @@ class AssetCard extends StatelessWidget {
                         ),
                         child: Icon(
                           _isUrl ? Icons.link_rounded : Icons.description_outlined,
-                          color: _isUrl ? kAccent : const Color(0xFFAB8BF5),
+                          color: _isUrl ? accentColor : const Color(0xFFAB8BF5),
                           size: 14,
                         ),
                       ),
                       Text(
                         asset.name,
-                        style: const TextStyle(
-                          color: kTextPrimary,
+                        style: TextStyle(
+                          color: textPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       TypeBadge(type: asset.type),
                       EnvBadge(env: asset.environment),
-                      // Value preview
-                      // Text(
-                      //   asset.value,
-                      //   style: const TextStyle(
-                      //     color: kTextMuted,
-                      //     fontSize: 11,
-                      //   ),
-                      // ),
                       if (_isUrl)
                         GestureDetector(
                           onTap: _launch,
-                          child: const Icon(
+                          child: Icon(
                             Icons.open_in_new_rounded,
-                            color: kTextMuted,
+                            color: textMuted,
                             size: 14,
                           ),
                         ),
@@ -175,9 +175,9 @@ class AssetCard extends StatelessWidget {
               margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: kPanelLight,
+                color: panelLightColor,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: kBorder.withValues(alpha: 0.5)),
+                border: Border.all(color: borderColor.withValues(alpha: 0.5)),
               ),
               child: _isUrl
                   ? GestureDetector(
@@ -187,17 +187,17 @@ class AssetCard extends StatelessWidget {
                           Expanded(
                             child: Text(
                               asset.value,
-                              style: const TextStyle(
-                                color: kAccent,
+                              style: TextStyle(
+                                color: accentColor,
                                 fontSize: 13,
                                 decoration: TextDecoration.underline,
-                                decorationColor: kAccent,
+                                decorationColor: accentColor,
                               ),
                             ),
                           ),
-                          const Icon(
+                          Icon(
                             Icons.open_in_new_rounded,
-                            color: kAccent,
+                            color: accentColor,
                             size: 14,
                           ),
                         ],
@@ -205,8 +205,8 @@ class AssetCard extends StatelessWidget {
                     )
                   : Text(
                       asset.value,
-                      style: const TextStyle(
-                        color: kTextSecondary,
+                      style: TextStyle(
+                        color: ProjectTheme.getTextSecondary(context),
                         fontSize: 13,
                         height: 1.5,
                       ),

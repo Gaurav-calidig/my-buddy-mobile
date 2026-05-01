@@ -6,16 +6,17 @@ class DashboardEntryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(8, 7, 8, 6),
+    final headerStyle = DashboardTableHeaderStyle.style(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 7, 8, 6),
       child: Row(
         children: <Widget>[
-          SizedBox(width: 78, child: Text('Member', style: DashboardTableHeaderStyle.style)),
-          Expanded(child: Text('Date & Time', style: DashboardTableHeaderStyle.style)),
-          Expanded(child: Text('Project', style: DashboardTableHeaderStyle.style)),
+          SizedBox(width: 78, child: Text('Member', style: headerStyle)),
+          Expanded(child: Text('Date & Time', style: headerStyle)),
+          Expanded(child: Text('Project', style: headerStyle)),
           SizedBox(
             width: 40,
-            child: Text('Hours', style: DashboardTableHeaderStyle.style, textAlign: TextAlign.right),
+            child: Text('Hours', style: headerStyle, textAlign: TextAlign.right),
           ),
         ],
       ),

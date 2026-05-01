@@ -18,25 +18,27 @@ class MemberCard extends StatelessWidget {
     this.onDelete,
   });
 
-  Color get _roleColor {
+  Color _roleColor(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (member.role) {
       case 'admin':
         return const Color(0xFFFBBF24);
       case 'project_lead':
-        return kAccent;
+        return ProjectTheme.getAccent(context);
       default:
-        return kTextSecondary;
+        return ProjectTheme.getTextSecondary(context);
     }
   }
 
-  Color get _roleBg {
+  Color _roleBg(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (member.role) {
       case 'admin':
-        return const Color(0xFF3A2A06);
+        return isDark ? const Color(0xFF3A2A06) : const Color(0xFFFEF3C7);
       case 'project_lead':
-        return const Color(0xFF0A2050);
+        return isDark ? const Color(0xFF0A2050) : const Color(0xFFE0E7FF);
       default:
-        return kPanelLight;
+        return ProjectTheme.getPanelLight(context);
     }
   }
 
@@ -53,12 +55,15 @@ class MemberCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = member.user;
+    final accentColor = ProjectTheme.getAccent(context);
+    final textMuted = ProjectTheme.getTextMuted(context);
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: kPanel,
+        color: ProjectTheme.getPanel(context),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: kBorder),
+        border: Border.all(color: ProjectTheme.getBorder(context)),
       ),
       child: Row(
         children: [
@@ -68,8 +73,8 @@ class MemberCard extends StatelessWidget {
             height: 42,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: kAccent.withValues(alpha: 0.15),
-              border: Border.all(color: kAccent.withValues(alpha: 0.3)),
+              color: accentColor.withValues(alpha: 0.15),
+              border: Border.all(color: accentColor.withValues(alpha: 0.3)),
             ),
             child: user.profileImageUrl != null
                 ? ClipOval(
@@ -81,8 +86,8 @@ class MemberCard extends StatelessWidget {
                 : Center(
                     child: Text(
                       user.initials,
-                      style: const TextStyle(
-                        color: kAccent,
+                      style: TextStyle(
+                        color: accentColor,
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                       ),
@@ -96,8 +101,8 @@ class MemberCard extends StatelessWidget {
               children: [
                 Text(
                   user.fullName,
-                  style: const TextStyle(
-                    color: kTextPrimary,
+                  style: TextStyle(
+                    color: ProjectTheme.getTextPrimary(context),
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                   ),
@@ -105,7 +110,7 @@ class MemberCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   user.email,
-                  style: const TextStyle(color: kTextMuted, fontSize: 12),
+                  style: TextStyle(color: textMuted, fontSize: 12),
                 ),
               ],
             ),
@@ -117,13 +122,13 @@ class MemberCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: _roleBg,
+                  color: _roleBg(context),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
                   member.role.replaceAll('_', ' ').toUpperCase(),
                   style: TextStyle(
-                    color: _roleColor,
+                    color: _roleColor(context),
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.5,
@@ -134,7 +139,7 @@ class MemberCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 PopupMenuButton<String>(
                   padding: EdgeInsets.zero,
-                  icon: const Icon(Icons.more_vert, color: kTextMuted, size: 20),
+                  icon: Icon(Icons.more_vert, color: textMuted, size: 20),
                   onSelected: (value) {
                     if (value == 'edit') {
                       onEdit?.call();

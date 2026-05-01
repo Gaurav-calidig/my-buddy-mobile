@@ -109,6 +109,13 @@ class _AddAssetModalState extends State<AddAssetModal> {
 
   @override
   Widget build(BuildContext context) {
+    final panelColor = ProjectTheme.getPanel(context);
+    final borderColor = ProjectTheme.getBorder(context);
+    final textPrimary = ProjectTheme.getTextPrimary(context);
+    final textMuted = ProjectTheme.getTextMuted(context);
+    final accentColor = ProjectTheme.getAccent(context);
+    final panelLightColor = ProjectTheme.getPanelLight(context);
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -116,9 +123,9 @@ class _AddAssetModalState extends State<AddAssetModal> {
         width: double.infinity,
         constraints: const BoxConstraints(maxWidth: 500),
         decoration: BoxDecoration(
-          color: kPanel,
+          color: panelColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: kBorder),
+          border: Border.all(color: borderColor),
         ),
         child: SingleChildScrollView(
           child: Padding(
@@ -132,8 +139,8 @@ class _AddAssetModalState extends State<AddAssetModal> {
                   children: [
                     Text(
                       widget.asset != null ? 'Edit Asset' : 'Add New Asset',
-                      style: const TextStyle(
-                        color: kTextPrimary,
+                      style: TextStyle(
+                        color: textPrimary,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                         fontFamily: 'Outfit',
@@ -141,22 +148,27 @@ class _AddAssetModalState extends State<AddAssetModal> {
                     ),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close, color: kTextMuted, size: 20),
+                      icon: Icon(Icons.close, color: textMuted, size: 20),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Securely store credentials, links, or files for this project.',
-                  style: TextStyle(color: kTextMuted, fontSize: 13),
+                  style: TextStyle(color: textMuted, fontSize: 13),
                 ),
                 const SizedBox(height: 20),
-                _buildLabel('Asset Name'),
+                _buildLabel('Asset Name', textPrimary),
                 _buildTextField(
                   controller: _nameController,
                   hint: 'e.g. AWS Production Keys',
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  panelLightColor: panelLightColor,
+                  borderColor: borderColor,
+                  accentColor: accentColor,
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -165,11 +177,16 @@ class _AddAssetModalState extends State<AddAssetModal> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabel('Type'),
+                          _buildLabel('Type', textPrimary),
                           _buildDropdown(
                             value: _selectedType,
                             items: ['url', 'Credential/Secret', 'File'],
                             onChanged: (v) => setState(() => _selectedType = v!),
+                            textPrimary: textPrimary,
+                            textMuted: textMuted,
+                            panelLightColor: panelLightColor,
+                            borderColor: borderColor,
+                            panelColor: panelColor,
                           ),
                         ],
                       ),
@@ -179,11 +196,16 @@ class _AddAssetModalState extends State<AddAssetModal> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabel('Environment'),
+                          _buildLabel('Environment', textPrimary),
                           _buildDropdown(
                             value: _selectedEnv,
                             items: ['Production', 'Staging', 'Dev'],
                             onChanged: (v) => setState(() => _selectedEnv = v!),
+                            textPrimary: textPrimary,
+                            textMuted: textMuted,
+                            panelLightColor: panelLightColor,
+                            borderColor: borderColor,
+                            panelColor: panelColor,
                           ),
                         ],
                       ),
@@ -191,17 +213,22 @@ class _AddAssetModalState extends State<AddAssetModal> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                _buildLabel('Value'),
+                _buildLabel('Value', textPrimary),
                 _buildTextField(
                   controller: _valueController,
                   hint: 'Paste your secret, URL, or content here...',
                   maxLines: 4,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  panelLightColor: panelLightColor,
+                  borderColor: borderColor,
+                  accentColor: accentColor,
                 ),
                 const SizedBox(height: 20),
-                _buildLabel('Role Access'),
-                const Text(
+                _buildLabel('Role Access', textPrimary),
+                Text(
                   'Roles that can see this asset by default.',
-                  style: TextStyle(color: kTextMuted, fontSize: 12),
+                  style: TextStyle(color: textMuted, fontSize: 12),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -226,9 +253,9 @@ class _AddAssetModalState extends State<AddAssetModal> {
                             width: 18,
                             height: 18,
                             decoration: BoxDecoration(
-                              color: isSelected ? kAccent : Colors.transparent,
+                              color: isSelected ? accentColor : Colors.transparent,
                               border: Border.all(
-                                color: isSelected ? kAccent : kBorder,
+                                color: isSelected ? accentColor : borderColor,
                               ),
                               borderRadius: BorderRadius.circular(4),
                             ),
@@ -239,7 +266,7 @@ class _AddAssetModalState extends State<AddAssetModal> {
                           const SizedBox(width: 8),
                           Text(
                             role.replaceAll('_', ' ').split(' ').map((s) => s[0].toUpperCase() + s.substring(1)).join(' '),
-                            style: const TextStyle(color: kTextPrimary, fontSize: 13),
+                            style: TextStyle(color: textPrimary, fontSize: 13),
                           ),
                         ],
                       ),
@@ -247,21 +274,21 @@ class _AddAssetModalState extends State<AddAssetModal> {
                   }).toList(),
                 ),
                 const SizedBox(height: 20),
-                _buildLabel('Specific User Access'),
-                const Text(
+                _buildLabel('Specific User Access', textPrimary),
+                Text(
                   'Grant access to specific developers regardless of their role.',
-                  style: TextStyle(color: kTextMuted, fontSize: 12),
+                  style: TextStyle(color: textMuted, fontSize: 12),
                 ),
                 const SizedBox(height: 8),
                 if (widget.members.isEmpty)
-                  const Text('No members found', style: TextStyle(color: kTextMuted, fontSize: 12))
+                  Text('No members found', style: TextStyle(color: textMuted, fontSize: 12))
                 else
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: kPanelLight.withValues(alpha: 0.5),
+                      color: panelLightColor.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: kBorder),
+                      border: Border.all(color: borderColor),
                     ),
                     child: Column(
                       children: widget.members.take(5).map((member) {
@@ -285,9 +312,9 @@ class _AddAssetModalState extends State<AddAssetModal> {
                                   width: 18,
                                   height: 18,
                                   decoration: BoxDecoration(
-                                    color: isSelected ? kAccent : Colors.transparent,
+                                    color: isSelected ? accentColor : Colors.transparent,
                                     border: Border.all(
-                                      color: isSelected ? kAccent : kBorder,
+                                      color: isSelected ? accentColor : borderColor,
                                     ),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
@@ -298,7 +325,7 @@ class _AddAssetModalState extends State<AddAssetModal> {
                                 const SizedBox(width: 10),
                                 Text(
                                   '${user.fullName} (${member.role})',
-                                  style: const TextStyle(color: kTextPrimary, fontSize: 13),
+                                  style: TextStyle(color: textPrimary, fontSize: 13),
                                 ),
                               ],
                             ),
@@ -313,7 +340,7 @@ class _AddAssetModalState extends State<AddAssetModal> {
                   child: ElevatedButton(
                     onPressed: _onSave,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: kAccent,
+                      backgroundColor: accentColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
@@ -334,13 +361,13 @@ class _AddAssetModalState extends State<AddAssetModal> {
     );
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildLabel(String text, Color textPrimary) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: const TextStyle(
-          color: kTextPrimary,
+        style: TextStyle(
+          color: textPrimary,
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
@@ -351,25 +378,30 @@ class _AddAssetModalState extends State<AddAssetModal> {
   Widget _buildTextField({
     required TextEditingController controller,
     required String hint,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color panelLightColor,
+    required Color borderColor,
+    required Color accentColor,
     int maxLines = 1,
   }) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
-      style: const TextStyle(color: kTextPrimary, fontSize: 14),
+      style: TextStyle(color: textPrimary, fontSize: 14),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: kTextMuted, fontSize: 13),
+        hintStyle: TextStyle(color: textMuted, fontSize: 13),
         filled: true,
-        fillColor: kPanelLight.withValues(alpha: 0.3),
+        fillColor: panelLightColor.withValues(alpha: 0.3),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: kBorder),
+          borderSide: BorderSide(color: borderColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: kAccent),
+          borderSide: BorderSide(color: accentColor),
         ),
       ),
     );
@@ -379,23 +411,28 @@ class _AddAssetModalState extends State<AddAssetModal> {
     required String value,
     required List<String> items,
     required ValueChanged<String?> onChanged,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color panelLightColor,
+    required Color borderColor,
+    required Color panelColor,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: kPanelLight.withValues(alpha: 0.3),
+        color: panelLightColor.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: kBorder),
+        border: Border.all(color: borderColor),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          dropdownColor: kPanel,
-          icon: const Icon(Icons.keyboard_arrow_down, color: kTextMuted, size: 18),
+          dropdownColor: panelColor,
+          icon: Icon(Icons.keyboard_arrow_down, color: textMuted, size: 18),
           items: items.map((i) => DropdownMenuItem(
             value: i,
-            child: Text(i, style: const TextStyle(color: kTextPrimary, fontSize: 13)),
+            child: Text(i, style: TextStyle(color: textPrimary, fontSize: 13)),
           )).toList(),
           onChanged: onChanged,
         ),

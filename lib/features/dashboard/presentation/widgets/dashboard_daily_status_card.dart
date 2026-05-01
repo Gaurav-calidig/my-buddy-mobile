@@ -13,8 +13,14 @@ class DashboardDailyStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final dsr = highlights?.dsr;
     final recentEntries = dsr?.recentEntries ?? const <DashboardRecentEntryEntity>[];
+
+    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+    final iconColor = isDark ? AppColors.kcDarkTextAccent : AppColors.kcPrimaryColor;
+    final tableBg = isDark ? AppColors.kcDarkCardSoft : AppColors.kcLightPage.withValues(alpha: 0.5);
+    final tableBorder = isDark ? AppColors.kcDarkBorderSoft.withValues(alpha: 0.7) : AppColors.kcLightBorder;
 
     return DashboardCardShell(
       child: Padding(
@@ -22,14 +28,18 @@ class DashboardDailyStatusCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Row(
+            Row(
               children: <Widget>[
-                Icon(Icons.assignment_outlined, size: 14, color: AppColors.kcDarkTextAccent),
-                SizedBox(width: 8),
+                Icon(Icons.assignment_outlined, size: 14, color: iconColor),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'My Daily Status',
-                    style: TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 14, fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -45,16 +55,20 @@ class DashboardDailyStatusCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Recent Entries',
-              style: TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 11, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextSecondary,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 6),
             Container(
               decoration: BoxDecoration(
-                color: AppColors.kcDarkCardSoft,
+                color: tableBg,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.7)),
+                border: Border.all(color: tableBorder),
               ),
               child: Column(
                 children: <Widget>[

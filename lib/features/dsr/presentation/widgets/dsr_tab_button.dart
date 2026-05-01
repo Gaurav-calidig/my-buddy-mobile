@@ -15,20 +15,24 @@ class DsrTabButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final selectedBg = isDark ? AppColors.kcDarkSelectedTab : AppColors.kcPrimaryColor;
+    final unselectedText = isDark ? AppColors.kcGreyColor : AppColors.kcLightTextSecondary;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         height: 34,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: selected ? AppColors.kcDarkSelectedTab : Colors.transparent,
+          color: selected ? selectedBg : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         alignment: Alignment.center,
         child: Text(
           title,
           style: TextStyle(
-            color: selected ? Colors.white : AppColors.kcGreyColor,
+            color: selected ? Colors.white : unselectedText,
             fontWeight: FontWeight.w600,
           ),
         ),

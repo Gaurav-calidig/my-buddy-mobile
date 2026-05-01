@@ -146,9 +146,9 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
           ? TaskTicketType.bug
           : TaskTicketType.task;
       _dueDate = existing.dueDate;
-      _assigneeId = (existing.assignee ?? '').trim().isEmpty
+      _assigneeId = (existing.assigneeId ?? '').trim().isEmpty
           ? null
-          : existing.assignee;
+          : existing.assigneeId;
       if (widget.boardType == TaskBoardType.sprint) {
         _sprintId = existing.sprintId ?? -1;
       } else {
@@ -573,6 +573,14 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
         ? (viewInsets.bottom - 20).clamp(0.0, topMargin - 12)
         : 0.0;
 
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final dialogBg = isDark ? const Color(0xFF0B1730) : AppColors.kcLightPage;
+    final titleColor = isDark ? AppColors.kcDarkTitle : AppColors.kcLightTitle;
+    final mutedColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+
     return AnimatedPadding(
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOutCubic,
@@ -588,11 +596,18 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
           child: Container(
             padding: const EdgeInsets.fromLTRB(22, 18, 22, 16),
             decoration: BoxDecoration(
-              color: const Color(0xFF0B1730),
+              color: dialogBg,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.7),
+                color: borderColor.withValues(alpha: 0.7),
               ),
+              boxShadow: isDark ? null : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
             child: Stack(
               fit: StackFit.expand,
@@ -613,8 +628,8 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                           children: [
                             Text(
                               widget.isCreate ? 'Create Task' : 'Task',
-                              style: const TextStyle(
-                                color: AppColors.kcDarkTitle,
+                              style: TextStyle(
+                                color: titleColor,
                                 fontSize: 26,
                                 fontWeight: FontWeight.w800,
                                 fontFamily: 'Outfit',
@@ -625,55 +640,59 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                               onPressed: _busy
                                   ? null
                                   : () => Navigator.of(context).maybePop(),
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.close,
-                                color: AppColors.kcDarkTextMuted,
+                                color: mutedColor,
                               ),
                               splashRadius: 18,
                             ),
                           ],
                         ),
                         const SizedBox(height: 18),
-                        _label('Title'),
+                        _label('Title', isDark),
                         const SizedBox(height: 8),
                         _input(
                           controller: _titleController,
                           hint: 'Task title',
                           autofocus: widget.isCreate,
+                          isDark: isDark,
                         ),
                         const SizedBox(height: 16),
-                        _label('Description'),
+                        _label('Description', isDark),
                         const SizedBox(height: 8),
                         _multiline(
                           controller: _descriptionController,
                           hint: 'Optional description',
                           minLines: 6,
                           maxLines: 10,
+                          isDark: isDark,
                         ),
                         const SizedBox(height: 18),
                         LayoutBuilder(
                           builder: (context, constraints) {
                             final isMobile = constraints.maxWidth < 720;
                             final items = [
-                              _dropdown<TaskTicketType>(
-                                label: 'Type',
-                                value: _ticketType,
-                                items: TaskTicketType.values,
-                                labelFor: (t) => t.label,
-                                onChanged: (v) =>
-                                    setState(() => _ticketType = v),
-                              ),
-                              _dropdown<TaskPriority>(
-                                label: 'Priority',
-                                value: _priority,
-                                items: TaskPriority.values,
-                                labelFor: (p) =>
-                                    p.name[0].toUpperCase() +
-                                    p.name.substring(1),
-                                onChanged: (v) => setState(() => _priority = v),
-                              ),
-                              _assigneeDropdown(),
-                              _dueDateField(),
+                                _dropdown<TaskTicketType>(
+                                 label: 'Type',
+                                 value: _ticketType,
+                                 items: TaskTicketType.values,
+                                 labelFor: (t) => t.label,
+                                 onChanged: (v) =>
+                                     setState(() => _ticketType = v),
+                                 isDark: isDark,
+                               ),
+                               _dropdown<TaskPriority>(
+                                 label: 'Priority',
+                                 value: _priority,
+                                 items: TaskPriority.values,
+                                 labelFor: (p) =>
+                                     p.name[0].toUpperCase() +
+                                     p.name.substring(1),
+                                 onChanged: (v) => setState(() => _priority = v),
+                                 isDark: isDark,
+                               ),
+                              _assigneeDropdown(isDark),
+                              _dueDateField(isDark),
                               _dropdown<int>(
                                 label: 'State',
                                 value: _columnId,
@@ -685,6 +704,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                                     )
                                     .name,
                                 onChanged: (v) => setState(() => _columnId = v),
+                                isDark: isDark,
                               ),
                               _dropdown<int?>(
                                 label: 'Sprint',
@@ -699,6 +719,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                                           )
                                           .name,
                                 onChanged: (v) => setState(() => _sprintId = v),
+                                isDark: isDark,
                               ),
                             ];
 
@@ -745,7 +766,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                         ),
                         const SizedBox(height: 16),
                         Divider(
-                          color: AppColors.kcDarkBorderSoft.withValues(
+                          color: borderColor.withValues(
                             alpha: 0.45,
                           ),
                         ),
@@ -760,13 +781,15 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                           onAction: widget.isCreate
                               ? _pickAttachments
                               : _attachToExistingTask,
+                          isDark: isDark,
                         ),
                         const SizedBox(height: 10),
                         if (widget.isCreate)
                           _stagedAttachments.isEmpty
-                              ? _muted('No attachments yet.')
+                              ? _muted('No attachments yet.', isDark)
                               : _attachmentsList(
-                                  _stagedAttachments
+                                  isDark: isDark,
+                                  rows: _stagedAttachments
                                       .map(
                                         (f) => _AttachmentRow(
                                           fileName: f.name,
@@ -775,6 +798,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                                           contentType: lookupMimeType(
                                             f.path ?? '',
                                           ),
+                                          isDark: isDark,
                                           trailing: IconButton(
                                             onPressed: () => setState(
                                               () =>
@@ -792,9 +816,10 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                                 )
                         else
                           _attachments.isEmpty
-                              ? _muted('No attachments yet.')
+                              ? _muted('No attachments yet.', isDark)
                               : _attachmentsList(
-                                  _attachments
+                                  isDark: isDark,
+                                  rows: _attachments
                                       .map(
                                         (a) => _AttachmentRow(
                                           fileName: a.fileName,
@@ -802,6 +827,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                                           url: a.filePath,
                                           contentType: a.contentType,
                                           uploadedByName: a.uploadedByName,
+                                          isDark: isDark,
                                           trailing: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
@@ -843,10 +869,11 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                             count: _links.length,
                             actionLabel: 'Link Task',
                             onAction: _linkTask,
+                            isDark: isDark,
                           ),
                           const SizedBox(height: 10),
                           _links.isEmpty
-                              ? _muted('No linked tasks.')
+                              ? _muted('No linked tasks.', isDark)
                               : Column(
                                   children: _links
                                       .map(
@@ -854,6 +881,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                                           displayId: l.linkedTaskDisplayId,
                                           title: l.linkedTaskTitle,
                                           linkId: l.id,
+                                          isDark: isDark,
                                         ),
                                       )
                                       .toList(growable: false),
@@ -865,19 +893,19 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                             count: _comments.length,
                             actionLabel: null,
                             onAction: null,
+                            isDark: isDark,
                           ),
                           const SizedBox(height: 10),
-                          _commentBox(),
+                          _commentBox(isDark),
                           const SizedBox(height: 12),
                           Align(
                             alignment: Alignment.centerRight,
                             child: ElevatedButton(
                               onPressed: _busy ? null : _postComment,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.kcDarkPrimarySoft,
+                                backgroundColor: isDark ? AppColors.kcDarkPrimarySoft : AppColors.kcPrimaryColor.withValues(alpha: 0.8),
                                 foregroundColor: Colors.white,
-                                disabledBackgroundColor: AppColors
-                                    .kcDarkPrimarySoft
+                                disabledBackgroundColor: (isDark ? AppColors.kcDarkPrimarySoft : AppColors.kcPrimaryColor)
                                     .withValues(alpha: 0.4),
                               ),
                               child: const Text('Post'),
@@ -892,10 +920,11 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                                       user: c.userName,
                                       content: c.content,
                                       createdAt: c.createdAt,
+                                      isDark: isDark,
                                     ),
                                   )
                                   .toList(growable: false),
-                            ),
+                             ),
                         ],
                         const SizedBox(height: 18),
                         Row(
@@ -924,9 +953,9 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                                   ? null
                                   : () => Navigator.of(context).maybePop(),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.kcDarkTextPrimary,
+                                foregroundColor: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
                                 side: BorderSide(
-                                  color: AppColors.kcDarkBorder.withValues(
+                                  color: borderColor.withValues(
                                     alpha: 0.85,
                                   ),
                                 ),
@@ -944,7 +973,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                             ElevatedButton(
                               onPressed: _busy ? null : _createOrSave,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.kcDarkPrimary,
+                                backgroundColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 22,
@@ -969,9 +998,9 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                         color: Colors.black.withValues(alpha: 0.28),
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: CircularProgressIndicator(
-                          color: AppColors.kcDarkPrimary,
+                          color: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
                         ),
                       ),
                     ),
@@ -984,22 +1013,22 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
     );
   }
 
-  Widget _label(String text) {
+  Widget _label(String text, bool isDark) {
     return Text(
       text,
-      style: const TextStyle(
-        color: AppColors.kcDarkTextPrimary,
+      style: TextStyle(
+        color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
         fontSize: 14,
         fontWeight: FontWeight.w700,
       ),
     );
   }
 
-  Widget _muted(String text) {
+  Widget _muted(String text, bool isDark) {
     return Text(
       text,
-      style: const TextStyle(
-        color: AppColors.kcDarkTextSecondary,
+      style: TextStyle(
+        color: isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary,
         fontWeight: FontWeight.w600,
       ),
     );
@@ -1009,16 +1038,17 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
     required TextEditingController controller,
     required String hint,
     bool autofocus = false,
+    required bool isDark,
   }) {
     return TextField(
       controller: controller,
       autofocus: autofocus,
-      style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 16),
+      style: TextStyle(color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle, fontSize: 16),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.kcDarkTextMuted),
+        hintStyle: TextStyle(color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted),
         filled: true,
-        fillColor: AppColors.kcDarkInputAlt,
+        fillColor: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 14,
@@ -1026,13 +1056,13 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
+            color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder).withValues(alpha: 0.55),
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: AppColors.kcDarkPrimary,
+          borderSide: BorderSide(
+            color: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
             width: 1.5,
           ),
         ),
@@ -1045,21 +1075,22 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
     required String hint,
     required int minLines,
     required int maxLines,
+    required bool isDark,
   }) {
     return TextField(
       controller: controller,
-      style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 16),
+      style: TextStyle(color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle, fontSize: 16),
       keyboardType: TextInputType.multiline,
       minLines: minLines,
       maxLines: maxLines,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(
-          color: AppColors.kcDarkTextMuted,
+        hintStyle: TextStyle(
+          color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
           fontSize: 18,
         ),
         filled: true,
-        fillColor: AppColors.kcDarkInputAlt,
+        fillColor: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 14,
@@ -1067,13 +1098,13 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
+            color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder).withValues(alpha: 0.55),
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: AppColors.kcDarkPrimary,
+          borderSide: BorderSide(
+            color: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
             width: 1.5,
           ),
         ),
@@ -1087,29 +1118,30 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
     required List<T> items,
     required String Function(T) labelFor,
     required ValueChanged<T> onChanged,
+    required bool isDark,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _label(label),
+        _label(label, isDark),
         const SizedBox(height: 8),
         Container(
           height: 52,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: AppColors.kcDarkInputAlt,
+            color: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
+              color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder).withValues(alpha: 0.55),
             ),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<T>(
               value: value,
-              dropdownColor: AppColors.kcDarkCard,
-              iconEnabledColor: AppColors.kcDarkTextMuted,
-              style: const TextStyle(
-                color: AppColors.kcDarkTextPrimary,
+              dropdownColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
+              iconEnabledColor: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+              style: TextStyle(
+                color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
               ),
@@ -1132,7 +1164,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
     );
   }
 
-  Widget _assigneeDropdown() {
+  Widget _assigneeDropdown(bool isDark) {
     final seenIds = <String>{};
     final uniqueAssignees = _assignees.where((a) => seenIds.add(a.id)).toList();
 
@@ -1152,25 +1184,25 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _label('Assignee'),
+        _label('Assignee', isDark),
         const SizedBox(height: 8),
         Container(
           height: 52,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: AppColors.kcDarkInputAlt,
+            color: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
+              color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder).withValues(alpha: 0.55),
             ),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String?>(
               value: effectiveValue,
-              dropdownColor: AppColors.kcDarkCard,
-              iconEnabledColor: AppColors.kcDarkTextMuted,
-              style: const TextStyle(
-                color: AppColors.kcDarkTextPrimary,
+              dropdownColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
+              iconEnabledColor: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+              style: TextStyle(
+                color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
               ),
@@ -1184,14 +1216,14 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
     );
   }
 
-  Widget _dueDateField() {
+  Widget _dueDateField(bool isDark) {
     final text = _dueDate == null
         ? 'dd/mm/yyyy'
         : '${_dueDate!.day.toString().padLeft(2, '0')}/${_dueDate!.month.toString().padLeft(2, '0')}/${_dueDate!.year}';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _label('Due Date'),
+        _label('Due Date', isDark),
         const SizedBox(height: 8),
         InkWell(
           onTap: () async {
@@ -1204,16 +1236,23 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
               builder: (context, child) {
                 return Theme(
                   data: Theme.of(context).copyWith(
-                    colorScheme: const ColorScheme.dark(
-                      primary: AppColors.kcDarkPrimary,
-                      onPrimary: Colors.white,
-                      surface: Color(0xFF121F3D),
-                      onSurface: AppColors.kcDarkTextPrimary,
+                    colorScheme: isDark
+                        ? const ColorScheme.dark(
+                            primary: AppColors.kcDarkPrimary,
+                            onPrimary: Colors.white,
+                            surface: Color(0xFF121F3D),
+                            onSurface: AppColors.kcDarkTextPrimary,
+                          )
+                        : ColorScheme.light(
+                            primary: AppColors.kcPrimaryColor,
+                            surface: Colors.white,
+                          ),
+                    dialogTheme: DialogThemeData(
+                      backgroundColor: isDark ? const Color(0xFF121F3D) : Colors.white,
                     ),
-                    dialogBackgroundColor: const Color(0xFF121F3D),
                     textButtonTheme: TextButtonThemeData(
                       style: TextButton.styleFrom(
-                        foregroundColor: AppColors.kcDarkPrimary,
+                        foregroundColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
                       ),
                     ),
                   ),
@@ -1230,18 +1269,19 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
             alignment: Alignment.centerLeft,
             padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
-              color: AppColors.kcDarkInputAlt,
+              color: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
+                color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder)
+                    .withValues(alpha: 0.55),
               ),
             ),
             child: Text(
               text,
               style: TextStyle(
                 color: _dueDate == null
-                    ? AppColors.kcDarkTextMuted
-                    : AppColors.kcDarkTextPrimary,
+                    ? (isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted)
+                    : (isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle),
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
               ),
@@ -1258,15 +1298,20 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
     required int count,
     required String? actionLabel,
     required VoidCallback? onAction,
+    required bool isDark,
   }) {
+    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+    final surfaceColor = isDark ? AppColors.kcDarkSurface : AppColors.kcLightInput;
+
     return Row(
       children: [
-        Icon(icon, color: AppColors.kcDarkTextPrimary, size: 18),
+        Icon(icon, color: textColor, size: 18),
         const SizedBox(width: 10),
         Text(
           label,
-          style: const TextStyle(
-            color: AppColors.kcDarkTextPrimary,
+          style: TextStyle(
+            color: textColor,
             fontSize: 18,
             fontWeight: FontWeight.w800,
           ),
@@ -1275,13 +1320,13 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: AppColors.kcDarkSurface,
+            color: surfaceColor,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Text(
             '$count',
-            style: const TextStyle(
-              color: AppColors.kcDarkTextPrimary,
+            style: TextStyle(
+              color: textColor,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -1293,13 +1338,13 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
             icon: const Icon(Icons.attach_file, size: 18),
             label: Text(actionLabel),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.kcDarkTextPrimary,
+              foregroundColor: textColor,
               side: BorderSide(
-                color: AppColors.kcDarkBorder.withValues(alpha: 0.85),
+                color: borderColor.withValues(alpha: 0.85),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
           ),
@@ -1307,13 +1352,13 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
     );
   }
 
-  Widget _attachmentsList(List<Widget> rows) {
+  Widget _attachmentsList({required bool isDark, required List<Widget> rows}) {
     return Column(
       children: [
         for (int i = 0; i < rows.length; i++) ...[
           rows[i],
           if (i != rows.length - 1)
-            Divider(color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.35)),
+            Divider(color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder).withValues(alpha: 0.35)),
         ],
       ],
     );
@@ -1323,25 +1368,31 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
     required String displayId,
     required String title,
     required int linkId,
+    required bool isDark,
   }) {
+    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+    final secondaryColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
+    final mutedColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
+    final inputBg = isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput;
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.kcDarkInputAlt.withValues(alpha: 0.5),
+        color: inputBg.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.3),
+          color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder).withValues(alpha: 0.3),
         ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.link, size: 18, color: AppColors.kcDarkPrimarySoft),
+          Icon(Icons.link, size: 18, color: isDark ? AppColors.kcDarkPrimarySoft : AppColors.kcPrimaryColor),
           const SizedBox(width: 10),
           Text(
             displayId,
-            style: const TextStyle(
-              color: AppColors.kcDarkTextSecondary,
+            style: TextStyle(
+              color: secondaryColor,
               fontWeight: FontWeight.w700,
               fontSize: 13,
             ),
@@ -1350,8 +1401,8 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
-                color: AppColors.kcDarkTextPrimary,
+              style: TextStyle(
+                color: textColor,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 fontFamily: 'Outfit',
@@ -1361,10 +1412,10 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
           ),
           IconButton(
             onPressed: _busy ? null : () => _deleteLink(linkId),
-            icon: const Icon(
+            icon: Icon(
               Icons.close,
               size: 18,
-              color: AppColors.kcDarkTextMuted,
+              color: mutedColor,
             ),
             splashRadius: 18,
             tooltip: 'Remove link',
@@ -1413,20 +1464,23 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
     }
   }
 
-  Widget _commentBox() {
+  Widget _commentBox(bool isDark) {
     return TextField(
       controller: _commentController,
-      style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 16),
+      style: TextStyle(
+        color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
+        fontSize: 16,
+      ),
       minLines: 3,
       maxLines: 6,
       decoration: InputDecoration(
         hintText: 'Write a comment...',
-        hintStyle: const TextStyle(
-          color: AppColors.kcDarkTextMuted,
+        hintStyle: TextStyle(
+          color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
           fontSize: 18,
         ),
         filled: true,
-        fillColor: AppColors.kcDarkInputAlt,
+        fillColor: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 14,
@@ -1434,13 +1488,14 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
+            color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder)
+                .withValues(alpha: 0.55),
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: AppColors.kcDarkPrimary,
+          borderSide: BorderSide(
+            color: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
             width: 1.5,
           ),
         ),
@@ -1451,6 +1506,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
   Widget _commentRow({
     required String user,
     required String content,
+    required bool isDark,
     DateTime? createdAt,
   }) {
     String timeStr = '';
@@ -1468,6 +1524,11 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
       }
     }
 
+    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+    final mutedColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
+    final inputBg = isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput;
+    final primarySoft = isDark ? AppColors.kcDarkPrimarySoft : AppColors.kcPrimaryColor;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
@@ -1475,11 +1536,11 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundColor: AppColors.kcDarkPrimarySoft.withValues(alpha: 0.2),
+            backgroundColor: primarySoft.withValues(alpha: 0.2),
             child: Text(
               user.isNotEmpty ? user[0].toUpperCase() : '?',
-              style: const TextStyle(
-                color: AppColors.kcDarkPrimarySoft,
+              style: TextStyle(
+                color: primarySoft,
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
               ),
@@ -1494,8 +1555,8 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                   children: [
                     Text(
                       user,
-                      style: const TextStyle(
-                        color: AppColors.kcDarkTextPrimary,
+                      style: TextStyle(
+                        color: textColor,
                         fontWeight: FontWeight.w800,
                         fontSize: 14,
                         fontFamily: 'Outfit',
@@ -1505,8 +1566,8 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                       const Spacer(),
                       Text(
                         timeStr,
-                        style: const TextStyle(
-                          color: AppColors.kcDarkTextMuted,
+                        style: TextStyle(
+                          color: mutedColor,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -1518,7 +1579,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.kcDarkInputAlt.withValues(alpha: 0.6),
+                    color: inputBg.withValues(alpha: 0.6),
                     borderRadius: const BorderRadius.only(
                       topRight: Radius.circular(14),
                       bottomLeft: Radius.circular(14),
@@ -1527,8 +1588,8 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                   ),
                   child: Text(
                     content,
-                    style: const TextStyle(
-                      color: AppColors.kcDarkTextPrimary,
+                    style: TextStyle(
+                      color: textColor,
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
                       fontFamily: 'Outfit',
@@ -1554,6 +1615,7 @@ class _AttachmentRow extends StatelessWidget {
     this.localPath,
     this.contentType,
     this.uploadedByName,
+    required this.isDark,
   });
 
   final String fileName;
@@ -1563,6 +1625,7 @@ class _AttachmentRow extends StatelessWidget {
   final String? localPath;
   final String? contentType;
   final String? uploadedByName;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
@@ -1649,7 +1712,7 @@ class _AttachmentRow extends StatelessWidget {
                   width: 48,
                   height: 48,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _typeIcon(type),
+                  errorBuilder: (_, _, _) => _typeIcon(type, isDark),
                 ),
               )
             else if (isImage && localPath != null)
@@ -1660,11 +1723,11 @@ class _AttachmentRow extends StatelessWidget {
                   width: 48,
                   height: 48,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => _typeIcon(type),
+                  errorBuilder: (_, _, _) => _typeIcon(type, isDark),
                 ),
               )
             else
-              _typeIcon(type),
+              _typeIcon(type, isDark),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -1672,8 +1735,8 @@ class _AttachmentRow extends StatelessWidget {
                 children: [
                   Text(
                     fileName,
-                    style: const TextStyle(
-                      color: AppColors.kcDarkTextPrimary,
+                    style: TextStyle(
+                      color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Outfit',
@@ -1683,8 +1746,8 @@ class _AttachmentRow extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     '$kb KB',
-                    style: const TextStyle(
-                      color: AppColors.kcDarkTextMuted,
+                    style: TextStyle(
+                      color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
@@ -1696,8 +1759,8 @@ class _AttachmentRow extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 uploadedByName!,
-                style: const TextStyle(
-                  color: AppColors.kcDarkTextMuted,
+                style: TextStyle(
+                  color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
@@ -1711,16 +1774,16 @@ class _AttachmentRow extends StatelessWidget {
     );
   }
 
-  Widget _typeIcon(String type) {
+  Widget _typeIcon(String type, bool isDark) {
     IconData iconData = Icons.insert_drive_file_outlined;
-    Color iconColor = AppColors.kcDarkTextSecondary;
+    Color iconColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
 
     if (type == 'pdf') {
       iconData = Icons.picture_as_pdf_outlined;
       iconColor = Colors.redAccent;
     } else if (type == 'video') {
       iconData = Icons.video_library_outlined;
-      iconColor = AppColors.kcDarkPrimary;
+      iconColor = isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor;
     } else if (type == 'image') {
       iconData = Icons.image_outlined;
     }
@@ -1776,13 +1839,16 @@ class _SearchTaskDialogState extends State<_SearchTaskDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return AlertDialog(
-      backgroundColor: AppColors.kcDarkCard,
+      backgroundColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
       surfaceTintColor: Colors.transparent,
-      title: const Text(
+      title: Text(
         'Link Task',
         style: TextStyle(
-          color: AppColors.kcDarkTextPrimary,
+          color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
           fontWeight: FontWeight.w800,
           fontFamily: 'Outfit',
         ),
@@ -1796,16 +1862,16 @@ class _SearchTaskDialogState extends State<_SearchTaskDialog> {
               controller: _searchController,
               onChanged: _onSearch,
               autofocus: true,
-              style: const TextStyle(color: AppColors.kcDarkTextPrimary),
+              style: TextStyle(color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle),
               decoration: InputDecoration(
                 hintText: 'Search by title or number...',
-                hintStyle: const TextStyle(color: AppColors.kcDarkTextMuted),
-                prefixIcon: const Icon(
+                hintStyle: TextStyle(color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted),
+                prefixIcon: Icon(
                   Icons.search,
-                  color: AppColors.kcDarkTextMuted,
+                  color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
                 ),
                 filled: true,
-                fillColor: AppColors.kcDarkInputAlt,
+                fillColor: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
@@ -1817,11 +1883,11 @@ class _SearchTaskDialogState extends State<_SearchTaskDialog> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxHeight: 400),
                 child: _filtered.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.all(20),
+                    ? Padding(
+                        padding: const EdgeInsets.all(20),
                         child: Text(
                           'No tasks found',
-                          style: TextStyle(color: AppColors.kcDarkTextMuted),
+                          style: TextStyle(color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted),
                         ),
                       )
                     : ListView.builder(
@@ -1835,21 +1901,21 @@ class _SearchTaskDialogState extends State<_SearchTaskDialog> {
                             onTap: () => Navigator.of(ctx).pop(t),
                             title: Text(
                               t.title,
-                              style: const TextStyle(
-                                color: AppColors.kcDarkTextPrimary,
+                              style: TextStyle(
+                                color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             subtitle: Text(
                               ticket,
-                              style: const TextStyle(
-                                color: AppColors.kcDarkTextMuted,
+                              style: TextStyle(
+                                color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
                                 fontSize: 12,
                               ),
                             ),
-                            trailing: const Icon(
+                            trailing: Icon(
                               Icons.add_link,
-                              color: AppColors.kcDarkPrimary,
+                              color: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
                               size: 20,
                             ),
                           );

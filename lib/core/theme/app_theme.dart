@@ -7,7 +7,7 @@ import 'app_typography.dart';
 /// Application theme configuration providing light and dark theme data.
 ///
 /// Defines consistent styling, colors, and typography across the entire app
-/// using the Manrope font family and custom color scheme.
+/// using the Inter and Outfit font families and custom color scheme.
 class AppTheme {
   /// Base primary color for the application
   static const Color primaryColor = AppColors.kcPrimaryColor;
@@ -17,24 +17,24 @@ class AppTheme {
     useMaterial3: true,
     primaryColor: primaryColor,
     brightness: Brightness.light,
-    scaffoldBackgroundColor: AppColors.kcBackgroundColorLight,
-    fontFamily: 'Inter', // Custom font family for consistent typography
+    scaffoldBackgroundColor: AppColors.kcLightPage,
+    fontFamily: 'Inter',
     textTheme: AppTypography.lightTextTheme,
 
     // AppBar Theme
     appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.kcBackgroundColorLight,
-      foregroundColor: AppColors.kcBlackColor,
+      backgroundColor: AppColors.kcLightPage,
+      foregroundColor: AppColors.kcLightTitle,
       elevation: 0,
       centerTitle: false,
-      iconTheme: IconThemeData(color: AppColors.kcBlackColor),
+      iconTheme: IconThemeData(color: AppColors.kcLightTitle),
       systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
       ),
       titleTextStyle: TextStyle(
-        color: AppColors.kcBlackColor,
+        color: AppColors.kcLightTitle,
         fontSize: 20,
         fontWeight: FontWeight.bold,
         fontFamily: 'Outfit',
@@ -42,28 +42,31 @@ class AppTheme {
     ),
 
     // Icon Theme
-    iconTheme: const IconThemeData(color: AppColors.kcGreyColor, size: 24),
+    iconTheme: const IconThemeData(color: AppColors.kcLightTextSecondary, size: 24),
 
     // Card Theme
     cardTheme: CardThemeData(
-      color: AppColors.kcSecondaryColorLight,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: AppColors.kcLightCard,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AppColors.kcLightBorder),
+      ),
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
     ),
 
     // Divider Theme
     dividerTheme: const DividerThemeData(
-      color: AppColors.kcLightGreyColor,
+      color: AppColors.kcLightBorder,
       thickness: 1,
       space: 1,
     ),
 
     // List Tile Theme
     listTileTheme: ListTileThemeData(
-      iconColor: AppColors.kcGreyColor,
-      textColor: AppColors.kcBlackColor,
-      selectedTileColor: AppColors.kcSelectedTileColor.withValues(alpha: 0.1),
+      iconColor: AppColors.kcLightTextSecondary,
+      textColor: AppColors.kcLightTextPrimary,
+      selectedTileColor: AppColors.kcPrimaryColor.withValues(alpha: 0.1),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
@@ -71,7 +74,7 @@ class AppTheme {
     // Progress Indicator Theme
     progressIndicatorTheme: const ProgressIndicatorThemeData(
       color: AppColors.kcPrimaryColor,
-      linearTrackColor: AppColors.kcLightGreyColor,
+      linearTrackColor: AppColors.kcLightBorder,
     ),
 
     // Switch Theme
@@ -93,26 +96,26 @@ class AppTheme {
     // Dropdown Menu Theme
     dropdownMenuTheme: DropdownMenuThemeData(
       textStyle: const TextStyle(
-        color: AppColors.kcBlackColor,
+        color: AppColors.kcLightTextPrimary,
         fontFamily: 'Inter',
       ),
       menuStyle: MenuStyle(
-        backgroundColor: WidgetStateProperty.all(
-          AppColors.kcSecondaryColorLight,
-        ),
+        backgroundColor: WidgetStateProperty.all(AppColors.kcLightCard),
         elevation: WidgetStateProperty.all(4),
         shape: WidgetStateProperty.all(
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.kcLightInput,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.kcDropdownBorderColor),
+          borderSide: const BorderSide(color: AppColors.kcLightBorder),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.kcDropdownBorderColor),
+          borderSide: const BorderSide(color: AppColors.kcLightBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -127,25 +130,24 @@ class AppTheme {
     // Color Scheme
     colorScheme: const ColorScheme.light(
       primary: AppColors.kcPrimaryColor,
-      secondary: AppColors.kcSecondaryColorLight,
-      onSecondary: Colors.white,
+      secondary: AppColors.kcLightTextSecondary,
+      surface: AppColors.kcLightSurface,
+      onSurface: AppColors.kcLightTextPrimary,
       error: AppColors.kcErrorColor,
-      surface: AppColors.kcSecondaryColorLight,
-      onSurface: AppColors.kcBlackColor,
     ),
 
     // Input Decoration Theme
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: AppColors.kcVeryLightGreyColor,
+      fillColor: AppColors.kcLightInput,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(color: AppColors.kcLightBorder),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide.none,
+        borderSide: const BorderSide(color: AppColors.kcLightBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -158,8 +160,8 @@ class AppTheme {
         borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(color: AppColors.kcErrorColor, width: 1),
       ),
-      labelStyle: const TextStyle(color: AppColors.kcLabelColor),
-      hintStyle: const TextStyle(color: AppColors.kcGreyColor),
+      labelStyle: const TextStyle(color: AppColors.kcLightTextSecondary),
+      hintStyle: const TextStyle(color: AppColors.kcLightTextMuted),
     ),
   );
 
@@ -168,16 +170,16 @@ class AppTheme {
     useMaterial3: true,
     primaryColor: primaryColor,
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: AppColors.kcBackgroundColorDark,
-    fontFamily: 'Inter', // Consistent font family across themes
+    scaffoldBackgroundColor: AppColors.kcDarkPage,
+    fontFamily: 'Inter',
     textTheme: AppTypography.darkTextTheme,
 
     // AppBar Theme
     appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.kcBackgroundColorDark,
+      backgroundColor: AppColors.kcDarkPage,
       foregroundColor: Colors.white,
       elevation: 0,
-      centerTitle: true,
+      centerTitle: false,
       iconTheme: IconThemeData(color: Colors.white),
       systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -193,28 +195,31 @@ class AppTheme {
     ),
 
     // Icon Theme
-    iconTheme: const IconThemeData(color: Colors.white70, size: 24),
+    iconTheme: const IconThemeData(color: AppColors.kcDarkTextSecondary, size: 24),
 
     // Card Theme
     cardTheme: CardThemeData(
-      color: AppColors.kcSecondaryColorDark,
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: AppColors.kcDarkCard,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AppColors.kcDarkBorderSoft),
+      ),
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
     ),
 
     // Divider Theme
     dividerTheme: const DividerThemeData(
-      color: Color(0xFF4A5D86),
+      color: AppColors.kcDarkBorderSoft,
       thickness: 1,
       space: 1,
     ),
 
     // List Tile Theme
     listTileTheme: ListTileThemeData(
-      iconColor: Colors.white70,
-      textColor: Colors.white,
-      selectedTileColor: AppColors.kcSelectedTileColor.withValues(alpha: 0.2),
+      iconColor: AppColors.kcDarkTextSecondary,
+      textColor: AppColors.kcDarkTextPrimary,
+      selectedTileColor: AppColors.kcPrimaryColor.withValues(alpha: 0.1),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
@@ -222,7 +227,7 @@ class AppTheme {
     // Progress Indicator Theme
     progressIndicatorTheme: const ProgressIndicatorThemeData(
       color: AppColors.kcPrimaryColor,
-      linearTrackColor: Colors.white10,
+      linearTrackColor: AppColors.kcDarkBorderStrong,
     ),
 
     // Switch Theme
@@ -243,24 +248,24 @@ class AppTheme {
 
     // Dropdown Menu Theme
     dropdownMenuTheme: DropdownMenuThemeData(
-      textStyle: const TextStyle(color: AppColors.textColorDark, fontFamily: 'Inter'),
+      textStyle: const TextStyle(color: AppColors.kcDarkTextPrimary, fontFamily: 'Inter'),
       menuStyle: MenuStyle(
-        backgroundColor: WidgetStateProperty.all(
-          AppColors.kcSecondaryColorDark,
-        ),
+        backgroundColor: WidgetStateProperty.all(AppColors.kcDarkCard),
         elevation: WidgetStateProperty.all(4),
         shape: WidgetStateProperty.all(
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.kcDarkInput,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF4A5D86)),
+          borderSide: const BorderSide(color: AppColors.kcDarkBorderSoft),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF4A5D86)),
+          borderSide: const BorderSide(color: AppColors.kcDarkBorderSoft),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -275,25 +280,24 @@ class AppTheme {
     // Color Scheme
     colorScheme: const ColorScheme.dark(
       primary: AppColors.kcPrimaryColor,
-      secondary: AppColors.kcSecondaryColorDark,
-      onSecondary: Colors.white,
+      secondary: AppColors.kcDarkTextSecondary,
+      surface: AppColors.kcDarkSurface,
+      onSurface: AppColors.kcDarkTextPrimary,
       error: AppColors.kcErrorColor,
-      surface: Colors.black,
-      onSurface: Colors.white,
     ),
 
     // Input Decoration Theme
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: const Color(0xFF0F1A33),
+      fillColor: AppColors.kcDarkInput,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFF4A5D86)),
+        borderSide: const BorderSide(color: AppColors.kcDarkBorderSoft),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFF4A5D86)),
+        borderSide: const BorderSide(color: AppColors.kcDarkBorderSoft),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -306,9 +310,8 @@ class AppTheme {
         borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(color: AppColors.kcErrorColor, width: 1),
       ),
-      labelStyle: const TextStyle(color: Color(0xFFA9BDE1)),
-      hintStyle: const TextStyle(color: Color(0xFF8EA5CD)),
+      labelStyle: const TextStyle(color: AppColors.kcDarkTextSecondary),
+      hintStyle: const TextStyle(color: AppColors.kcDarkTextMuted),
     ),
   );
 }
-

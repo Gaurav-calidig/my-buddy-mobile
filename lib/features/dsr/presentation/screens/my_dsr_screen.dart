@@ -91,6 +91,9 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
   }
 
   Future<void> _deleteEntry(DateTime date, int index) async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     final DateTime dateKey = _dayKey(date);
     final List<DsrEntryEntity> entries = context.read<DsrBloc>().state.entriesByDate[dateKey] ?? <DsrEntryEntity>[];
     if (index < 0 || index >= entries.length) return;
@@ -101,14 +104,19 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          backgroundColor: AppColors.kcBackgroundColorDark,
-          title: const Text(
+          backgroundColor: isDark ? AppColors.kcBackgroundColorDark : AppColors.kcLightCard,
+          title: Text(
             'Delete DSR Entry',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+            style: TextStyle(
+              color: isDark ? Colors.white : AppColors.kcLightTitle,
+              fontWeight: FontWeight.w700,
+            ),
           ),
-          content: const Text(
+          content: Text(
             'Are you sure you want to delete this entry?',
-            style: TextStyle(color: AppColors.kcDarkTextPrimary),
+            style: TextStyle(
+              color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTextSecondary,
+            ),
           ),
           actions: <Widget>[
             TextButton(
@@ -134,6 +142,9 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
     required int index,
     required DsrEntryEntity current,
   }) async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
     final List<String> projectNames = state.projects.map((p) => p.name).toList(growable: false);
     String? selectedProject = projectNames.contains(current.project) ? current.project : (projectNames.isNotEmpty ? projectNames.first : null);
     final String currentStatusLabel = _toDisplayStatus(current.status);
@@ -147,8 +158,14 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
         return StatefulBuilder(
           builder: (BuildContext context, void Function(void Function()) setDialogState) {
             return AlertDialog(
-              backgroundColor: AppColors.kcBackgroundColorDark,
-              title: const Text('Edit DSR Entry', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+              backgroundColor: isDark ? AppColors.kcBackgroundColorDark : AppColors.kcLightCard,
+              title: Text(
+                'Edit DSR Entry',
+                style: TextStyle(
+                  color: isDark ? Colors.white : AppColors.kcLightTitle,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               content: SingleChildScrollView(
                 child: SizedBox(
                   width: 340,
@@ -177,8 +194,8 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                       TextFormField(
                         initialValue: description,
                         maxLines: 4,
-                        style: const TextStyle(color: AppColors.kcDarkTextPrimary),
-                        decoration: dsrFieldDecoration('What did you work on?'),
+                        style: TextStyle(color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle),
+                        decoration: dsrFieldDecoration('What did you work on?', isDark: isDark),
                         onChanged: (String value) => description = value,
                       ),
                     ],
@@ -215,6 +232,9 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       drawer: const TemplateFeatureDrawer(),
       appBar: const CustomAppBar(title: 'DSR'),
@@ -235,13 +255,29 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
           final DateTime yesterday = today.subtract(const Duration(days: 1));
           final List<MapEntry<DateTime, List<DsrEntryEntity>>> historyGroups = state.entriesByDate.entries.toList()..sort((a, b) => b.key.compareTo(a.key));
 
+          final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+          final subTitleColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
+
           return LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
               return Container(
                 width: double.infinity,
                 height: double.infinity,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom]),
+                decoration: BoxDecoration(
+                  gradient: isDark
+                      ? const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom],
+                        )
+                      : LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: <Color>[
+                            AppColors.kcLightPage,
+                            AppColors.kcLightPage.withValues(alpha: 0.95),
+                          ],
+                        ),
                 ),
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(8, 10, 8, 20),
@@ -250,9 +286,23 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
-                        const Text('Daily Status Report', style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.w700)),
+                        Text(
+                          'Daily Status Report',
+                          style: TextStyle(
+                            color: titleColor,
+                            fontSize: 34,
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Outfit',
+                          ),
+                        ),
                         const SizedBox(height: 2),
-                        const Text('Log your daily work activity and hours', style: TextStyle(color: AppColors.kcDarkTextSecondary, fontSize: 14)),
+                        Text(
+                          'Log your daily work activity and hours',
+                          style: TextStyle(
+                            color: subTitleColor,
+                            fontSize: 14,
+                          ),
+                        ),
                         const SizedBox(height: 10),
                         DsrTabStripWidget(
                           isAddSelected: _activeTab == _DsrTab.add,
@@ -264,11 +314,25 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                         ),
                         const SizedBox(height: 10),
                         if (state.errorMessage != null) ...<Widget>[
-                          Text(state.errorMessage!, style: const TextStyle(color: AppColors.kcDarkErrorText, fontSize: 12, fontWeight: FontWeight.w600)),
+                          Text(
+                            state.errorMessage!,
+                            style: TextStyle(
+                              color: isDark ? AppColors.kcDarkErrorText : AppColors.kcErrorColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                           const SizedBox(height: 10),
                         ],
                         if (showTabLoader)
-                          const Padding(padding: EdgeInsets.only(top: 24), child: Center(child: CircularProgressIndicator()))
+                          Padding(
+                            padding: const EdgeInsets.only(top: 24),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: isDark ? Colors.white : AppColors.kcPrimaryColor,
+                              ),
+                            ),
+                          )
                         else if (_activeTab == _DsrTab.add)
                           DsrAddTabWidget(
                             selectedDate: selectedDate,
@@ -300,7 +364,8 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                             today: today,
                             yesterday: yesterday,
                             formatDate: _formatDate,
-                            onEdit: (DateTime date, int index, DsrEntryEntity entry) => _editEntry(state: state, date: date, index: index, current: entry),
+                            onEdit: (DateTime date, int index, DsrEntryEntity entry) =>
+                                _editEntry(state: state, date: date, index: index, current: entry),
                             onDelete: (DateTime date, int index) => _deleteEntry(date, index),
                           ),
                       ],

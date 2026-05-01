@@ -17,13 +17,16 @@ class DashboardAttendanceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft.withValues(alpha: 0.35) : AppColors.kcLightBorder;
+    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
     final displayName = '${member.firstName} ${member.lastName}'.trim();
 
     return Container(
       height: 32,
       padding: const EdgeInsets.symmetric(horizontal: 6),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.35))),
+        border: Border(bottom: BorderSide(color: borderColor)),
       ),
       child: Row(
         children: <Widget>[
@@ -31,7 +34,7 @@ class DashboardAttendanceRow extends StatelessWidget {
             width: memberWidth,
             child: Text(
               displayName,
-              style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 11, fontWeight: FontWeight.w600),
+              style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.w600),
               overflow: TextOverflow.ellipsis,
             ),
           ),

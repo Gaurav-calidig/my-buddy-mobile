@@ -1,4 +1,5 @@
 import 'package:core/features/projects/presentation/bloc/project_detail_event.dart';
+import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/features/projects/domain/entities/project_asset_entity.dart';
@@ -87,9 +88,9 @@ class _AssetsTabState extends State<AssetsTab> {
   Widget _buildToolbar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      decoration: const BoxDecoration(
-        color: kPanel,
-        border: Border(bottom: BorderSide(color: kBorder, width: 0.5)),
+      decoration: BoxDecoration(
+        color: ProjectTheme.getPanel(context),
+        border: Border(bottom: BorderSide(color: ProjectTheme.getBorder(context), width: 0.5)),
       ),
       child: Row(
         children: [
@@ -157,10 +158,10 @@ class TeamTab extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Team Members',
                       style: TextStyle(
-                        color: kTextPrimary,
+                        color: ProjectTheme.getTextPrimary(context),
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
@@ -215,16 +216,16 @@ class TeamTab extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: kPanel,
-        title: const Text('Remove Member', style: TextStyle(color: kTextPrimary)),
+        backgroundColor: ProjectTheme.getPanel(context),
+        title: Text('Remove Member', style: TextStyle(color: ProjectTheme.getTextPrimary(context))),
         content: Text(
           'Are you sure you want to remove ${member.user.fullName} from this project?',
-          style: const TextStyle(color: kTextSecondary),
+          style: TextStyle(color: ProjectTheme.getTextSecondary(context)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel', style: TextStyle(color: kTextMuted)),
+            child: Text('Cancel', style: TextStyle(color: ProjectTheme.getTextMuted(context))),
           ),
           TextButton(
             onPressed: () {
@@ -311,17 +312,17 @@ class TechStackTab extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: kPanelLight.withValues(alpha: 0.1),
+        color: ProjectTheme.getPanelLight(context).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kBorder.withValues(alpha: 0.5)),
+        border: Border.all(color: ProjectTheme.getBorder(context).withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Select tech stacks for this project:',
             style: TextStyle(
-              color: kTextPrimary,
+              color: ProjectTheme.getTextPrimary(context),
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
@@ -348,8 +349,8 @@ class TechStackTab extends StatelessWidget {
         children: [
           Text(
             groupName.toUpperCase(),
-            style: const TextStyle(
-              color: kTextMuted,
+            style: TextStyle(
+              color: ProjectTheme.getTextMuted(context),
               fontSize: 11,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
@@ -378,17 +379,17 @@ class TechStackTab extends StatelessWidget {
                         ),
                       );
                 },
-                backgroundColor: kPanelLight,
-                selectedColor: kAccent,
+                backgroundColor: ProjectTheme.getPanelLight(context),
+                selectedColor: ProjectTheme.getAccent(context),
                 labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : kTextPrimary,
+                  color: isSelected ? Colors.white : ProjectTheme.getTextPrimary(context),
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                   side: BorderSide(
-                    color: isSelected ? kAccent : kBorder,
+                    color: isSelected ? ProjectTheme.getAccent(context) : ProjectTheme.getBorder(context),
                     width: 0.5,
                   ),
                 ),
@@ -414,12 +415,12 @@ class TechStackTab extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.layers_outlined, color: kAccent, size: 20),
+            Icon(Icons.layers_outlined, color: ProjectTheme.getAccent(context), size: 20),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'Current Tech Stack',
               style: TextStyle(
-                color: kTextPrimary,
+                color: ProjectTheme.getTextPrimary(context),
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
@@ -481,12 +482,12 @@ class OverviewTab extends StatelessWidget {
               InfoRow(
                 label: 'Billable',
                 value: project.isBillable ? 'Yes' : 'No',
-                valueColor: project.isBillable ? kSuccess : kTextSecondary,
+                valueColor: project.isBillable ? ProjectTheme.kSuccess : ProjectTheme.getTextSecondary(context),
               ),
               InfoRow(
                 label: 'Archived',
                 value: project.isArchived ? 'Yes' : 'No',
-                valueColor: project.isArchived ? kWarning : kTextSecondary,
+                valueColor: project.isArchived ? ProjectTheme.kWarning : ProjectTheme.getTextSecondary(context),
               ),
               InfoRow(
                 label: 'Members',
@@ -507,8 +508,8 @@ class OverviewTab extends StatelessWidget {
             title: 'Description',
             child: Text(
               project.description.isEmpty ? 'No description provided.' : project.description,
-              style: const TextStyle(
-                color: kTextSecondary,
+              style: TextStyle(
+                color: ProjectTheme.getTextSecondary(context),
                 fontSize: 14,
                 height: 1.6,
               ),

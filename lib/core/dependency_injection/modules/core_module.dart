@@ -9,9 +9,13 @@ import 'package:core/core/network/network_checker.dart';
 import 'package:core/core/services/share_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:get_it/get_it.dart';
+import 'package:core/core/theme/theme_cubit.dart';
 import 'package:core/features/workmanager/service/workmanager_service.dart';
 
 void registerCoreModule(GetIt sl) {
+  if (!sl.isRegistered<ThemeCubit>()) {
+    sl.registerLazySingleton(() => ThemeCubit());
+  }
   if (!sl.isRegistered<Placeholder>()) {
     sl.registerLazySingleton<Placeholder>(() => const Placeholder());
   }

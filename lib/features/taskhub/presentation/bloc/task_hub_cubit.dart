@@ -189,7 +189,7 @@ class TaskHubCubit extends Cubit<TaskHubState> {
       taskNumber: maxTaskNumber + 1,
       title: clean,
       descriptionHtml: null,
-      assignee: assignee?.trim().isEmpty == true ? null : assignee?.trim(),
+      assigneeId: assignee?.trim().isEmpty == true ? null : assignee?.trim(),
       priority: priority,
       ticketType: 'task',
       boardType: state.boardType,

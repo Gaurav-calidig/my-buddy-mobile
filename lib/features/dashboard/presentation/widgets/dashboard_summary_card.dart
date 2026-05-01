@@ -16,6 +16,12 @@ class DashboardSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final valueColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final labelColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
+    final iconBg = isDark ? const Color(0xFF173A74) : AppColors.kcPrimaryColor.withValues(alpha: 0.1);
+    final iconColor = isDark ? const Color(0xFF74A4FF) : AppColors.kcPrimaryColor;
+
     return DashboardCardShell(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
@@ -25,10 +31,10 @@ class DashboardSummaryCard extends StatelessWidget {
               width: 20,
               height: 20,
               decoration: BoxDecoration(
-                color: const Color(0xFF173A74),
+                color: iconBg,
                 borderRadius: BorderRadius.circular(5),
               ),
-              child: Icon(icon, color: const Color(0xFF74A4FF), size: 12),
+              child: Icon(icon, color: iconColor, size: 12),
             ),
             const SizedBox(width: 8),
             Column(
@@ -36,16 +42,16 @@ class DashboardSummaryCard extends StatelessWidget {
               children: <Widget>[
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: AppColors.kcDarkTextSecondary,
+                  style: TextStyle(
+                    color: labelColor,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
                   value,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: valueColor,
                     fontSize: 34,
                     fontWeight: FontWeight.w700,
                     height: 0.95,

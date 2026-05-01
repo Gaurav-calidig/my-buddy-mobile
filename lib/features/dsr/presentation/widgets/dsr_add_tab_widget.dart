@@ -53,6 +53,7 @@ class DsrAddTabWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -60,16 +61,16 @@ class DsrAddTabWidget extends StatelessWidget {
           height: 36,
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
-            color: AppColors.kcDarkInput,
+            color: isDark ? AppColors.kcDarkInput : AppColors.kcLightInput,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.kcDarkBorderSoft),
+            border: Border.all(color: isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<DateTime>(
               value: selectedDate,
-              dropdownColor: AppColors.kcBackgroundColorDark,
-              iconEnabledColor: AppColors.kcDarkTextSecondary,
-              style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontWeight: FontWeight.w600),
+              dropdownColor: isDark ? AppColors.kcBackgroundColorDark : Colors.white,
+              iconEnabledColor: isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary,
+              style: TextStyle(color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle, fontWeight: FontWeight.w600),
               items: <DateTime>[today, yesterday].map((DateTime date) {
                 final bool isToday = _isSameDate(date, today);
                 final String label = isToday ? 'Today' : 'Yesterday';
@@ -86,11 +87,11 @@ class DsrAddTabWidget extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: AppColors.kcDarkInput,
+            color: isDark ? AppColors.kcDarkInput : AppColors.kcLightInput,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.kcDarkBorderMid),
+            border: Border.all(color: isDark ? AppColors.kcDarkBorderMid : AppColors.kcLightBorderMid),
           ),
-          child: Text('${totalHours.toStringAsFixed(1)}h logged', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+          child: Text('${totalHours.toStringAsFixed(1)}h logged', style: TextStyle(color: isDark ? Colors.white : AppColors.kcLightTitle, fontWeight: FontWeight.w600)),
         ),
         const SizedBox(height: 12),
         DsrCardShell(
@@ -99,7 +100,7 @@ class DsrAddTabWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text('Add Entry', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+                Text('Add Entry', style: TextStyle(color: isDark ? Colors.white : AppColors.kcLightTitle, fontSize: 20, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 14),
                 const DsrLabel('Project'),
                 DsrDropdownField<String>(value: selectedProject, hintText: 'Select project', items: projectNames, onChanged: onProjectChanged),
@@ -117,8 +118,8 @@ class DsrAddTabWidget extends StatelessWidget {
                     icon: const Icon(Icons.add, size: 16),
                     label: const Text('Add'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.kcDarkPrimarySoft,
-                      foregroundColor: AppColors.kcDarkTextPrimary,
+                      backgroundColor: isDark ? AppColors.kcDarkPrimarySoft : AppColors.kcPrimaryColor,
+                      foregroundColor: isDark ? AppColors.kcDarkTextPrimary : Colors.white,
                       minimumSize: const Size.fromHeight(40),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                     ),
@@ -129,8 +130,8 @@ class DsrAddTabWidget extends StatelessWidget {
                 TextField(
                   controller: descriptionController,
                   maxLines: 3,
-                  style: const TextStyle(color: AppColors.kcDarkTextPrimary),
-                  decoration: dsrFieldDecoration('What did you work on?'),
+                  style: TextStyle(color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle),
+                  decoration: dsrFieldDecoration('What did you work on?', isDark: isDark),
                 ),
               ],
             ),

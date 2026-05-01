@@ -14,11 +14,17 @@ class DashboardAttendanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final allDays = overview?.days ?? const <DashboardAttendanceDayEntity>[];
     final membersWithLeaves = (overview?.members ?? const <DashboardAttendanceMemberEntity>[])
         .where((member) => member.leaves.isNotEmpty)
         .take(5)
         .toList();
+
+    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+    final iconColor = isDark ? AppColors.kcDarkTextAccent : AppColors.kcPrimaryColor;
+    final tableBg = isDark ? AppColors.kcDarkCardSoft : AppColors.kcLightPage.withValues(alpha: 0.5);
+    final tableBorder = isDark ? AppColors.kcDarkBorderSoft.withValues(alpha: 0.7) : AppColors.kcLightBorder;
 
     return DashboardCardShell(
       child: Padding(
@@ -28,13 +34,13 @@ class DashboardAttendanceCard extends StatelessWidget {
           children: <Widget>[
             Row(
               children: <Widget>[
-                const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.kcDarkTextAccent),
+                Icon(Icons.calendar_today_outlined, size: 14, color: iconColor),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Attendance - Upcoming Leaves',
                     style: TextStyle(
-                      color: AppColors.kcDarkTextPrimary,
+                      color: textColor,
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
@@ -42,8 +48,8 @@ class DashboardAttendanceCard extends StatelessWidget {
                 ),
                 Text(
                   'Pending ${overview?.pendingApprovalCount ?? 0}',
-                  style: const TextStyle(
-                    color: AppColors.kcDarkTextPrimary,
+                  style: TextStyle(
+                    color: textColor,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
@@ -53,9 +59,9 @@ class DashboardAttendanceCard extends StatelessWidget {
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                color: AppColors.kcDarkCardSoft,
+                color: tableBg,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.7)),
+                border: Border.all(color: tableBorder),
               ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
@@ -70,14 +76,14 @@ class DashboardAttendanceCard extends StatelessWidget {
                     children: <Widget>[
                       DashboardAttendanceHeaderRow(days: days, memberWidth: memberWidth),
                       if (membersWithLeaves.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
                               'No upcoming leaves',
                               style: TextStyle(
-                                color: AppColors.kcDarkTextMuted,
+                                color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextSecondary,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                               ),

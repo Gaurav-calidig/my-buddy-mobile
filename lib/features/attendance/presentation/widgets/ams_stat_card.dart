@@ -9,19 +9,33 @@ class AmsStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? AppColors.kcDarkCard : AppColors.kcLightCard;
+    final borderColor = isDark ? AppColors.kcDarkBorderStrong.withValues(alpha: 0.5) : AppColors.kcLightBorder;
+    final labelColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
+    final valueColor = isDark ? Colors.white : AppColors.kcLightTitle;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.kcDarkCard,
+        color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.kcDarkBorderStrong.withOpacity(0.5)),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: borderColor),
+        boxShadow: isDark 
+            ? <BoxShadow>[
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : <BoxShadow>[
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -29,8 +43,8 @@ class AmsStatCard extends StatelessWidget {
         children: <Widget>[
           Text(
             item.label.toUpperCase(),
-            style: const TextStyle(
-              color: AppColors.kcDarkTextSecondary,
+            style: TextStyle(
+              color: labelColor,
               fontSize: 10,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.5,
@@ -41,8 +55,8 @@ class AmsStatCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             item.value,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: valueColor,
               fontWeight: FontWeight.w900,
               fontSize: 24,
               height: 1,
@@ -52,7 +66,7 @@ class AmsStatCard extends StatelessWidget {
           Text(
             item.caption,
             style: TextStyle(
-              color: AppColors.kcDarkTextSecondary.withOpacity(0.8),
+              color: labelColor.withValues(alpha: 0.8),
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),

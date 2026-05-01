@@ -19,30 +19,37 @@ class DsrHistoryEntryRowWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.kcDarkSurface : AppColors.kcLightInput;
+    final borderColor = isDark ? AppColors.kcDarkBorderStrong : AppColors.kcLightBorder;
+    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+    final readOnlyBg = isDark ? AppColors.kcDarkReadOnlyBg : AppColors.kcLightInput.withValues(alpha: 0.5);
+    final borderMidColor = isDark ? AppColors.kcDarkBorderMid : AppColors.kcLightBorder;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
-      decoration: BoxDecoration(color: AppColors.kcDarkSurface, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.kcDarkBorderStrong)),
+      decoration: BoxDecoration(color: surfaceColor, borderRadius: BorderRadius.circular(8), border: Border.all(color: borderColor)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Expanded(flex: 3, child: Text(entry.project, style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 13, fontWeight: FontWeight.w700))),
+              Expanded(flex: 3, child: Text(entry.project, style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.w700))),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.kcDarkBorderMid)),
-                child: Text('${entry.hours.toStringAsFixed(1)}h', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: borderMidColor)),
+                child: Text('${entry.hours.toStringAsFixed(1)}h', style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.w700)),
               ),
               const SizedBox(width: 8),
               DsrStatusPill(status: entry.status),
               if (canMutate) ...<Widget>[
                 const SizedBox(width: 8),
-                InkWell(onTap: onEdit, child: const Icon(Icons.edit_outlined, color: AppColors.kcDarkTextPrimary, size: 17)),
+                InkWell(onTap: onEdit, child: Icon(Icons.edit_outlined, color: textColor, size: 17)),
                 const SizedBox(width: 10),
-                InkWell(onTap: onDelete, child: const Icon(Icons.delete_outline, color: AppColors.kcDarkTextPrimary, size: 17)),
+                InkWell(onTap: onDelete, child: Icon(Icons.delete_outline, color: textColor, size: 17)),
               ],
             ],
           ),
@@ -50,8 +57,8 @@ class DsrHistoryEntryRowWidget extends StatelessWidget {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(color: AppColors.kcDarkReadOnlyBg, borderRadius: BorderRadius.circular(6)),
-            child: Text(entry.description.isEmpty ? 'No description provided.' : entry.description, style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 12, height: 1.35)),
+            decoration: BoxDecoration(color: readOnlyBg, borderRadius: BorderRadius.circular(6)),
+            child: Text(entry.description.isEmpty ? 'No description provided.' : entry.description, style: TextStyle(color: textColor, fontSize: 12, height: 1.35)),
           ),
         ],
       ),

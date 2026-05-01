@@ -8,11 +8,27 @@ class DashboardCardShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.kcDarkCard,
+        color: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.kcDarkBorder.withValues(alpha: 0.55)),
+        border: Border.all(
+          color: isDark 
+              ? AppColors.kcDarkBorder.withValues(alpha: 0.1) 
+              : AppColors.kcLightBorder,
+        ),
+        boxShadow: isDark 
+            ? null 
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: child,
     );

@@ -9,27 +9,28 @@ class InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final borderColor = ProjectTheme.getBorder(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: kPanel,
+        color: ProjectTheme.getPanel(context),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: kBorder),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: kTextPrimary,
+            style: TextStyle(
+              color: ProjectTheme.getTextPrimary(context),
               fontSize: 14,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 12),
-          const Divider(color: kBorder, height: 1),
+          Divider(color: borderColor, height: 1),
           const SizedBox(height: 12),
           if (rows != null)
             ...rows!.map((r) => Padding(
@@ -60,13 +61,13 @@ class InfoRow extends StatelessWidget {
           width: 110,
           child: Text(
             label,
-            style: const TextStyle(color: kTextMuted, fontSize: 13),
+            style: TextStyle(color: ProjectTheme.getTextMuted(context), fontSize: 13),
           ),
         ),
         Text(
           value,
           style: TextStyle(
-            color: valueColor ?? kTextPrimary,
+            color: valueColor ?? ProjectTheme.getTextPrimary(context),
             fontSize: 13,
             fontWeight: FontWeight.w600,
           ),

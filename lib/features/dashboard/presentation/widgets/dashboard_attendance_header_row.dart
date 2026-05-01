@@ -14,19 +14,24 @@ class DashboardAttendanceHeaderRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft.withValues(alpha: 0.7) : AppColors.kcLightBorder;
+    final labelColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextSecondary;
+    final valueColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(6, 6, 6, 6),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.7))),
+        border: Border(bottom: BorderSide(color: borderColor)),
       ),
       child: Row(
         children: <Widget>[
           SizedBox(
             width: memberWidth,
-            child: const Text(
+            child: Text(
               'Member',
               style: TextStyle(
-                color: AppColors.kcDarkTextMuted,
+                color: labelColor,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
@@ -38,10 +43,10 @@ class DashboardAttendanceHeaderRow extends StatelessWidget {
                 return Expanded(
                   child: Column(
                     children: <Widget>[
-                      Text(days[idx].dayLabel, style: const TextStyle(color: AppColors.kcDarkTextMuted, fontSize: 10)),
+                      Text(days[idx].dayLabel, style: TextStyle(color: labelColor, fontSize: 10)),
                       Text(
                         days[idx].dayNum.toString(),
-                        style: const TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 12, fontWeight: FontWeight.w700),
+                        style: TextStyle(color: valueColor, fontSize: 12, fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),

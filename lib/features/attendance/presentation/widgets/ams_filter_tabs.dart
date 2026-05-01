@@ -15,12 +15,19 @@ class AmsFilterTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final containerBg = isDark ? AppColors.kcDarkCard : AppColors.kcLightInput;
+    final borderColor = isDark ? AppColors.kcDarkBorderStrong : AppColors.kcLightBorder;
+    final selectedBg = isDark ? const Color(0xFF1B2E4F) : AppColors.kcPrimaryColor.withValues(alpha: 0.1);
+    final selectedTextColor = isDark ? Colors.white : AppColors.kcPrimaryColor;
+    final unselectedTextColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
+
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: AppColors.kcDarkCard,
+        color: containerBg,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.kcDarkBorderStrong),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         children: List<Widget>.generate(items.length, (int index) {
@@ -32,14 +39,14 @@ class AmsFilterTabs extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: selected ? const Color(0xFF1B2E4F) : Colors.transparent,
+                  color: selected ? selectedBg : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   items[index],
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: selected ? Colors.white : AppColors.kcDarkTextSecondary,
+                    color: selected ? selectedTextColor : unselectedTextColor,
                     fontSize: 12,
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   ),

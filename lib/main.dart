@@ -6,19 +6,17 @@ import 'package:core/core/dependency_injection/injection_container.dart';
 import 'package:core/core/errors/error_handler.dart';
 import 'package:core/core/config/feature_flags.dart';
 import 'package:core/core/l10n/app_localizations.dart';
-import 'package:core/core/localization/hybrid_localizations_delegate.dart';
 import 'package:core/core/navigation/app_router.dart';
 import 'package:core/core/navigation/app_routes.dart';
 import 'package:core/core/navigation/navigation_service.dart';
-import 'package:core/core/network/api_service.dart';
 import 'package:core/core/notification/bloc/navigation_bloc.dart';
 import 'package:core/core/notification/push/push_notification_service.dart';
-import 'package:core/core/services/remote_config.dart';
+import 'package:core/core/theme/app_theme.dart';
+import 'package:core/core/theme/theme_cubit.dart';
 import 'package:core/core/theme/app_colors.dart';
 import 'package:core/core/utils/app_initializer.dart';
 import 'package:core/core/utils/firebase_initializer.dart';
 import 'package:core/core/widgets/app_progress_indicator.dart';
-import 'package:core/core/widgets/template_feature_drawer.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:core/features/auth/presentation/bloc/auth_event.dart';
 import 'package:core/features/auth/presentation/screens/login_screen.dart';
@@ -149,6 +147,9 @@ class MyApp extends StatelessWidget {
       BlocProvider<SplashBloc>(
         create: (context) => SplashBloc()..add(AppStarted()),
       ),
+      BlocProvider<ThemeCubit>(
+        create: (context) => sl<ThemeCubit>(),
+      ),
       BlocProvider<NotificationNavigationBloc>.value(value: navigationBloc),
       BlocProvider<DashboardBloc>(
         create: (context) => sl<DashboardBloc>()..add(DashboardLoadRequested()),
@@ -196,16 +197,22 @@ class MyApp extends StatelessWidget {
   }
 
   Widget _buildScaffold(BuildContext context, Widget child, String location) {
-    const Color appChrome = Color(0xFF101C34);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color appChrome = isDark ? const Color(0xFF101C34) : AppColors.kcLightPage;
 
     return Scaffold(backgroundColor: appChrome, body: child);
   }
 
   Widget _buildWithGoRouter(BuildContext context) {
-       return MaterialApp.router(
+    return BlocBuilder<ThemeCubit, ThemeMode>(
+      builder: (context, mode) {
+        return MaterialApp.router(
           routerConfig: AppRouter.router,
           locale: DevicePreview.locale(context),
           title: AppConstants.appName,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: mode,
           localizationsDelegates: _localizationsDelegates(),
           supportedLocales: _supportedLocales(),
           debugShowCheckedModeBanner: false,
@@ -220,10 +227,14 @@ class MyApp extends StatelessWidget {
             );
           },
         );
+      },
+    );
   }
 
   Widget _buildWithNavigator(BuildContext context) {
-     return MaterialApp(
+    return BlocBuilder<ThemeCubit, ThemeMode>(
+      builder: (context, mode) {
+        return MaterialApp(
           navigatorKey: _navigationService.navigatorKey,
           initialRoute: AppRoutes.splash,
           routes: {
@@ -233,7 +244,10 @@ class MyApp extends StatelessWidget {
             AppRoutes.notificationInbox: (_) => const NotificationInboxScreen(),
           },
           locale: DevicePreview.locale(context),
-          title:AppConstants.appName,
+          title: AppConstants.appName,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: mode,
           localizationsDelegates: _localizationsDelegates(),
           supportedLocales: _supportedLocales(),
           debugShowCheckedModeBanner: false,
@@ -248,6 +262,8 @@ class MyApp extends StatelessWidget {
             );
           },
         );
+      },
+    );
   }
 
   List<LocalizationsDelegate<dynamic>>? _localizationsDelegates() {

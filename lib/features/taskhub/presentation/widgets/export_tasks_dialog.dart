@@ -140,7 +140,7 @@ class _ExportTasksDialogState extends State<ExportTasksDialog> {
           sheet.cell(CellIndex.indexByColumnRow(columnIndex: 4, rowIndex: rowIndex)).value = TextCellValue(task.priority.name.toUpperCase());
 
           // Assignee
-          final assigneeName = widget.assigneeById[task.assignee] ?? task.assignee ?? 'Unassigned';
+          final assigneeName = widget.assigneeById[task.assigneeId] ?? task.assigneeId ?? 'Unassigned';
           sheet.cell(CellIndex.indexByColumnRow(columnIndex: 5, rowIndex: rowIndex)).value = TextCellValue(assigneeName);
 
           // Due Date
@@ -226,8 +226,17 @@ class _ExportTasksDialogState extends State<ExportTasksDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final mq = MediaQuery.of(context);
     final width = mq.size.width < 500 ? mq.size.width - 32 : 440.0;
+
+    final dialogBg = isDark ? const Color(0xFF0F1D39) : AppColors.kcLightPage;
+    final titleColor = isDark ? AppColors.kcDarkTitle : AppColors.kcLightTitle;
+    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTextPrimary;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+    final mutedColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -236,11 +245,18 @@ class _ExportTasksDialogState extends State<ExportTasksDialog> {
         width: width,
         constraints: const BoxConstraints(maxHeight: 560),
         decoration: BoxDecoration(
-          color: const Color(0xFF0F1D39),
+          color: dialogBg,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.5),
+            color: borderColor.withValues(alpha: 0.5),
           ),
+          boxShadow: isDark ? null : [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -250,11 +266,11 @@ class _ExportTasksDialogState extends State<ExportTasksDialog> {
               padding: const EdgeInsets.fromLTRB(24, 20, 16, 8),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Export Tasks',
                       style: TextStyle(
-                        color: AppColors.kcDarkTitle,
+                        color: titleColor,
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                         fontFamily: 'Outfit',
@@ -263,7 +279,7 @@ class _ExportTasksDialogState extends State<ExportTasksDialog> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: AppColors.kcDarkTextMuted),
+                    icon: Icon(Icons.close, color: mutedColor),
                     splashRadius: 20,
                   ),
                 ],
@@ -275,24 +291,24 @@ class _ExportTasksDialogState extends State<ExportTasksDialog> {
               child: CheckboxListTile(
                 value: _selectAll,
                 onChanged: _toggleSelectAll,
-                title: const Text(
+                title: Text(
                   'Select All',
                   style: TextStyle(
-                    color: AppColors.kcDarkTextPrimary,
+                    color: textColor,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                activeColor: AppColors.kcDarkPrimary,
+                activeColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
                 checkColor: Colors.white,
                 dense: true,
                 controlAffinity: ListTileControlAffinity.leading,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Divider(color: AppColors.kcDarkBorderSoft, height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Divider(color: borderColor, height: 1),
             ),
             Flexible(
               child: ListView.builder(
@@ -307,13 +323,13 @@ class _ExportTasksDialogState extends State<ExportTasksDialog> {
                     onChanged: (v) => _toggleColumn(col.id, v),
                     title: Text(
                       col.name,
-                      style: const TextStyle(
-                        color: AppColors.kcDarkTextPrimary,
+                      style: TextStyle(
+                        color: textColor,
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    activeColor: AppColors.kcDarkPrimary,
+                    activeColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
                     checkColor: Colors.white,
                     dense: true,
                     controlAffinity: ListTileControlAffinity.leading,
@@ -332,11 +348,11 @@ class _ExportTasksDialogState extends State<ExportTasksDialog> {
                       child: OutlinedButton(
                         onPressed: _isExporting ? null : () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.kcDarkBorderSoft),
+                          side: BorderSide(color: borderColor),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          foregroundColor: AppColors.kcDarkTextPrimary,
+                          foregroundColor: textColor,
                         ),
                         child: const Text('Cancel'),
                       ),
@@ -349,7 +365,7 @@ class _ExportTasksDialogState extends State<ExportTasksDialog> {
                       child: ElevatedButton(
                         onPressed: _isExporting ? null : _onExport,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.kcDarkPrimary,
+                          backgroundColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),

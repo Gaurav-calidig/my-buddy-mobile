@@ -39,6 +39,9 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return BlocBuilder<TaskHubCubit, TaskHubState>(
       builder: (context, state) {
         // Initialize or update local columns if state changed and we are not dragging
@@ -56,17 +59,32 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
         final width = mq.size.width < 500 ? mq.size.width - 32 : 480.0;
         final isLoading = state.status == TaskHubLoadStatus.loading;
 
+        final dialogBg = isDark ? const Color(0xFF0B1730) : AppColors.kcLightPage;
+        final titleColor = isDark ? AppColors.kcDarkTitle : AppColors.kcLightTitle;
+        final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+        final mutedColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
+        final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+        final inputBg = isDark ? AppColors.kcDarkInput : AppColors.kcLightInput;
+        final inputAltBg = isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput;
+
         return Dialog(
           backgroundColor: Colors.transparent,
           child: Container(
             width: width,
             constraints: const BoxConstraints(maxHeight: 600),
             decoration: BoxDecoration(
-              color: const Color(0xFF0B1730),
+              color: dialogBg,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.5),
+                color: borderColor.withValues(alpha: 0.5),
               ),
+              boxShadow: isDark ? null : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -76,24 +94,24 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
                   padding: const EdgeInsets.fromLTRB(24, 20, 16, 8),
                   child: Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'Manage States',
                               style: TextStyle(
-                                color: AppColors.kcDarkTitle,
+                                color: titleColor,
                                 fontSize: 22,
                                 fontWeight: FontWeight.w800,
                                 fontFamily: 'Outfit',
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
                               'Drag states to reorder them. Changes apply immediately to the board.',
                               style: TextStyle(
-                                color: AppColors.kcDarkTextMuted,
+                                color: mutedColor,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -103,8 +121,8 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
                       ),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close,
-                            color: AppColors.kcDarkTextMuted),
+                        icon: Icon(Icons.close,
+                            color: mutedColor),
                       ),
                     ],
                   ),
@@ -144,11 +162,11 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
                                     vertical: 14,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.kcDarkInput
+                                    color: inputBg
                                         .withValues(alpha: 0.4),
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
-                                      color: AppColors.kcDarkBorderSoft
+                                      color: borderColor
                                           .withValues(alpha: 0.3),
                                     ),
                                   ),
@@ -156,9 +174,9 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
                                     children: [
                                       ReorderableDragStartListener(
                                         index: index,
-                                        child: const Icon(
+                                        child: Icon(
                                           Icons.drag_indicator,
-                                          color: AppColors.kcDarkTextMuted,
+                                          color: mutedColor,
                                           size: 20,
                                         ),
                                       ),
@@ -166,8 +184,8 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
                                       Expanded(
                                         child: Text(
                                           col.name,
-                                          style: const TextStyle(
-                                            color: AppColors.kcDarkTextPrimary,
+                                          style: TextStyle(
+                                            color: textColor,
                                             fontSize: 16,
                                             fontWeight: FontWeight.w600,
                                           ),
@@ -179,17 +197,17 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
                                           vertical: 4,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: AppColors.kcDarkInputAlt,
+                                          color: inputAltBg,
                                           borderRadius:
                                               BorderRadius.circular(12),
                                           border: Border.all(
-                                            color: AppColors.kcDarkBorderSoft,
+                                            color: borderColor,
                                           ),
                                         ),
                                         child: Text(
                                           '$count',
-                                          style: const TextStyle(
-                                            color: Colors.white,
+                                          style: TextStyle(
+                                            color: isDark ? Colors.white : AppColors.kcLightTitle,
                                             fontSize: 12,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -202,9 +220,9 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
                                             : () => context
                                                 .read<TaskHubCubit>()
                                                 .deleteColumn(col.id),
-                                        icon: const Icon(
+                                        icon: Icon(
                                           Icons.delete_outline,
-                                          color: AppColors.kcDarkTextMuted,
+                                          color: mutedColor,
                                           size: 20,
                                         ),
                                         padding: EdgeInsets.zero,
@@ -221,9 +239,9 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
                         if (isLoading)
                           Container(
                             color: Colors.black12,
-                            child: const Center(
+                            child: Center(
                               child: CircularProgressIndicator(
-                                color: AppColors.kcDarkPrimary,
+                                color: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
                               ),
                             ),
                           ),
@@ -232,7 +250,7 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
                   ),
                 ),
 
-                const Divider(color: AppColors.kcDarkBorderSoft, height: 32),
+                Divider(color: borderColor, height: 32),
 
                 // Add Section
                 Padding(
@@ -243,24 +261,24 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
                         child: Container(
                           height: 48,
                           decoration: BoxDecoration(
-                            color: AppColors.kcDarkInput.withValues(alpha: 0.6),
+                            color: inputBg.withValues(alpha: 0.6),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: AppColors.kcDarkBorderSoft,
+                              color: borderColor,
                             ),
                           ),
                           child: TextField(
                             controller: _nameController,
                             enabled: !isLoading,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: const InputDecoration(
+                            style: TextStyle(color: textColor),
+                            decoration: InputDecoration(
                               hintText: 'New state name',
                               hintStyle: TextStyle(
-                                color: AppColors.kcDarkTextMuted,
+                                color: mutedColor,
                                 fontSize: 14,
                               ),
                               contentPadding:
-                                  EdgeInsets.symmetric(horizontal: 16),
+                                  const EdgeInsets.symmetric(horizontal: 16),
                               border: InputBorder.none,
                             ),
                           ),
@@ -283,7 +301,7 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
                                 },
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
-                                AppColors.kcPrimaryColor.withValues(alpha: 0.8),
+                                (isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor).withValues(alpha: 0.8),
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),

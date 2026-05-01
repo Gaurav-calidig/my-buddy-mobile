@@ -8,11 +8,17 @@ class DsrCardShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.kcDarkCard : AppColors.kcLightCard;
+    final borderColor = isDark 
+        ? AppColors.kcDarkBorder.withValues(alpha: 0.55) 
+        : AppColors.kcLightBorder;
+
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.kcDarkCard,
+        color: bg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.kcDarkBorder.withValues(alpha: 0.55)),
+        border: Border.all(color: borderColor),
       ),
       child: child,
     );

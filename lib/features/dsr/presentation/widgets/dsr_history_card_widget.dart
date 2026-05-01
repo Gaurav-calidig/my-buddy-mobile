@@ -25,6 +25,13 @@ class DsrHistoryCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final readOnlyBg = isDark ? AppColors.kcDarkReadOnlyBg : AppColors.kcLightInput.withValues(alpha: 0.5);
+    final readOnlyBorder = isDark ? AppColors.kcDarkReadOnlyBorder : AppColors.kcLightBorder;
+    final borderMidColor = isDark ? AppColors.kcDarkBorderMid : AppColors.kcLightBorder;
+    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+
     return DsrCardShell(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -33,19 +40,19 @@ class DsrHistoryCardWidget extends StatelessWidget {
           children: <Widget>[
             Row(
               children: <Widget>[
-                Text(formatDate(date), style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w700)),
+                Text(formatDate(date), style: TextStyle(color: titleColor, fontSize: 22, fontWeight: FontWeight.w700)),
                 const Spacer(),
                 if (!canMutate)
                   Container(
                     margin: const EdgeInsets.only(right: 8),
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(color: AppColors.kcDarkReadOnlyBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.kcDarkReadOnlyBorder)),
-                    child: const Text('Read-only', style: TextStyle(color: AppColors.kcDarkTextPrimary, fontSize: 10, fontWeight: FontWeight.w600)),
+                    decoration: BoxDecoration(color: readOnlyBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: readOnlyBorder)),
+                    child: Text('Read-only', style: TextStyle(color: textColor, fontSize: 10, fontWeight: FontWeight.w600)),
                   ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.kcDarkBorderMid)),
-                  child: Text('${total.toStringAsFixed(1)}h', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: borderMidColor)),
+                  child: Text('${total.toStringAsFixed(1)}h', style: TextStyle(color: titleColor, fontSize: 11, fontWeight: FontWeight.w700)),
                 ),
               ],
             ),

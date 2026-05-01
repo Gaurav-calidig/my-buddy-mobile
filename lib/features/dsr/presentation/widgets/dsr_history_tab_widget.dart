@@ -25,15 +25,18 @@ class DsrHistoryTabWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final faintColor = isDark ? AppColors.kcDarkTextFaint : AppColors.kcLightTextMuted;
+
     final List<MapEntry<DateTime, List<DsrEntryEntity>>> visibleGroups = historyGroups
         .where((MapEntry<DateTime, List<DsrEntryEntity>> group) => !_isSameDate(group.key, today))
         .toList(growable: false);
 
     if (visibleGroups.isEmpty) {
-      return const DsrCardShell(
+      return DsrCardShell(
         child: Padding(
-          padding: EdgeInsets.all(14),
-          child: Text('No history records found.', style: TextStyle(color: AppColors.kcDarkTextFaint)),
+          padding: const EdgeInsets.all(14),
+          child: Text('No history records found.', style: TextStyle(color: faintColor)),
         ),
       );
     }

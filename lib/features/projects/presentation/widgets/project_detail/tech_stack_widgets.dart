@@ -1,3 +1,4 @@
+import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:core/features/projects/domain/entities/tech_stack_entity.dart';
 import 'project_detail_constants.dart';
@@ -12,9 +13,9 @@ class TechGroupCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: kPanel,
+        color: ProjectTheme.getPanel(context),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: kBorder),
+        border: Border.all(color: ProjectTheme.getBorder(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -24,16 +25,16 @@ class TechGroupCard extends StatelessWidget {
               Container(
                 width: 8,
                 height: 8,
-                decoration: const BoxDecoration(
-                  color: kAccent,
+                decoration: BoxDecoration(
+                  color: ProjectTheme.getAccent(context),
                   shape: BoxShape.circle,
                 ),
               ),
               const SizedBox(width: 8),
               Text(
                 groupName,
-                style: const TextStyle(
-                  color: kTextSecondary,
+                style: TextStyle(
+                  color: ProjectTheme.getTextSecondary(context),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.5,
@@ -61,17 +62,19 @@ class TechChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = ProjectTheme.getAccent(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF0D1E42),
+        color: isDark ? const Color(0xFF0D1E42) : AppColors.kcLightPage,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: kAccent.withValues(alpha: 0.4)),
+        border: Border.all(color: accentColor.withValues(alpha: 0.4)),
       ),
       child: Text(
         name,
-        style: const TextStyle(
-          color: kTextPrimary,
+        style: TextStyle(
+          color: ProjectTheme.getTextPrimary(context),
           fontSize: 13,
           fontWeight: FontWeight.w500,
         ),

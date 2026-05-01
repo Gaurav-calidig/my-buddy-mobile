@@ -1,3 +1,4 @@
+import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'project_detail_constants.dart';
 
@@ -50,6 +51,7 @@ class TypeBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isUrl = type == 'url';
+    final accentColor = ProjectTheme.getAccent(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
@@ -57,14 +59,14 @@ class TypeBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
           color: isUrl
-              ? kAccent.withValues(alpha: 0.4)
+              ? accentColor.withValues(alpha: 0.4)
               : const Color(0xFFAB8BF5).withValues(alpha: 0.4),
         ),
       ),
       child: Text(
         type,
         style: TextStyle(
-          color: isUrl ? kAccent : const Color(0xFFAB8BF5),
+          color: isUrl ? accentColor : const Color(0xFFAB8BF5),
           fontSize: 10,
           fontWeight: FontWeight.w600,
         ),
@@ -81,6 +83,7 @@ class EnvBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     Color color;
     Color bg;
+    final accentColor = ProjectTheme.getAccent(context);
     switch (env.toLowerCase()) {
       case 'production':
         color = kSuccess;
@@ -92,12 +95,12 @@ class EnvBadge extends StatelessWidget {
         break;
       case 'dev':
       case 'development':
-        color = kAccent;
+        color = accentColor;
         bg = const Color(0xFF0A1E42);
         break;
       default:
-        color = kTextSecondary;
-        bg = kPanelLight;
+        color = ProjectTheme.getTextSecondary(context);
+        bg = ProjectTheme.getPanelLight(context);
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -130,7 +133,7 @@ class IconAction extends StatelessWidget {
       borderRadius: BorderRadius.circular(4),
       child: Padding(
         padding: const EdgeInsets.all(2),
-        child: Icon(icon, color: color ?? kTextMuted, size: 20),
+        child: Icon(icon, color: color ?? ProjectTheme.getTextMuted(context), size: 20),
       ),
     );
   }
@@ -146,11 +149,11 @@ class EmptyView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.inbox_rounded, color: kTextMuted, size: 48),
+          Icon(Icons.inbox_rounded, color: ProjectTheme.getTextMuted(context), size: 48),
           const SizedBox(height: 12),
           Text(
             message,
-            style: const TextStyle(color: kTextMuted, fontSize: 14),
+            style: TextStyle(color: ProjectTheme.getTextMuted(context), fontSize: 14),
           ),
         ],
       ),
@@ -172,10 +175,10 @@ class ErrorView extends StatelessWidget {
           children: [
             const Icon(Icons.error_outline, color: kDanger, size: 48),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Something went wrong',
               style: TextStyle(
-                color: kTextPrimary,
+                color: ProjectTheme.getTextPrimary(context),
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -183,7 +186,7 @@ class ErrorView extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               message,
-              style: const TextStyle(color: kTextMuted, fontSize: 12),
+              style: TextStyle(color: ProjectTheme.getTextMuted(context), fontSize: 12),
               textAlign: TextAlign.center,
             ),
           ],
@@ -200,21 +203,22 @@ class SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textMuted = ProjectTheme.getTextMuted(context);
     return Container(
       height: 36,
       decoration: BoxDecoration(
-        color: kPanelLight,
+        color: ProjectTheme.getPanelLight(context),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: kBorder),
+        border: Border.all(color: ProjectTheme.getBorder(context)),
       ),
       child: TextField(
         onChanged: onChanged,
-        style: const TextStyle(color: kTextPrimary, fontSize: 13),
+        style: TextStyle(color: ProjectTheme.getTextPrimary(context), fontSize: 13),
         decoration: InputDecoration(
           border: InputBorder.none,
-          prefixIcon: const Icon(Icons.search, color: kTextMuted, size: 16),
+          prefixIcon: Icon(Icons.search, color: textMuted, size: 16),
           hintText: hint,
-          hintStyle: const TextStyle(color: kTextMuted, fontSize: 13),
+          hintStyle: TextStyle(color: textMuted, fontSize: 13),
           contentPadding: const EdgeInsets.symmetric(vertical: 8),
         ),
       ),
@@ -235,20 +239,21 @@ class EnvDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: 36,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: kPanelLight,
+        color: ProjectTheme.getPanelLight(context),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: kBorder),
+        border: Border.all(color: ProjectTheme.getBorder(context)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: selected,
-          dropdownColor: const Color(0xFF172340),
-          style: const TextStyle(color: kTextPrimary, fontSize: 12),
-          icon: const Icon(Icons.keyboard_arrow_down, color: kTextMuted, size: 16),
+          dropdownColor: isDark ? const Color(0xFF172340) : AppColors.kcLightCard,
+          style: TextStyle(color: ProjectTheme.getTextPrimary(context), fontSize: 12),
+          icon: Icon(Icons.keyboard_arrow_down, color: ProjectTheme.getTextMuted(context), size: 16),
           items: options
               .map(
                 (o) => DropdownMenuItem(
@@ -277,7 +282,7 @@ class AddButton extends StatelessWidget {
         height: 36,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: kAccent,
+          color: ProjectTheme.getAccent(context),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(

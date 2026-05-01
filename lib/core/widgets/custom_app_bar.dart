@@ -15,9 +15,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return AppBar(
-      backgroundColor: AppColors.kcBackgroundColorDark,
-      foregroundColor: AppColors.kcSecondaryColorLight,
+      backgroundColor: isDark ? AppColors.kcBackgroundColorDark : AppColors.kcBackgroundColorLight,
+      foregroundColor: isDark ? AppColors.kcSecondaryColorLight : AppColors.kcBlackColor,
       leading: showDrawer
           ? Builder(
               builder: (context) {

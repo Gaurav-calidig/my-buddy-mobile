@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:core/core/theme/app_colors.dart';
 import 'package:core/features/taskhub/domain/entities/task_entity.dart';
 import 'package:core/features/taskhub/domain/enums/task_priority.dart';
@@ -29,7 +30,9 @@ class _TaskTicketCardState extends State<TaskTicketCard> {
 
   @override
   Widget build(BuildContext context) {
-    // The handle that initiates the drag
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final dragHandle = Draggable<TaskEntity>(
       data: widget.task,
       onDragUpdate: (details) => widget.onDragPositionChanged?.call(
@@ -54,16 +57,17 @@ class _TaskTicketCardState extends State<TaskTicketCard> {
               task: widget.task,
               projectPrefix: widget.projectPrefix,
               assigneeLabel: widget.assigneeLabel,
+              isDark: isDark,
             ),
           ),
         ),
       ),
-      child: const Padding(
-        padding: EdgeInsets.only(right: 8),
+      child: Padding(
+        padding: const EdgeInsets.only(right: 8),
         child: Icon(
           Icons.drag_indicator,
           size: 18,
-          color: AppColors.kcDarkTextMuted,
+          color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
         ),
       ),
     );
@@ -73,6 +77,7 @@ class _TaskTicketCardState extends State<TaskTicketCard> {
       projectPrefix: widget.projectPrefix,
       assigneeLabel: widget.assigneeLabel,
       dragHandle: dragHandle,
+      isDark: isDark,
     );
 
     return Opacity(
@@ -95,23 +100,38 @@ class _CardBody extends StatelessWidget {
     required this.projectPrefix,
     this.assigneeLabel,
     this.dragHandle,
+    required this.isDark,
   });
 
   final TaskEntity task;
   final String projectPrefix;
   final String? assigneeLabel;
   final Widget? dragHandle;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
+    final cardBg = isDark ? AppColors.kcDarkCard : AppColors.kcLightCard;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+    final titleColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+    final mutedColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
+    final secondaryColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: AppColors.kcDarkCard,
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.6),
+          color: borderColor.withValues(alpha: 0.6),
         ),
+        boxShadow: isDark ? null : [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,18 +141,18 @@ class _CardBody extends StatelessWidget {
               if (dragHandle != null)
                 dragHandle!
               else ...[
-                const Icon(
+                Icon(
                   Icons.drag_indicator,
                   size: 18,
-                  color: AppColors.kcDarkTextMuted,
+                  color: mutedColor,
                 ),
                 const SizedBox(width: 8),
               ],
               Expanded(
                 child: Text(
-                  '$projectPrefix-${task.taskNumber}',
-                  style: const TextStyle(
-                    color: AppColors.kcDarkTextSecondary,
+                  '${projectPrefix.substring(0, math.min(3, projectPrefix.length)).toUpperCase()}-${task.taskNumber}',
+                  style: TextStyle(
+                    color: secondaryColor,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
@@ -141,8 +161,8 @@ class _CardBody extends StatelessWidget {
               if ((assigneeLabel ?? '').trim().isNotEmpty)
                 Text(
                   assigneeLabel!,
-                  style: const TextStyle(
-                    color: AppColors.kcDarkTextSecondary,
+                  style: TextStyle(
+                    color: secondaryColor,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -153,8 +173,8 @@ class _CardBody extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             task.title,
-            style: const TextStyle(
-              color: AppColors.kcDarkTextPrimary,
+            style: TextStyle(
+              color: titleColor,
               fontSize: 18,
               fontWeight: FontWeight.w700,
               fontFamily: 'Outfit',
@@ -169,7 +189,7 @@ class _CardBody extends StatelessWidget {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _PriorityPill(priority: task.priority),
+                  _PriorityPill(priority: task.priority, isDark: isDark),
                   if (task.ticketType.toLowerCase() == 'bug') ...[
                     const SizedBox(width: 8),
                     Container(
@@ -178,16 +198,16 @@ class _CardBody extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF421C1C),
+                        color: isDark ? const Color(0xFF421C1C) : const Color(0xFFFEF2F2),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: const Color(0xFF8B2C2C).withValues(alpha: 0.6),
+                          color: isDark ? const Color(0xFF8B2C2C).withValues(alpha: 0.6) : const Color(0xFFFCA5A5),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'BUG',
                         style: TextStyle(
-                          color: Color(0xFFFF8A8A),
+                          color: isDark ? const Color(0xFFFF8A8A) : const Color(0xFFB91C1C),
                           fontSize: 11,
                           fontWeight: FontWeight.w800,
                         ),
@@ -200,16 +220,16 @@ class _CardBody extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.calendar_today_outlined,
                       size: 14,
-                      color: AppColors.kcDarkTextMuted,
+                      color: mutedColor,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       DateFormat('MMM d, y').format(task.dueDate!),
-                      style: const TextStyle(
-                        color: AppColors.kcDarkTextMuted,
+                      style: TextStyle(
+                        color: mutedColor,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -225,13 +245,14 @@ class _CardBody extends StatelessWidget {
 }
 
 class _PriorityPill extends StatelessWidget {
-  const _PriorityPill({required this.priority});
+  const _PriorityPill({required this.priority, required this.isDark});
 
   final TaskPriority priority;
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
-    final config = priority.pill;
+    final config = isDark ? priority.darkPill : priority.lightPill;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -266,7 +287,7 @@ class _PriorityPillConfig {
 }
 
 extension on TaskPriority {
-  _PriorityPillConfig get pill {
+  _PriorityPillConfig get darkPill {
     switch (this) {
       case TaskPriority.high:
         return const _PriorityPillConfig(
@@ -288,6 +309,32 @@ extension on TaskPriority {
           bg: Color(0xFF1B243A),
           fg: Color(0xFF8FA5CE),
           border: Color(0xFF3A4A6A),
+        );
+    }
+  }
+
+  _PriorityPillConfig get lightPill {
+    switch (this) {
+      case TaskPriority.high:
+        return const _PriorityPillConfig(
+          label: 'High',
+          bg: Color(0xFFFFF7ED),
+          fg: Color(0xFF9A3412),
+          border: Color(0xFFFED7AA),
+        );
+      case TaskPriority.medium:
+        return const _PriorityPillConfig(
+          label: 'Medium',
+          bg: Color(0xFFEFF6FF),
+          fg: Color(0xFF1E40AF),
+          border: Color(0xFFBFDBFE),
+        );
+      case TaskPriority.low:
+        return const _PriorityPillConfig(
+          label: 'Low',
+          bg: Color(0xFFF8FAFC),
+          fg: Color(0xFF475569),
+          border: Color(0xFFE2E8F0),
         );
     }
   }

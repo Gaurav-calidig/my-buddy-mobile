@@ -117,31 +117,58 @@ class AttendanceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       drawer: const TemplateFeatureDrawer(),
       appBar: const CustomAppBar(title: 'Attendance Management'),
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom],
-          ),
+        decoration: BoxDecoration(
+          gradient: isDark
+              ? const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: <Color>[AppColors.kcDarkGradientTop, AppColors.kcDarkGradientBottom],
+                )
+              : LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: <Color>[
+                    AppColors.kcLightPage,
+                    AppColors.kcLightPage.withValues(alpha: 0.95),
+                  ],
+                ),
         ),
         child: BlocBuilder<AttendanceBloc, AttendanceState>(
           builder: (BuildContext context, AttendanceState state) {
             if (state.isLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(
+                child: CircularProgressIndicator(
+                  color: isDark ? Colors.white : AppColors.kcPrimaryColor,
+                ),
+              );
             }
+
+            final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(state.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 24, letterSpacing: -0.5)),
+                  Text(
+                    state.title,
+                    style: TextStyle(
+                      color: titleColor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 24,
+                      letterSpacing: -0.5,
+                      fontFamily: 'Outfit',
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   GridView.builder(
                     physics: const NeverScrollableScrollPhysics(),
@@ -167,12 +194,26 @@ class AttendanceScreen extends StatelessWidget {
                   if (state.error != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(state.error!, style: const TextStyle(color: AppColors.kcDarkErrorText, fontWeight: FontWeight.w600, fontSize: 12)),
+                      child: Text(
+                        state.error!,
+                        style: TextStyle(
+                          color: isDark ? AppColors.kcDarkErrorText : AppColors.kcErrorColor,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
                   if (state.successMessage != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(state.successMessage!, style: const TextStyle(color: Color(0xFF30D48A), fontWeight: FontWeight.w600, fontSize: 12)),
+                      child: Text(
+                        'Request successful!', // Standardized success message
+                        style: TextStyle(
+                          color: isDark ? const Color(0xFF30D48A) : const Color(0xFF2E7D32),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
                   if (state.selectedFilterIndex == 0)
                     AmsMyLeavesTab(
@@ -186,34 +227,34 @@ class AttendanceScreen extends StatelessWidget {
                       onCancel: (id) => context.read<AttendanceBloc>().add(AttendanceLeaveCancelRequested(id)),
                     )
                   else if (state.selectedFilterIndex == 1)
-                        AmsApplyLeaveTab(
-                          leaveTypes: _leaveTypes(state),
-                          isSubmitting: state.leaveSubmitInProgress,
-                          isCalculatingDays: state.leaveDaysCalculationInProgress,
-                          calculatedTotalDays: state.calculatedTotalDays,
-                          calculatedHolidayCount: state.calculatedHolidayCount,
-                          calculatedWeekendCount: state.calculatedWeekendCount,
-                          prefill: _leavePrefill(state),
-                          onCalculateDays: ({
-                            required String startDate,
-                            required String startHalf,
-                            required String endDate,
-                            required String endHalf,
-                          }) {
-                            context.read<AttendanceBloc>().add(
-                                  AttendanceLeaveDaysCalculationRequested(
-                                    startDate: startDate,
-                                    startHalf: startHalf,
-                                    endDate: endDate,
-                                    endHalf: endHalf,
-                                  ),
-                                );
-                          },
-                          onClearCalculatedDays: () =>
-                              context.read<AttendanceBloc>().add(const AttendanceLeaveDaysCalculationCleared()),
-                          onSubmit: ({
-                            int? leaveId,
-                            required int leaveTypeId,
+                    AmsApplyLeaveTab(
+                      leaveTypes: _leaveTypes(state),
+                      isSubmitting: state.leaveSubmitInProgress,
+                      isCalculatingDays: state.leaveDaysCalculationInProgress,
+                      calculatedTotalDays: state.calculatedTotalDays,
+                      calculatedHolidayCount: state.calculatedHolidayCount,
+                      calculatedWeekendCount: state.calculatedWeekendCount,
+                      prefill: _leavePrefill(state),
+                      onCalculateDays: ({
+                        required String startDate,
+                        required String startHalf,
+                        required String endDate,
+                        required String endHalf,
+                      }) {
+                        context.read<AttendanceBloc>().add(
+                              AttendanceLeaveDaysCalculationRequested(
+                                startDate: startDate,
+                                startHalf: startHalf,
+                                endDate: endDate,
+                                endHalf: endHalf,
+                              ),
+                            );
+                      },
+                      onClearCalculatedDays: () =>
+                          context.read<AttendanceBloc>().add(const AttendanceLeaveDaysCalculationCleared()),
+                      onSubmit: ({
+                        int? leaveId,
+                        required int leaveTypeId,
                         required String startDate,
                         required String startHalf,
                         required String endDate,
@@ -221,34 +262,34 @@ class AttendanceScreen extends StatelessWidget {
                         required String reason,
                       }) {
                         context.read<AttendanceBloc>().add(
-                                AttendanceLeaveSubmitted(
-                                  leaveId: leaveId,
-                                  leaveTypeId: leaveTypeId,
-                                  startDate: startDate,
-                                  startHalf: startHalf,
-                                  endDate: endDate,
-                                  endHalf: endHalf,
-                                  reason: reason,
-                                ),
-                              );
+                              AttendanceLeaveSubmitted(
+                                leaveId: leaveId,
+                                leaveTypeId: leaveTypeId,
+                                startDate: startDate,
+                                startHalf: startHalf,
+                                endDate: endDate,
+                                endHalf: endHalf,
+                                reason: reason,
+                              ),
+                            );
                       },
                     )
                   else if (state.selectedFilterIndex == 2)
                     AmsCompOffTab(
                       isSubmitting: state.compOffSubmitInProgress,
                       history: state.compOffHistory,
-                          onSubmit: ({
-                            required String workedDate,
-                            required String leaveDays,
-                            required String reason,
-                          }) {
-                            context.read<AttendanceBloc>().add(
-                                  AttendanceCompOffSubmitted(
-                                    workedDate: workedDate,
-                                    leaveDays: leaveDays,
-                                    reason: reason,
-                                  ),
-                                );
+                      onSubmit: ({
+                        required String workedDate,
+                        required String leaveDays,
+                        required String reason,
+                      }) {
+                        context.read<AttendanceBloc>().add(
+                              AttendanceCompOffSubmitted(
+                                workedDate: workedDate,
+                                leaveDays: leaveDays,
+                                reason: reason,
+                              ),
+                            );
                       },
                     )
                   else if (state.selectedFilterIndex == 3)

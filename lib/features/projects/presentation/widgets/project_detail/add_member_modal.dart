@@ -71,6 +71,14 @@ class _AddMemberModalState extends State<AddMemberModal> {
 
   @override
   Widget build(BuildContext context) {
+    final panelColor = ProjectTheme.getPanel(context);
+    final borderColor = ProjectTheme.getBorder(context);
+    final textPrimary = ProjectTheme.getTextPrimary(context);
+    final textSecondary = ProjectTheme.getTextSecondary(context);
+    final textMuted = ProjectTheme.getTextMuted(context);
+    final accentColor = ProjectTheme.getAccent(context);
+    final panelLightColor = ProjectTheme.getPanelLight(context);
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
@@ -78,9 +86,9 @@ class _AddMemberModalState extends State<AddMemberModal> {
         width: double.infinity,
         constraints: const BoxConstraints(maxWidth: 450),
         decoration: BoxDecoration(
-          color: kPanel,
+          color: panelColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: kBorder),
+          border: Border.all(color: borderColor),
         ),
         child: BlocBuilder<ProjectDetailBloc, ProjectDetailState>(
           builder: (context, state) {
@@ -110,10 +118,10 @@ class _AddMemberModalState extends State<AddMemberModal> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Add Team Member',
                           style: TextStyle(
-                            color: kTextPrimary,
+                            color: textPrimary,
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             fontFamily: 'Outfit',
@@ -121,43 +129,43 @@ class _AddMemberModalState extends State<AddMemberModal> {
                         ),
                         IconButton(
                           onPressed: () => Navigator.of(context).pop(),
-                          icon: const Icon(Icons.close, color: kTextMuted, size: 20),
+                          icon: Icon(Icons.close, color: textMuted, size: 20),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Select a user and assign them a role in this project.',
-                      style: TextStyle(color: kTextMuted, fontSize: 13),
+                      style: TextStyle(color: textMuted, fontSize: 13),
                     ),
                     const SizedBox(height: 20),
-                    _buildLabel('User'),
-                    _buildSearchField(),
+                    _buildLabel('User', textPrimary),
+                    _buildSearchField(textPrimary, textMuted, panelLightColor, borderColor, accentColor),
                     const SizedBox(height: 12),
                     if (_searchQuery.isNotEmpty || _selectedUser != null)
                       _selectedUser != null && _searchQuery.isEmpty
-                          ? _buildUserTile(_selectedUser!, isSelected: true)
+                          ? _buildUserTile(_selectedUser!, accentColor, textPrimary, textMuted, borderColor, isSelected: true)
                           : Container(
                               constraints: const BoxConstraints(maxHeight: 200),
                               decoration: BoxDecoration(
-                                color: kPanelLight.withValues(alpha: 0.3),
+                                color: panelLightColor.withValues(alpha: 0.3),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: kBorder),
+                                border: Border.all(color: borderColor),
                               ),
                               child: ListView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: filteredUsers.length,
                                 itemBuilder: (context, index) {
-                                  return _buildUserTile(filteredUsers[index]);
+                                  return _buildUserTile(filteredUsers[index], accentColor, textPrimary, textMuted, borderColor);
                                 },
                               ),
                             ),
                     const SizedBox(height: 20),
-                    _buildLabel('Role'),
-                    _buildRoleDropdown(),
+                    _buildLabel('Role', textPrimary),
+                    _buildRoleDropdown(textPrimary, textMuted, panelLightColor, borderColor, panelColor),
                     const SizedBox(height: 32),
                     SizedBox(
                       width: double.infinity,
@@ -165,7 +173,7 @@ class _AddMemberModalState extends State<AddMemberModal> {
                       child: ElevatedButton(
                         onPressed: _onSave,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: kAccent,
+                          backgroundColor: accentColor,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -188,13 +196,13 @@ class _AddMemberModalState extends State<AddMemberModal> {
     );
   }
 
-  Widget _buildLabel(String text) {
+  Widget _buildLabel(String text, Color textPrimary) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: const TextStyle(
-          color: kTextPrimary,
+        style: TextStyle(
+          color: textPrimary,
           fontSize: 14,
           fontWeight: FontWeight.w600,
         ),
@@ -202,34 +210,34 @@ class _AddMemberModalState extends State<AddMemberModal> {
     );
   }
 
-  Widget _buildSearchField() {
+  Widget _buildSearchField(Color textPrimary, Color textMuted, Color panelLightColor, Color borderColor, Color accentColor) {
     return TextField(
       controller: _searchController,
       onChanged: (v) => setState(() {
         _searchQuery = v;
         if (v.isNotEmpty) _selectedUser = null;
       }),
-      style: const TextStyle(color: kTextPrimary, fontSize: 14),
+      style: TextStyle(color: textPrimary, fontSize: 14),
       decoration: InputDecoration(
         hintText: 'Search users...',
-        hintStyle: const TextStyle(color: kTextMuted, fontSize: 13),
-        prefixIcon: const Icon(Icons.search, color: kTextMuted, size: 18),
+        hintStyle: TextStyle(color: textMuted, fontSize: 13),
+        prefixIcon: Icon(Icons.search, color: textMuted, size: 18),
         filled: true,
-        fillColor: kPanelLight.withValues(alpha: 0.3),
+        fillColor: panelLightColor.withValues(alpha: 0.3),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: kBorder),
+          borderSide: BorderSide(color: borderColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: kAccent),
+          borderSide: BorderSide(color: accentColor),
         ),
       ),
     );
   }
 
-  Widget _buildUserTile(UserEntity user, {bool isSelected = false}) {
+  Widget _buildUserTile(UserEntity user, Color accentColor, Color textPrimary, Color textMuted, Color borderColor, {bool isSelected = false}) {
     return InkWell(
       onTap: () {
         setState(() {
@@ -241,22 +249,22 @@ class _AddMemberModalState extends State<AddMemberModal> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? kAccent.withValues(alpha: 0.1) : Colors.transparent,
+          color: isSelected ? accentColor.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: isSelected ? BorderRadius.circular(8) : null,
           border: isSelected 
-            ? Border.all(color: kBorder)
+            ? Border.all(color: borderColor)
             : Border(
-                bottom: BorderSide(color: kBorder.withValues(alpha: 0.5), width: 0.5),
+                bottom: BorderSide(color: borderColor.withValues(alpha: 0.5), width: 0.5),
               ),
         ),
         child: Row(
           children: [
             CircleAvatar(
               radius: 16,
-              backgroundColor: kAccent.withValues(alpha: 0.2),
+              backgroundColor: accentColor.withValues(alpha: 0.2),
               child: Text(
                 user.fullName.isNotEmpty ? user.fullName[0].toUpperCase() : 'U',
-                style: const TextStyle(color: kAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                style: TextStyle(color: accentColor, fontSize: 12, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(width: 12),
@@ -267,43 +275,43 @@ class _AddMemberModalState extends State<AddMemberModal> {
                 children: [
                   Text(
                     user.fullName,
-                    style: const TextStyle(color: kTextPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+                    style: TextStyle(color: textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
                   ),
                   Text(
                     user.email,
-                    style: const TextStyle(color: kTextMuted, fontSize: 12),
+                    style: TextStyle(color: textMuted, fontSize: 12),
                   ),
                 ],
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle, color: kAccent, size: 18),
+              Icon(Icons.check_circle, color: accentColor, size: 18),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRoleDropdown() {
+  Widget _buildRoleDropdown(Color textPrimary, Color textMuted, Color panelLightColor, Color borderColor, Color panelColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: kPanelLight.withValues(alpha: 0.3),
+        color: panelLightColor.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: kBorder),
+        border: Border.all(color: borderColor),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedRole,
           isExpanded: true,
-          dropdownColor: kPanel,
-          icon: const Icon(Icons.keyboard_arrow_down, color: kTextMuted, size: 18),
+          dropdownColor: panelColor,
+          icon: Icon(Icons.keyboard_arrow_down, color: textMuted, size: 18),
           items: _roles.map((role) {
             return DropdownMenuItem(
               value: role,
               child: Text(
                 role.replaceAll('_', ' ').split(' ').map((s) => s[0].toUpperCase() + s.substring(1)).join(' '),
-                style: const TextStyle(color: kTextPrimary, fontSize: 14),
+                style: TextStyle(color: textPrimary, fontSize: 14),
               ),
             );
           }).toList(),

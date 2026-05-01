@@ -51,6 +51,9 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
   }
 
   Future<void> _showAddEditDialog([SprintEntity? sprint]) async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final nameController = TextEditingController(text: sprint?.name ?? '');
     final goalController = TextEditingController(text: sprint?.goal ?? '');
     DateTime? startDate = sprint?.startDate;
@@ -75,11 +78,18 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
         context: context,
         builder: (ctx) => StatefulBuilder(
           builder: (ctx, setLocalState) {
+            final dialogBg = isDark ? AppColors.kcDarkSurface : AppColors.kcLightPage;
+            final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+            final secondaryTextColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
+            final mutedColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
+            final inputBg = isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput;
+            final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+
             Widget label(String text) {
               return Text(
                 text,
-                style: const TextStyle(
-                  color: AppColors.kcDarkTextSecondary,
+                style: TextStyle(
+                  color: secondaryTextColor,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                 ),
@@ -92,9 +102,9 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
             }) {
               return InputDecoration(
                 hintText: hintText,
-                hintStyle: const TextStyle(color: AppColors.kcDarkTextMuted),
+                hintStyle: TextStyle(color: mutedColor),
                 filled: true,
-                fillColor: AppColors.kcDarkInputAlt,
+                fillColor: inputBg,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 12,
@@ -102,12 +112,12 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide(
-                    color: AppColors.kcDarkBorderSoft.withValues(alpha: 0.55),
+                    color: borderColor.withValues(alpha: 0.55),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.kcDarkPrimary),
+                  borderSide: BorderSide(color: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor),
                 ),
                 suffixIcon: suffixIcon,
               );
@@ -132,8 +142,8 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                     controller: controller,
                     readOnly: readOnly,
                     onTap: onTap,
-                    style: const TextStyle(
-                      color: AppColors.kcDarkTextPrimary,
+                    style: TextStyle(
+                      color: textColor,
                       fontWeight: FontWeight.w700,
                     ),
                     minLines: minLines,
@@ -159,10 +169,15 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                 builder: (context, child) {
                   return Theme(
                     data: Theme.of(context).copyWith(
-                      colorScheme: const ColorScheme.dark(
-                        primary: AppColors.kcDarkPrimary,
-                        surface: AppColors.kcDarkCard,
-                      ),
+                      colorScheme: isDark
+                          ? const ColorScheme.dark(
+                              primary: AppColors.kcDarkPrimary,
+                              surface: AppColors.kcDarkCard,
+                            )
+                          : const ColorScheme.light(
+                              primary: AppColors.kcPrimaryColor,
+                              surface: Colors.white,
+                            ),
                     ),
                     child: child!,
                   );
@@ -172,7 +187,7 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
             }
 
             return Dialog(
-              backgroundColor: AppColors.kcDarkSurface,
+              backgroundColor: dialogBg,
               insetPadding: const EdgeInsets.symmetric(
                 horizontal: 20,
                 vertical: 40,
@@ -187,26 +202,26 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
+                          Text(
                             'Manage Sprints',
                             style: TextStyle(
-                              color: AppColors.kcDarkTextPrimary,
+                              color: textColor,
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
                               fontFamily: 'Outfit',
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.close,
-                              color: AppColors.kcDarkTextMuted,
+                              color: mutedColor,
                             ),
                             onPressed: () => Navigator.pop(ctx),
                           ),
                         ],
                       ),
-                      const Divider(
-                        color: AppColors.kcDarkBorderSoft,
+                      Divider(
+                        color: borderColor,
                         height: 1,
                       ),
                       Flexible(
@@ -217,8 +232,8 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                             children: [
                               Text(
                                 sprint == null ? 'New Sprint' : 'Edit Sprint',
-                                style: const TextStyle(
-                                  color: AppColors.kcDarkTextPrimary,
+                                style: TextStyle(
+                                  color: textColor,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
@@ -245,10 +260,10 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                                       controller: startController,
                                       hintText: 'dd/mm/yyyy',
                                       readOnly: true,
-                                      suffixIcon: const Icon(
+                                      suffixIcon: Icon(
                                         Icons.calendar_today_rounded,
                                         size: 18,
-                                        color: AppColors.kcDarkTextMuted,
+                                        color: mutedColor,
                                       ),
                                       onTap: () => pickDate(
                                         initial: startDate,
@@ -270,10 +285,10 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                                       controller: endController,
                                       hintText: 'dd/mm/yyyy',
                                       readOnly: true,
-                                      suffixIcon: const Icon(
+                                      suffixIcon: Icon(
                                         Icons.calendar_today_rounded,
                                         size: 18,
-                                        color: AppColors.kcDarkTextMuted,
+                                        color: mutedColor,
                                       ),
                                       onTap: () => pickDate(
                                         initial: endDate,
@@ -302,21 +317,20 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                                       horizontal: 10,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.kcDarkInputAlt,
+                                      color: inputBg,
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: AppColors.kcDarkBorderSoft
+                                        color: borderColor
                                             .withValues(alpha: 0.55),
                                       ),
                                     ),
                                     child: DropdownButtonHideUnderline(
                                       child: DropdownButton<String>(
                                         value: status,
-                                        dropdownColor: AppColors.kcDarkCard,
-                                        iconEnabledColor:
-                                            AppColors.kcDarkTextMuted,
-                                        style: const TextStyle(
-                                          color: AppColors.kcDarkTextPrimary,
+                                        dropdownColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
+                                        iconEnabledColor: mutedColor,
+                                        style: TextStyle(
+                                          color: textColor,
                                           fontWeight: FontWeight.w700,
                                         ),
                                         isExpanded: true,
@@ -357,7 +371,7 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                                       Navigator.pop(ctx, true);
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.kcDarkPrimary,
+                                      backgroundColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
                                       foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -374,8 +388,7 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                                   TextButton(
                                     onPressed: () => Navigator.pop(ctx),
                                     style: TextButton.styleFrom(
-                                      foregroundColor:
-                                          AppColors.kcDarkTextSecondary,
+                                      foregroundColor: secondaryTextColor,
                                     ),
                                     child: const Text('Cancel'),
                                   ),
@@ -435,13 +448,16 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
   }
 
   Future<void> _deleteSprint(SprintEntity sprint) async {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.kcDarkCard,
-        title: const Text(
+        backgroundColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
+        title: Text(
           'Delete Sprint',
-          style: TextStyle(color: AppColors.kcDarkTextPrimary),
+          style: TextStyle(color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle),
         ),
         content: Text('Are you sure you want to delete ${sprint.name}?'),
         actions: [
@@ -478,8 +494,16 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final dialogBg = isDark ? AppColors.kcDarkSurface : AppColors.kcLightPage;
+    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
+    final mutedColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
+    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+
     return Dialog(
-      backgroundColor: AppColors.kcDarkSurface,
+      backgroundColor: dialogBg,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 600, maxHeight: 600),
@@ -491,18 +515,18 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Manage Sprints',
                     style: TextStyle(
-                      color: AppColors.kcDarkTextPrimary,
+                      color: textColor,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.close,
-                      color: AppColors.kcDarkTextMuted,
+                      color: mutedColor,
                     ),
                     onPressed: () => Navigator.pop(context),
                   ),
@@ -510,17 +534,17 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
               ),
               const SizedBox(height: 20),
               if (_loading)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(child: CircularProgressIndicator()),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
+                  child: Center(child: CircularProgressIndicator(color: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor)),
                 )
               else if (_sprints.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 40),
                   child: Center(
                     child: Text(
                       'No sprints found',
-                      style: TextStyle(color: AppColors.kcDarkTextMuted),
+                      style: TextStyle(color: mutedColor),
                     ),
                   ),
                 )
@@ -530,31 +554,31 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                     shrinkWrap: true,
                     itemCount: _sprints.length,
                     separatorBuilder: (context, index) =>
-                        const Divider(color: AppColors.kcDarkBorderSoft),
+                        Divider(color: borderColor),
                     itemBuilder: (context, index) {
                       final sprint = _sprints[index];
                       return ListTile(
                         title: Text(
                           sprint.name,
-                          style: const TextStyle(
-                            color: AppColors.kcDarkTextPrimary,
+                          style: TextStyle(
+                            color: textColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         subtitle: Text(
                           '${DateFormat('MMM d').format(sprint.startDate)} - ${DateFormat('MMM d').format(sprint.endDate)}\nGoal: ${sprint.goal}',
-                          style: const TextStyle(
-                            color: AppColors.kcDarkTextMuted,
+                          style: TextStyle(
+                            color: mutedColor,
                           ),
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.edit,
                                 size: 18,
-                                color: AppColors.kcDarkPrimary,
+                                color: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
                               ),
                               onPressed: () => _showAddEditDialog(sprint),
                             ),
@@ -581,7 +605,7 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                   icon: const Icon(Icons.add),
                   label: const Text('Create New Sprint'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.kcDarkPrimary,
+                    backgroundColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
                     foregroundColor: Colors.white,
                   ),
                 ),

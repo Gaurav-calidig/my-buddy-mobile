@@ -16,13 +16,17 @@ class DsrTabStripWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.kcDarkCardSoft : AppColors.kcLightInput;
+    final borderColor = isDark ? AppColors.kcDarkBorderStrong : AppColors.kcLightBorder;
+
     return Align(
       alignment: Alignment.centerLeft,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.kcDarkCardSoft,
+          color: bg,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.kcDarkBorderStrong),
+          border: Border.all(color: borderColor),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

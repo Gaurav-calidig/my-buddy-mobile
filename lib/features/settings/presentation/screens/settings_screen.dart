@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/core/theme/app_colors.dart';
+import 'package:core/core/theme/theme_cubit.dart';
+import 'package:core/core/widgets/custom_app_bar.dart';
+import 'package:core/core/widgets/template_feature_drawer.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -9,31 +13,46 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  bool _isDarkMode = true;
   String _dateFormat = 'DD/MM/YYYY';
-
-  static const Color _title = AppColors.kcDarkTitle;
-  static const Color _muted = AppColors.kcDarkTextFaint;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: AppColors.kcDarkPage,
-      child: ListView(
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    
+    final titleColor = isDark ? AppColors.kcDarkTitle : AppColors.kcLightTitle;
+    final mutedColor = isDark ? AppColors.kcDarkTextFaint : AppColors.kcLightTextMuted;
+    final cardColor = isDark ? AppColors.kcDarkCard : AppColors.kcLightCard;
+    final borderColor = isDark ? AppColors.kcDarkBorderStrong : AppColors.kcLightBorder;
+    final pageBg = isDark ? AppColors.kcDarkPage : AppColors.kcLightPage;
+    final inputBg = isDark ? AppColors.kcDarkInput : AppColors.kcLightInput;
+
+    return Scaffold(
+      backgroundColor: pageBg,
+      appBar: const CustomAppBar(title: 'Settings'),
+      drawer: const TemplateFeatureDrawer(),
+      body: ListView(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 18),
         children: <Widget>[
           _card(
+            color: cardColor,
+            borderColor: borderColor,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text(
+                Text(
                   'Theme',
-                  style: TextStyle(color: _title, fontSize: 18, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Outfit',
+                  ),
                 ),
                 const SizedBox(height: 2),
-                const Text(
+                Text(
                   'Switch between light and dark mode',
-                  style: TextStyle(color: _muted, fontSize: 13),
+                  style: TextStyle(color: mutedColor, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -41,15 +60,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _themeButton(
                       label: 'Light',
                       icon: Icons.light_mode_outlined,
-                      selected: !_isDarkMode,
-                      onTap: () => setState(() => _isDarkMode = false),
+                      selected: !isDark,
+                      titleColor: titleColor,
+                      onTap: () => context.read<ThemeCubit>().updateTheme(ThemeMode.light),
                     ),
                     const SizedBox(width: 8),
                     _themeButton(
                       label: 'Dark',
                       icon: Icons.dark_mode_outlined,
-                      selected: _isDarkMode,
-                      onTap: () => setState(() => _isDarkMode = true),
+                      selected: isDark,
+                      titleColor: titleColor,
+                      onTap: () => context.read<ThemeCubit>().updateTheme(ThemeMode.dark),
                     ),
                   ],
                 ),
@@ -58,39 +79,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 12),
           _card(
+            color: cardColor,
+            borderColor: borderColor,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text(
+                Text(
                   'Date Format',
-                  style: TextStyle(color: _title, fontSize: 18, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Outfit',
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Row(
                   children: <Widget>[
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Preview: 22/04/2026',
-                        style: TextStyle(color: _muted, fontSize: 13),
+                        style: TextStyle(color: mutedColor, fontSize: 13),
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
                       decoration: BoxDecoration(
-                        color: AppColors.kcDarkInput,
+                        color: inputBg,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.kcDarkBorderMid),
+                        border: Border.all(color: borderColor),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: _dateFormat,
-                          dropdownColor: AppColors.kcBackgroundColorDark,
-                          style: const TextStyle(
-                            color: _title,
+                          dropdownColor: isDark ? AppColors.kcBackgroundColorDark : Colors.white,
+                          style: TextStyle(
+                            color: titleColor,
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
                           ),
-                          iconEnabledColor: _muted,
+                          iconEnabledColor: mutedColor,
                           items: const <DropdownMenuItem<String>>[
                             DropdownMenuItem<String>(
                               value: 'DD/MM/YYYY',
@@ -119,53 +147,71 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 12),
           _card(
-            child: const Column(
+            color: cardColor,
+            borderColor: borderColor,
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Text(
                   'Account',
-                  style: TextStyle(color: _title, fontSize: 18, fontWeight: FontWeight.w700),
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Outfit',
+                  ),
                 ),
-                SizedBox(height: 12),
-                Text('Name', style: TextStyle(color: _muted, fontSize: 12)),
-                SizedBox(height: 2),
+                const SizedBox(height: 12),
+                Text('Name', style: TextStyle(color: mutedColor, fontSize: 12)),
+                const SizedBox(height: 2),
                 Text(
                   'Harsh Rajput',
-                  style: TextStyle(color: _title, fontSize: 16, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: titleColor, fontSize: 16, fontWeight: FontWeight.w700),
                 ),
-                SizedBox(height: 12),
-                Text('Email', style: TextStyle(color: _muted, fontSize: 12)),
-                SizedBox(height: 2),
+                const SizedBox(height: 12),
+                Text('Email', style: TextStyle(color: mutedColor, fontSize: 12)),
+                const SizedBox(height: 2),
                 Text(
                   'harsh.rajput@calidig.com',
-                  style: TextStyle(color: _title, fontSize: 15, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: titleColor, fontSize: 15, fontWeight: FontWeight.w700),
                 ),
-                SizedBox(height: 12),
-                Text('Role', style: TextStyle(color: _muted, fontSize: 12)),
-                SizedBox(height: 4),
-                _RolePill(role: 'Member'),
+                const SizedBox(height: 12),
+                Text('Role', style: TextStyle(color: mutedColor, fontSize: 12)),
+                const SizedBox(height: 4),
+                _RolePill(
+                  role: 'Member',
+                  isDark: isDark,
+                  borderColor: borderColor,
+                ),
               ],
             ),
           ),
           const SizedBox(height: 12),
           _card(
+            color: cardColor,
+            borderColor: borderColor,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Row(
+                Row(
                   children: <Widget>[
-                    Icon(Icons.sell_outlined, color: _title, size: 18),
-                    SizedBox(width: 8),
+                    Icon(Icons.sell_outlined, color: titleColor, size: 18),
+                    const SizedBox(width: 8),
                     Text(
                       'My Project Tags',
-                      style: TextStyle(color: _title, fontSize: 18, fontWeight: FontWeight.w700),
+                      style: TextStyle(
+                        color: titleColor,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        fontFamily: 'Outfit',
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Create personal tags to organize and filter your projects',
-                  style: TextStyle(color: _muted, fontSize: 13),
+                  style: TextStyle(color: mutedColor, fontSize: 13),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -174,13 +220,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
-                          color: AppColors.kcDarkInput,
+                          color: inputBg,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.kcDarkBorderMid),
+                          border: Border.all(color: borderColor),
                         ),
-                        child: const Text(
+                        child: Text(
                           'New tag name',
-                          style: TextStyle(color: _muted, fontSize: 13),
+                          style: TextStyle(color: mutedColor, fontSize: 13),
                         ),
                       ),
                     ),
@@ -204,9 +250,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF99BDFF),
-                    side: const BorderSide(color: AppColors.kcDarkBorderMid),
-                    backgroundColor: AppColors.kcDarkReadOnlyBg,
+                    foregroundColor: isDark ? const Color(0xFF99BDFF) : AppColors.kcPrimaryColor,
+                    side: BorderSide(color: borderColor),
+                    backgroundColor: isDark ? AppColors.kcDarkReadOnlyBg : AppColors.kcLightInput,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () {},
@@ -221,13 +267,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _card({required Widget child}) {
+  Widget _card({
+    required Widget child,
+    required Color color,
+    required Color borderColor,
+  }) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.kcDarkCard,
+        color: color,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.kcDarkBorder),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          if (Theme.of(context).brightness == Brightness.light)
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+        ],
       ),
       child: child,
     );
@@ -237,6 +295,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required String label,
     required IconData icon,
     required bool selected,
+    required Color titleColor,
     required VoidCallback onTap,
   }) {
     return Expanded(
@@ -248,16 +307,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           decoration: BoxDecoration(
             color: selected ? AppColors.kcDarkPrimary : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: selected ? AppColors.kcDarkPrimary : AppColors.kcDarkBorderMid),
+            border: Border.all(
+              color: selected ? AppColors.kcDarkPrimary : AppColors.kcDarkBorderMid.withValues(alpha: 0.3),
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Icon(icon, size: 16, color: _title),
+              Icon(icon, size: 16, color: selected ? Colors.white : titleColor),
               const SizedBox(width: 8),
               Text(
                 label,
-                style: const TextStyle(color: _title, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  color: selected ? Colors.white : titleColor,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -268,23 +332,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
 }
 
 class _RolePill extends StatelessWidget {
-  const _RolePill({required this.role});
+  const _RolePill({
+    required this.role,
+    required this.isDark,
+    required this.borderColor,
+  });
 
   final String role;
+  final bool isDark;
+  final Color borderColor;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.kcDarkReadOnlyBg,
+        color: isDark ? AppColors.kcDarkReadOnlyBg : AppColors.kcLightInput,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.kcDarkBorderMid),
+        border: Border.all(color: borderColor),
       ),
       child: Text(
         role,
-        style: const TextStyle(
-          color: AppColors.kcDarkTextPrimary,
+        style: TextStyle(
+          color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTextPrimary,
           fontWeight: FontWeight.w700,
           fontSize: 12,
         ),
