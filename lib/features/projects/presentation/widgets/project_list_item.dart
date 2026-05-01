@@ -11,15 +11,19 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/core/utils/date_time_utils.dart';
 import 'package:core/core/theme/date_format_cubit.dart';
 import 'package:go_router/go_router.dart';
+import 'package:core/features/settings/presentation/bloc/user_tag_bloc.dart';
+import 'package:core/features/settings/domain/entities/user_tag_entity.dart';
 
 class ProjectsTable extends StatelessWidget {
   final List<ProjectEntity> projects;
+  final UserTagState tagState;
   final Color panel;
   final Color border;
 
   const ProjectsTable({
     super.key,
     required this.projects,
+    required this.tagState,
     required this.panel,
     required this.border,
   });
@@ -82,7 +86,10 @@ class ProjectsTable extends StatelessWidget {
                         )
                       else
                         ...projects.map(
-                          (project) => ProjectTableRow(project: project),
+                          (project) => ProjectTableRow(
+                            project: project,
+                            tagState: tagState,
+                          ),
                         ),
                     ],
                   ),
@@ -127,9 +134,14 @@ class _HeadCell extends StatelessWidget {
 }
 
 class ProjectTableRow extends StatelessWidget {
-  const ProjectTableRow({super.key, required this.project});
+  const ProjectTableRow({
+    super.key,
+    required this.project,
+    required this.tagState,
+  });
 
   final ProjectEntity project;
+  final UserTagState tagState;
 
   @override
   Widget build(BuildContext context) {
@@ -246,10 +258,26 @@ class ProjectTableRow extends StatelessWidget {
             SizedBox(
               width: 70,
               child: Center(
-                child: Icon(
-                  Icons.sell_outlined,
-                  size: 16,
-                  color: isDark ? const Color(0xFF6B84B2) : AppColors.kcLightTextMuted,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: tagState.projectTags
+                      .where((pt) => pt.projectId == project.id)
+                      .map((pt) {
+                        final tag = tagState.tags.where((t) => t.id == pt.tagId).firstOrNull;
+                        if (tag == null) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: _getHexColor(tag.color),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        );
+                      })
+                      .toList(),
                 ),
               ),
             ),
@@ -362,5 +390,15 @@ class ProjectTableRow extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Color _getHexColor(String hex) {
+    try {
+      if (hex.startsWith('#')) hex = hex.substring(1);
+      if (hex.length == 6) hex = 'FF$hex';
+      return Color(int.parse(hex, radix: 16));
+    } catch (e) {
+      return Colors.grey;
+    }
   }
 }

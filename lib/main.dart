@@ -24,6 +24,9 @@ import 'package:core/features/auth/presentation/screens/login_screen.dart';
 import 'package:core/features/auth/presentation/screens/notification_inbox_screen.dart';
 import 'package:core/features/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'package:core/features/dashboard/presentation/bloc/dashboard_event.dart';
+import 'package:core/features/projects/presentation/bloc/project_bloc.dart';
+import 'package:core/features/projects/presentation/bloc/project_event.dart';
+import 'package:core/features/settings/presentation/bloc/user_tag_bloc.dart';
 import 'package:core/features/splash/presentation/bloc/splash_bloc.dart';
 import 'package:core/features/splash/presentation/bloc/splash_event.dart';
 import 'package:core/features/splash/presentation/screens/splash_screen.dart';
@@ -157,6 +160,12 @@ class MyApp extends StatelessWidget {
       BlocProvider<NotificationNavigationBloc>.value(value: navigationBloc),
       BlocProvider<DashboardBloc>(
         create: (context) => sl<DashboardBloc>()..add(DashboardLoadRequested()),
+      ),
+      BlocProvider<UserTagBloc>(
+        create: (context) => sl<UserTagBloc>()..add(UserTagLoadRequested()),
+      ),
+      BlocProvider<ProjectBloc>(
+        create: (context) => sl<ProjectBloc>()..add(FetchProjects()),
       ),
     ];
 

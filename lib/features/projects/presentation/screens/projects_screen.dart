@@ -14,6 +14,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:core/features/projects/presentation/widgets/project_card.dart';
 import 'package:core/features/projects/presentation/widgets/project_list_item.dart';
+import 'package:core/features/settings/presentation/bloc/user_tag_bloc.dart';
+import 'package:core/features/settings/domain/entities/user_tag_entity.dart';
 
 class ProjectsScreen extends StatefulWidget {
   const ProjectsScreen({super.key});
@@ -26,6 +28,13 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
   final TextEditingController _searchController = TextEditingController();
   bool _showArchived = false;
   bool _isListView = true;
+  int? _selectedTagId; // null means 'All'
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<UserTagBloc>().add(UserTagLoadRequested());
+  }
 
   @override
   void dispose() {
@@ -33,10 +42,24 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     super.dispose();
   }
 
-  List<ProjectEntity> _filterProjects(List<ProjectEntity> allProjects) {
+  List<ProjectEntity> _filterProjects(List<ProjectEntity> allProjects, UserTagState tagState) {
     final String query = _searchController.text.trim().toLowerCase();
+    
+    Set<int>? taggedProjectIds;
+    if (_selectedTagId != null) {
+      taggedProjectIds = tagState.projectTags
+          .where((pt) => pt.tagId == _selectedTagId)
+          .map((pt) => pt.projectId)
+          .toSet();
+    }
+
     return allProjects.where((project) {
       if (!_showArchived && project.isArchived) return false;
+      
+      if (taggedProjectIds != null && !taggedProjectIds.contains(project.id)) {
+        return false;
+      }
+
       if (query.isEmpty) return true;
       return project.name.toLowerCase().contains(query) ||
           project.description.toLowerCase().contains(query);
@@ -49,29 +72,33 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final pageBg = isDark ? const Color(0xFF0E1A34) : AppColors.kcLightPage;
 
-    return BlocProvider(
-      create: (context) => sl<ProjectBloc>()..add(FetchProjects()),
-      child: BlocBuilder<ProjectBloc, ProjectState>(
-        builder: (context, state) {
-          return Scaffold(
-            drawer: const TemplateFeatureDrawer(),
-            appBar: const CustomAppBar(title: 'Projects'),
-            body: Container(
-              color: pageBg,
-              child: ProjectsView(
-                searchController: _searchController,
-                showArchived: _showArchived,
-                isListView: _isListView,
-                onSearchChanged: (_) => setState(() {}),
-                onArchivedChanged: (val) => setState(() => _showArchived = val),
-                onViewChanged: (isList) => setState(() => _isListView = isList),
-                state: state,
-                filterProjects: _filterProjects,
+    return BlocBuilder<UserTagBloc, UserTagState>(
+      builder: (context, tagState) {
+        return BlocBuilder<ProjectBloc, ProjectState>(
+          builder: (context, state) {
+            return Scaffold(
+              drawer: const TemplateFeatureDrawer(),
+              appBar: const CustomAppBar(title: 'Projects'),
+              body: Container(
+                color: pageBg,
+                child: ProjectsView(
+                  searchController: _searchController,
+                  showArchived: _showArchived,
+                  isListView: _isListView,
+                  selectedTagId: _selectedTagId,
+                  onSearchChanged: (_) => setState(() {}),
+                  onArchivedChanged: (val) => setState(() => _showArchived = val),
+                  onViewChanged: (isList) => setState(() => _isListView = isList),
+                  onTagSelected: (tagId) => setState(() => _selectedTagId = tagId),
+                  state: state,
+                  tagState: tagState,
+                  filterProjects: (all) => _filterProjects(all, tagState),
+                ),
               ),
-            ),
-          );
-        },
-      ),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -80,10 +107,13 @@ class ProjectsView extends StatelessWidget {
   final TextEditingController searchController;
   final bool showArchived;
   final bool isListView;
+  final int? selectedTagId;
   final ValueChanged<String> onSearchChanged;
   final ValueChanged<bool> onArchivedChanged;
   final ValueChanged<bool> onViewChanged;
+  final ValueChanged<int?> onTagSelected;
   final ProjectState state;
+  final UserTagState tagState;
   final List<ProjectEntity> Function(List<ProjectEntity>) filterProjects;
 
   const ProjectsView({
@@ -91,10 +121,13 @@ class ProjectsView extends StatelessWidget {
     required this.searchController,
     required this.showArchived,
     required this.isListView,
+    this.selectedTagId,
     required this.onSearchChanged,
     required this.onArchivedChanged,
     required this.onViewChanged,
+    required this.onTagSelected,
     required this.state,
+    required this.tagState,
     required this.filterProjects,
   });
 
@@ -125,7 +158,37 @@ class ProjectsView extends StatelessWidget {
           const SizedBox(height: 16),
           _buildControlsRow(context, border, isDark, titleColor),
           const SizedBox(height: 16),
+          _buildTagFilterList(isDark),
+          const SizedBox(height: 16),
           Expanded(child: _buildContent(panel, border, isDark)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTagFilterList(bool isDark) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          Icon(Icons.sell_outlined, size: 16, color: isDark ? const Color(0xFF7F95BE) : AppColors.kcLightTextSecondary),
+          const SizedBox(width: 12),
+          _TagChip(
+            label: 'All',
+            isSelected: selectedTagId == null,
+            onTap: () => onTagSelected(null),
+            isDark: isDark,
+          ),
+          ...tagState.tags.map((tag) => Padding(
+            padding: const EdgeInsets.only(left: 10),
+            child: _TagChip(
+              label: tag.name,
+              color: tag.color,
+              isSelected: selectedTagId == tag.id,
+              onTap: () => onTagSelected(tag.id),
+              isDark: isDark,
+            ),
+          )),
         ],
       ),
     );
@@ -315,7 +378,12 @@ class ProjectsView extends StatelessWidget {
       final projects = filterProjects(allProjects);
 
       if (isListView) {
-        return ProjectsTable(projects: projects, panel: panel, border: border);
+        return ProjectsTable(
+          projects: projects,
+          tagState: tagState,
+          panel: panel,
+          border: border,
+        );
       } else {
         return ProjectsCards(projects: projects, panel: panel, border: border);
       }
@@ -351,5 +419,128 @@ class ProjectsView extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _TagChip extends StatelessWidget {
+  final String label;
+  final String? color;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _TagChip({
+    required this.label,
+    this.color,
+    required this.isSelected,
+    required this.onTap,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tagColor = color != null ? _getHexColor(color!) : AppColors.kcPrimaryColor;
+    
+    // Dark mode styles
+    if (isDark) {
+      final bgColor = isSelected 
+          ? tagColor 
+          : const Color(0xFF1E293B);
+      final textColor = isSelected 
+          ? Colors.white 
+          : const Color(0xFF94A3B8);
+      final borderColor = isSelected ? tagColor : const Color(0xFF334155);
+
+      return GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!isSelected && color != null) ...[
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: tagColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Light mode styles
+    final bgColor = isSelected 
+        ? tagColor
+        : const Color(0xFFF1F5F9);
+    final textColor = isSelected 
+        ? Colors.white 
+        : const Color(0xFF64748B);
+    final borderColor = isSelected ? tagColor : const Color(0xFFE2E8F0);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (color != null) ...[
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: tagColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getHexColor(String hex) {
+    try {
+      if (hex.startsWith('#')) hex = hex.substring(1);
+      if (hex.length == 6) hex = 'FF$hex';
+      return Color(int.parse(hex, radix: 16));
+    } catch (e) {
+      return Colors.grey;
+    }
   }
 }

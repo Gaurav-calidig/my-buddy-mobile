@@ -143,4 +143,10 @@ class ApiRoutes {
   }) =>
       '$base/api/leave-requests/calendar?startDate=$startDate&endDate=$endDate';
   static String get compOffRequests => '$base/api/comp-off-requests';
+
+  // User Tags
+  static String get userTags => '$base/api/user-tags';
+  static String userTagDetail(int tagId) => '$base/api/user-tags/$tagId';
+  static String userTagProjects(int tagId) => '$base/api/user-tags/$tagId/projects';
+  static String get userProjectTags => '$base/api/user-project-tags';
 }

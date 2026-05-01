@@ -7,6 +7,18 @@ import '../errors/error_handler.dart';
 /// in API calls and other operations that can fail.
 abstract class Result<T> {
   const Result();
+
+  static Result<T> success<T>(T data) => Success<T>(data);
+  static Result<T> error<T>(String route, dynamic error, [StackTrace? stackTrace]) =>
+      Failure<T>(apiRoute: route, error: error, stackTrace: stackTrace);
+
+  R fold<R>(R Function(T data) onSuccess, R Function(String error) onFailure) {
+    if (this is Success<T>) {
+      return onSuccess((this as Success<T>).data);
+    } else {
+      return onFailure((this as Failure<T>).message);
+    }
+  }
 }
 
 /// Represents a successful operation result.
