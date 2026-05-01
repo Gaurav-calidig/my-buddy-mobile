@@ -9,5 +9,6 @@ class PrefKeys {
   static const String pendingApiRequests = 'pending_api_requests';
   static const String notificationInbox = 'notification_inbox';
   static const String onboardingSeen = 'onboarding_seen';
+  static const String dateFormat = 'date_format';
 }
 

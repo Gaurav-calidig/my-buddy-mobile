@@ -2,6 +2,9 @@ import 'package:core/features/projects/presentation/bloc/project_detail_event.da
 import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:core/core/utils/date_time_utils.dart';
+import 'package:core/core/theme/date_format_cubit.dart';
+import 'package:core/core/widgets/app_progress_indicator.dart';
 import 'package:core/features/projects/domain/entities/project_asset_entity.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
 import 'package:core/features/projects/domain/entities/project_member_entity.dart';
@@ -497,9 +500,13 @@ class OverviewTab extends StatelessWidget {
                 label: 'Assets',
                 value: project.assetCount.toString(),
               ),
-              InfoRow(
-                label: 'Created',
-                value: _formatDate(project.createdAt),
+              BlocBuilder<DateFormatCubit, String>(
+                builder: (context, format) {
+                  return InfoRow(
+                    label: 'Created',
+                    value: _formatDate(project.createdAt, format),
+                  );
+                },
               ),
             ],
           ),
@@ -520,8 +527,8 @@ class OverviewTab extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime dt) {
-    return '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+  String _formatDate(DateTime dt, String format) {
+    return DateTimeUtils.formatDate(dt, format);
   }
 }
 

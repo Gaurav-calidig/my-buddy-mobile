@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:core/core/utils/date_time_utils.dart';
+import 'package:core/core/theme/date_format_cubit.dart';
 import 'package:core/features/projects/domain/entities/project_asset_entity.dart';
 import 'package:core/features/projects/presentation/bloc/project_detail_bloc.dart';
 import 'package:core/features/projects/presentation/bloc/project_detail_event.dart';
@@ -61,9 +63,13 @@ class DeletedAssetCard extends StatelessWidget {
           ),
           TypeBadge(type: asset.type),
           if (asset.deletedAt != null)
-            Text(
-              _fmt(asset.deletedAt!),
-              style: const TextStyle(color: kDanger, fontSize: 10),
+            BlocBuilder<DateFormatCubit, String>(
+              builder: (context, format) {
+                return Text(
+                  _fmt(asset.deletedAt!, format),
+                  style: const TextStyle(color: kDanger, fontSize: 10),
+                );
+              },
             ),
           IconAction(
             icon: Icons.restore_rounded,
@@ -79,6 +85,6 @@ class DeletedAssetCard extends StatelessWidget {
     );
   }
 
-  String _fmt(DateTime dt) =>
-      '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+  String _fmt(DateTime dt, String format) =>
+      DateTimeUtils.formatDate(dt, format);
 }

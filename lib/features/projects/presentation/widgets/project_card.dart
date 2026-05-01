@@ -9,6 +9,8 @@ import 'package:core/features/projects/presentation/widgets/project_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:core/core/utils/date_time_utils.dart';
+import 'package:core/core/theme/date_format_cubit.dart';
 
 class ProjectsCards extends StatelessWidget {
   const ProjectsCards({
@@ -126,9 +128,13 @@ class ProjectCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                'Created ${_formatDate(project.createdAt)}',
-                style: TextStyle(color: mutedColor, fontSize: 12),
+              BlocBuilder<DateFormatCubit, String>(
+                builder: (context, format) {
+                  return Text(
+                    'Created ${DateTimeUtils.formatDate(project.createdAt, format)}',
+                    style: TextStyle(color: mutedColor, fontSize: 12),
+                  );
+                },
               ),
               const SizedBox(height: 10),
               Row(
@@ -264,7 +270,4 @@ class ProjectCard extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-  }
 }

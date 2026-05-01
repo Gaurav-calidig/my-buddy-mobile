@@ -8,6 +8,8 @@ import 'package:core/features/projects/presentation/bloc/project_event.dart';
 import 'package:core/features/projects/presentation/widgets/project_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:core/core/utils/date_time_utils.dart';
+import 'package:core/core/theme/date_format_cubit.dart';
 import 'package:go_router/go_router.dart';
 
 class ProjectsTable extends StatelessWidget {
@@ -254,9 +256,13 @@ class ProjectTableRow extends StatelessWidget {
             SizedBox(
               width: 110,
               child: Center(
-                child: Text(
-                  '${project.createdAt.day.toString().padLeft(2, '0')}/${project.createdAt.month.toString().padLeft(2, '0')}/${project.createdAt.year}',
-                  style: TextStyle(color: secondaryTextColor, fontSize: 14),
+                child: BlocBuilder<DateFormatCubit, String>(
+                  builder: (context, format) {
+                    return Text(
+                      DateTimeUtils.formatDate(project.createdAt, format),
+                      style: TextStyle(color: secondaryTextColor, fontSize: 14),
+                    );
+                  },
                 ),
               ),
             ),

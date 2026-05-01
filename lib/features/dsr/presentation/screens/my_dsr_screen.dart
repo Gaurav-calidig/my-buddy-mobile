@@ -8,6 +8,8 @@ import 'package:core/features/dsr/presentation/bloc/dsr_state.dart';
 import 'package:core/features/dsr/presentation/widgets/dsr_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:core/core/utils/date_time_utils.dart';
+import 'package:core/core/theme/date_format_cubit.dart';
 
 class MyDsrScreen extends StatefulWidget {
   const MyDsrScreen({super.key});
@@ -43,11 +45,8 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
 
   DateTime _dayKey(DateTime date) => DateTime(date.year, date.month, date.day);
 
-  String _formatDate(DateTime date) {
-    final String day = date.day.toString().padLeft(2, '0');
-    final String month = date.month.toString().padLeft(2, '0');
-    final String year = date.year.toString();
-    return '$day/$month/$year';
+  String _formatDate(DateTime date, String format) {
+    return DateTimeUtils.formatDate(date, format);
   }
 
   String _toDisplayStatus(String raw) {
@@ -334,39 +333,47 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                             ),
                           )
                         else if (_activeTab == _DsrTab.add)
-                          DsrAddTabWidget(
-                            selectedDate: selectedDate,
-                            today: today,
-                            yesterday: yesterday,
-                            totalHours: addTabTotalHours,
-                            projectNames: projectNames,
-                            selectedProject: _selectedProject,
-                            selectedHours: _selectedHours,
-                            selectedStatus: _selectedStatus,
-                            descriptionController: _descriptionController,
-                            entries: addTabEntries,
-                            formatDate: _formatDate,
-                            onDateChanged: (DateTime value) => context.read<DsrBloc>().add(DsrDateChangedRequested(value)),
-                            onProjectChanged: (String? value) => setState(() => _selectedProject = value),
-                            onHoursChanged: (String? value) => setState(() => _selectedHours = value),
-                            onStatusChanged: (String? value) {
-                              if (value != null) setState(() => _selectedStatus = value);
+                          BlocBuilder<DateFormatCubit, String>(
+                            builder: (context, format) {
+                              return DsrAddTabWidget(
+                                selectedDate: selectedDate,
+                                today: today,
+                                yesterday: yesterday,
+                                totalHours: addTabTotalHours,
+                                projectNames: projectNames,
+                                selectedProject: _selectedProject,
+                                selectedHours: _selectedHours,
+                                selectedStatus: _selectedStatus,
+                                descriptionController: _descriptionController,
+                                entries: addTabEntries,
+                                formatDate: (date) => _formatDate(date, format),
+                                onDateChanged: (DateTime value) => context.read<DsrBloc>().add(DsrDateChangedRequested(value)),
+                                onProjectChanged: (String? value) => setState(() => _selectedProject = value),
+                                onHoursChanged: (String? value) => setState(() => _selectedHours = value),
+                                onStatusChanged: (String? value) {
+                                  if (value != null) setState(() => _selectedStatus = value);
+                                },
+                                onAdd: () => _addEntry(state, selectedDate),
+                                onEdit: (int index, DsrEntryEntity entry) => _editEntry(state: state, date: selectedDate, index: index, current: entry),
+                                onDelete: (int index) => _deleteEntry(selectedDate, index),
+                                statuses: _statuses,
+                                hoursOptions: _hoursOptions,
+                              );
                             },
-                            onAdd: () => _addEntry(state, selectedDate),
-                            onEdit: (int index, DsrEntryEntity entry) => _editEntry(state: state, date: selectedDate, index: index, current: entry),
-                            onDelete: (int index) => _deleteEntry(selectedDate, index),
-                            statuses: _statuses,
-                            hoursOptions: _hoursOptions,
                           )
                         else
-                          DsrHistoryTabWidget(
-                            historyGroups: historyGroups,
-                            today: today,
-                            yesterday: yesterday,
-                            formatDate: _formatDate,
-                            onEdit: (DateTime date, int index, DsrEntryEntity entry) =>
-                                _editEntry(state: state, date: date, index: index, current: entry),
-                            onDelete: (DateTime date, int index) => _deleteEntry(date, index),
+                          BlocBuilder<DateFormatCubit, String>(
+                            builder: (context, format) {
+                              return DsrHistoryTabWidget(
+                                historyGroups: historyGroups,
+                                today: today,
+                                yesterday: yesterday,
+                                formatDate: (date) => _formatDate(date, format),
+                                onEdit: (DateTime date, int index, DsrEntryEntity entry) =>
+                                    _editEntry(state: state, date: date, index: index, current: entry),
+                                onDelete: (DateTime date, int index) => _deleteEntry(date, index),
+                              );
+                            },
                           ),
                       ],
                     ),

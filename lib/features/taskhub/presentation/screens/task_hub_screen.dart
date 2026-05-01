@@ -18,6 +18,8 @@ import 'package:core/features/taskhub/presentation/widgets/export_tasks_dialog.d
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:core/core/utils/date_time_utils.dart';
+import 'package:core/core/theme/date_format_cubit.dart';
 
 class TaskHubScreen extends StatefulWidget {
   const TaskHubScreen({super.key, required this.project});
@@ -791,9 +793,9 @@ class _SelectedSprintDetails extends StatelessWidget {
     return raw;
   }
 
-  String get _dateRange {
-    final start = DateFormat('dd/MM/yyyy').format(sprint.startDate);
-    final end = DateFormat('dd/MM/yyyy').format(sprint.endDate);
+  String _getDateRange(String format) {
+    final start = DateTimeUtils.formatDate(sprint.startDate, format);
+    final end = DateTimeUtils.formatDate(sprint.endDate, format);
     return '$start - $end';
   }
 
@@ -859,13 +861,17 @@ class _SelectedSprintDetails extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            _dateRange,
-            style: TextStyle(
-              color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
+          BlocBuilder<DateFormatCubit, String>(
+            builder: (context, format) {
+              return Text(
+                _getDateRange(format),
+                style: TextStyle(
+                  color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              );
+            },
           ),
         ],
       ),

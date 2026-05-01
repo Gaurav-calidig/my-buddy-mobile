@@ -32,7 +32,10 @@ import 'package:core/features/taskhub/domain/enums/task_board_type.dart';
 import 'package:core/features/taskhub/domain/enums/task_priority.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:core/core/utils/date_time_utils.dart';
+import 'package:core/core/theme/date_format_cubit.dart';
 import 'package:mime/mime.dart';
 
 enum TaskTicketType { task, bug }
@@ -1217,76 +1220,81 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
   }
 
   Widget _dueDateField(bool isDark) {
-    final text = _dueDate == null
-        ? 'dd/mm/yyyy'
-        : '${_dueDate!.day.toString().padLeft(2, '0')}/${_dueDate!.month.toString().padLeft(2, '0')}/${_dueDate!.year}';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _label('Due Date', isDark),
         const SizedBox(height: 8),
-        InkWell(
-          onTap: () async {
-            final now = DateTime.now();
-            final selected = await showDatePicker(
-              context: context,
-              initialDate: _dueDate ?? now,
-              firstDate: DateTime(now.year - 5),
-              lastDate: DateTime(now.year + 10),
-              builder: (context, child) {
-                return Theme(
-                  data: Theme.of(context).copyWith(
-                    colorScheme: isDark
-                        ? const ColorScheme.dark(
-                            primary: AppColors.kcDarkPrimary,
-                            onPrimary: Colors.white,
-                            surface: Color(0xFF121F3D),
-                            onSurface: AppColors.kcDarkTextPrimary,
-                          )
-                        : ColorScheme.light(
-                            primary: AppColors.kcPrimaryColor,
-                            surface: Colors.white,
+        BlocBuilder<DateFormatCubit, String>(
+          builder: (context, format) {
+            final text = _dueDate == null
+                ? format.toLowerCase()
+                : DateTimeUtils.formatDate(_dueDate, format);
+
+            return InkWell(
+              onTap: () async {
+                final now = DateTime.now();
+                final selected = await showDatePicker(
+                  context: context,
+                  initialDate: _dueDate ?? now,
+                  firstDate: DateTime(now.year - 5),
+                  lastDate: DateTime(now.year + 10),
+                  builder: (context, child) {
+                    return Theme(
+                      data: Theme.of(context).copyWith(
+                        colorScheme: isDark
+                            ? const ColorScheme.dark(
+                                primary: AppColors.kcDarkPrimary,
+                                onPrimary: Colors.white,
+                                surface: Color(0xFF121F3D),
+                                onSurface: AppColors.kcDarkTextPrimary,
+                              )
+                            : ColorScheme.light(
+                                primary: AppColors.kcPrimaryColor,
+                                surface: Colors.white,
+                              ),
+                        dialogTheme: DialogThemeData(
+                          backgroundColor: isDark ? const Color(0xFF121F3D) : Colors.white,
+                        ),
+                        textButtonTheme: TextButtonThemeData(
+                          style: TextButton.styleFrom(
+                            foregroundColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
                           ),
-                    dialogTheme: DialogThemeData(
-                      backgroundColor: isDark ? const Color(0xFF121F3D) : Colors.white,
-                    ),
-                    textButtonTheme: TextButtonThemeData(
-                      style: TextButton.styleFrom(
-                        foregroundColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
+                        ),
                       ),
-                    ),
-                  ),
-                  child: child!,
+                      child: child!,
+                    );
+                  },
                 );
+                if (!mounted) return;
+                if (selected != null) setState(() => _dueDate = selected);
               },
-            );
-            if (!mounted) return;
-            if (selected != null) setState(() => _dueDate = selected);
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            height: 52,
-            alignment: Alignment.centerLeft,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder)
-                    .withValues(alpha: 0.55),
+              child: Container(
+                height: 52,
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder)
+                        .withValues(alpha: 0.55),
+                  ),
+                ),
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    color: _dueDate == null
+                        ? (isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted)
+                        : (isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
               ),
-            ),
-            child: Text(
-              text,
-              style: TextStyle(
-                color: _dueDate == null
-                    ? (isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted)
-                    : (isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle),
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-              ),
-            ),
-          ),
+            );
+          },
         ),
       ],
     );

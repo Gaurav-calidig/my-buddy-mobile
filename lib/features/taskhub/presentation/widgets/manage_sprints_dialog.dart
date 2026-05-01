@@ -3,7 +3,10 @@ import 'package:core/core/dependency_injection/injection_container.dart';
 import 'package:core/features/taskhub/domain/entities/sprint_entity.dart';
 import 'package:core/features/taskhub/domain/usecases/sprint_usecases.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:core/core/utils/date_time_utils.dart';
+import 'package:core/core/theme/date_format_cubit.dart';
 
 class ManageSprintsDialog extends StatefulWidget {
   final int projectId;
@@ -65,11 +68,13 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
       status = 'planned';
     }
 
+    final currentFormat = context.read<DateFormatCubit>().state;
+
     final startController = TextEditingController(
-      text: startDate == null ? '' : DateFormat('dd/MM/yyyy').format(startDate),
+      text: DateTimeUtils.formatDate(startDate, currentFormat),
     );
     final endController = TextEditingController(
-      text: endDate == null ? '' : DateFormat('dd/MM/yyyy').format(endDate),
+      text: DateTimeUtils.formatDate(endDate, currentFormat),
     );
 
     bool? result;
@@ -252,58 +257,64 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                                 maxLines: 3,
                               ),
                               const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: field(
-                                      labelText: 'Start Date',
-                                      controller: startController,
-                                      hintText: 'dd/mm/yyyy',
-                                      readOnly: true,
-                                      suffixIcon: Icon(
-                                        Icons.calendar_today_rounded,
-                                        size: 18,
-                                        color: mutedColor,
+                              BlocBuilder<DateFormatCubit, String>(
+                                builder: (context, format) {
+                                  return Row(
+                                    children: [
+                                      Expanded(
+                                        child: field(
+                                          labelText: 'Start Date',
+                                          controller: startController,
+                                          hintText: format.toLowerCase(),
+                                          readOnly: true,
+                                          suffixIcon: Icon(
+                                            Icons.calendar_today_rounded,
+                                            size: 18,
+                                            color: mutedColor,
+                                          ),
+                                          onTap: () => pickDate(
+                                            initial: startDate,
+                                            onPicked: (d) {
+                                              setLocalState(() {
+                                                startDate = d;
+                                                startController.text = DateTimeUtils.formatDate(
+                                                  d,
+                                                  format,
+                                                );
+                                              });
+                                            },
+                                          ),
+                                        ),
                                       ),
-                                      onTap: () => pickDate(
-                                        initial: startDate,
-                                        onPicked: (d) {
-                                          setLocalState(() {
-                                            startDate = d;
-                                            startController.text = DateFormat(
-                                              'dd/MM/yyyy',
-                                            ).format(d);
-                                          });
-                                        },
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: field(
+                                          labelText: 'End Date',
+                                          controller: endController,
+                                          hintText: format.toLowerCase(),
+                                          readOnly: true,
+                                          suffixIcon: Icon(
+                                            Icons.calendar_today_rounded,
+                                            size: 18,
+                                            color: mutedColor,
+                                          ),
+                                          onTap: () => pickDate(
+                                            initial: endDate,
+                                            onPicked: (d) {
+                                              setLocalState(() {
+                                                endDate = d;
+                                                endController.text = DateTimeUtils.formatDate(
+                                                  d,
+                                                  format,
+                                                );
+                                              });
+                                            },
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: field(
-                                      labelText: 'End Date',
-                                      controller: endController,
-                                      hintText: 'dd/mm/yyyy',
-                                      readOnly: true,
-                                      suffixIcon: Icon(
-                                        Icons.calendar_today_rounded,
-                                        size: 18,
-                                        color: mutedColor,
-                                      ),
-                                      onTap: () => pickDate(
-                                        initial: endDate,
-                                        onPicked: (d) {
-                                          setLocalState(() {
-                                            endDate = d;
-                                            endController.text = DateFormat(
-                                              'dd/MM/yyyy',
-                                            ).format(d);
-                                          });
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                    ],
+                                  );
+                                },
                               ),
                               const SizedBox(height: 12),
                               Column(

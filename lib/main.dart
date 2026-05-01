@@ -15,6 +15,7 @@ import 'package:core/core/theme/app_theme.dart';
 import 'package:core/core/theme/theme_cubit.dart';
 import 'package:core/core/theme/app_colors.dart';
 import 'package:core/core/utils/app_initializer.dart';
+import 'core/theme/date_format_cubit.dart';
 import 'package:core/core/utils/firebase_initializer.dart';
 import 'package:core/core/widgets/app_progress_indicator.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
@@ -149,6 +150,9 @@ class MyApp extends StatelessWidget {
       ),
       BlocProvider<ThemeCubit>(
         create: (context) => sl<ThemeCubit>(),
+      ),
+      BlocProvider<DateFormatCubit>(
+        create: (context) => DateFormatCubit(),
       ),
       BlocProvider<NotificationNavigationBloc>.value(value: navigationBloc),
       BlocProvider<DashboardBloc>(
