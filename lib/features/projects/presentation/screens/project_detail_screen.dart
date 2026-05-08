@@ -169,11 +169,13 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           InkWell(
             onTap: () => context.push(AppRoutes.taskHub, extra: widget.project),
             borderRadius: BorderRadius.circular(6),
-            child: const StatusBadge(
+            child: StatusBadge(
               label: 'Task Hub',
               icon: Icons.bar_chart_rounded,
-              color: Color(0xFF7B61FF),
-              bg: Color(0xFF1E1840),
+              color: const Color(0xFF7B61FF),
+              bg: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF1E1840)
+                  : const Color(0xFF7B61FF).withValues(alpha: 0.1),
             ),
           ),
         ],

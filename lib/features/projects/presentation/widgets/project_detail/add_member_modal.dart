@@ -144,25 +144,24 @@ class _AddMemberModalState extends State<AddMemberModal> {
                     _buildLabel('User', textPrimary),
                     _buildSearchField(textPrimary, textMuted, panelLightColor, borderColor, accentColor),
                     const SizedBox(height: 12),
-                    if (_searchQuery.isNotEmpty || _selectedUser != null)
-                      _selectedUser != null && _searchQuery.isEmpty
-                          ? _buildUserTile(_selectedUser!, accentColor, textPrimary, textMuted, borderColor, isSelected: true)
-                          : Container(
-                              constraints: const BoxConstraints(maxHeight: 200),
-                              decoration: BoxDecoration(
-                                color: panelLightColor.withValues(alpha: 0.3),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: borderColor),
-                              ),
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: filteredUsers.length,
-                                itemBuilder: (context, index) {
-                                  return _buildUserTile(filteredUsers[index], accentColor, textPrimary, textMuted, borderColor);
-                                },
-                              ),
+                    _selectedUser != null && _searchQuery.isEmpty
+                        ? _buildUserTile(_selectedUser!, accentColor, textPrimary, textMuted, borderColor, isSelected: true)
+                        : Container(
+                            constraints: const BoxConstraints(maxHeight: 200),
+                            decoration: BoxDecoration(
+                              color: panelLightColor.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: borderColor),
                             ),
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              itemCount: filteredUsers.length,
+                              itemBuilder: (context, index) {
+                                return _buildUserTile(filteredUsers[index], accentColor, textPrimary, textMuted, borderColor);
+                              },
+                            ),
+                          ),
                     const SizedBox(height: 20),
                     _buildLabel('Role', textPrimary),
                     _buildRoleDropdown(textPrimary, textMuted, panelLightColor, borderColor, panelColor),

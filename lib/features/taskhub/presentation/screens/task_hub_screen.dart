@@ -20,6 +20,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:core/core/utils/date_time_utils.dart';
 import 'package:core/core/theme/date_format_cubit.dart';
+import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:core/features/auth/presentation/bloc/auth_state.dart';
 
 class TaskHubScreen extends StatefulWidget {
   const TaskHubScreen({super.key, required this.project});
@@ -296,6 +298,12 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
     required List<TaskEntity> tasks,
     required Map<String, String> assigneeById,
   }) {
+    final authState = context.read<AuthBloc>().state;
+    String? myId;
+    if (authState is AuthSuccess) {
+      myId = authState.user.id;
+    }
+
     final filtered = tasks.where((t) {
       final q = _searchController.text.trim().toLowerCase();
       if (q.isNotEmpty) {
@@ -305,9 +313,7 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
         }
       }
       if (_taskFilter == 'Assigned to me') {
-        // Mocking user id for demonstration
-        const myId = 'd8230625-f192-43ba-8e20-0111074a34f8';
-        if (t.assigneeId != myId) return false;
+        if (myId != null && t.assigneeId != myId) return false;
       }
       return true;
     }).toList();

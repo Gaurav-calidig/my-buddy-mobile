@@ -52,21 +52,32 @@ class TypeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final isUrl = type == 'url';
     final accentColor = ProjectTheme.getAccent(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    final bgDarkUrl = const Color(0xFF0D2340);
+    final bgLightUrl = accentColor.withValues(alpha: 0.1);
+    final bgDarkSecret = const Color(0xFF1A1040);
+    final bgLightSecret = const Color(0xFFAB8BF5).withValues(alpha: 0.1);
+
+    final secretColor = isDark ? const Color(0xFFAB8BF5) : Colors.deepPurple;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: isUrl ? const Color(0xFF0D2340) : const Color(0xFF1A1040),
+        color: isUrl 
+            ? (isDark ? bgDarkUrl : bgLightUrl) 
+            : (isDark ? bgDarkSecret : bgLightSecret),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
           color: isUrl
               ? accentColor.withValues(alpha: 0.4)
-              : const Color(0xFFAB8BF5).withValues(alpha: 0.4),
+              : secretColor.withValues(alpha: 0.4),
         ),
       ),
       child: Text(
         type,
         style: TextStyle(
-          color: isUrl ? accentColor : const Color(0xFFAB8BF5),
+          color: isUrl ? accentColor : secretColor,
           fontSize: 10,
           fontWeight: FontWeight.w600,
         ),
@@ -83,20 +94,22 @@ class EnvBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     Color color;
     Color bg;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = ProjectTheme.getAccent(context);
+    
     switch (env.toLowerCase()) {
       case 'production':
-        color = kSuccess;
-        bg = kSuccessBg;
+        color = isDark ? ProjectTheme.kSuccess : const Color(0xFF059669);
+        bg = isDark ? ProjectTheme.kSuccessBg : const Color(0xFFD1FAE5);
         break;
       case 'staging':
-        color = kWarning;
-        bg = kWarningBg;
+        color = isDark ? ProjectTheme.kWarning : const Color(0xFFD97706);
+        bg = isDark ? ProjectTheme.kWarningBg : const Color(0xFFFEF3C7);
         break;
       case 'dev':
       case 'development':
         color = accentColor;
-        bg = const Color(0xFF0A1E42);
+        bg = isDark ? const Color(0xFF0A1E42) : accentColor.withValues(alpha: 0.1);
         break;
       default:
         color = ProjectTheme.getTextSecondary(context);

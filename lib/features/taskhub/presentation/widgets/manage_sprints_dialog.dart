@@ -371,29 +371,32 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
                               const SizedBox(height: 16),
                               Row(
                                 children: [
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      final name = nameController.text.trim();
-                                      if (name.isEmpty) return;
-                                      if (startDate == null ||
-                                          endDate == null) {
-                                        return;
-                                      }
-                                      Navigator.pop(ctx, true);
+                                  ValueListenableBuilder<TextEditingValue>(
+                                    valueListenable: nameController,
+                                    builder: (context, nameValue, child) {
+                                      final name = nameValue.text.trim();
+                                      final isValid = name.isNotEmpty && startDate != null && endDate != null;
+                                      return ElevatedButton(
+                                        onPressed: isValid
+                                            ? () => Navigator.pop(ctx, true)
+                                            : null,
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
+                                          foregroundColor: Colors.white,
+                                          disabledBackgroundColor: (isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor).withValues(alpha: 0.5),
+                                          disabledForegroundColor: Colors.white.withValues(alpha: 0.7),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          sprint == null ? 'Create' : 'Update',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      );
                                     },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      sprint == null ? 'Create' : 'Update',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
                                   ),
                                   const SizedBox(width: 10),
                                   TextButton(
@@ -418,10 +421,12 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
         ),
       );
     } finally {
-      nameController.dispose();
-      goalController.dispose();
-      startController.dispose();
-      endController.dispose();
+      Future.delayed(const Duration(milliseconds: 300), () {
+        nameController.dispose();
+        goalController.dispose();
+        startController.dispose();
+        endController.dispose();
+      });
     }
 
     if (result == true) {

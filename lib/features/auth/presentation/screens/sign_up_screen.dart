@@ -87,7 +87,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           listener: (context, state) {
             if (state is AuthSuccess) {
               AppUtils.showToast('Account created');
-              Navigator.of(context).maybePop();
+              Navigator.of(context).pop();
             } else if (state is AuthFailure) {
               AppUtils.showToast('Error: ${state.error}');
             }

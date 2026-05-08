@@ -642,7 +642,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                             IconButton(
                               onPressed: _busy
                                   ? null
-                                  : () => Navigator.of(context).maybePop(),
+                                  : () => Navigator.of(context).pop(),
                               icon: Icon(
                                 Icons.close,
                                 color: mutedColor,
@@ -954,7 +954,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                             OutlinedButton(
                               onPressed: _busy
                                   ? null
-                                  : () => Navigator.of(context).maybePop(),
+                                  : () => Navigator.of(context).pop(),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
                                 side: BorderSide(

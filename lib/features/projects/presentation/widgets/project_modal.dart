@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
-import 'package:core/core/theme/app_colors.dart';
+import 'package:core/features/projects/presentation/widgets/project_detail/project_detail_constants.dart';
 
 class ProjectModal extends StatefulWidget {
   final ProjectEntity? project;
@@ -40,10 +40,11 @@ class _ProjectModalState extends State<ProjectModal> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.project != null;
-    const Color bg = Color(0xFF111C32);
-    const Color inputBg = Color(0xFF0F1A33);
-    const Color border = Color(0xFF2E3D5C);
-    const Color textMuted = Color(0xFF8EA5CD);
+    final Color bg = ProjectTheme.getPanel(context);
+    final Color inputBg = ProjectTheme.getPanelLight(context);
+    final Color border = ProjectTheme.getBorder(context);
+    final Color textMuted = ProjectTheme.getTextMuted(context);
+    final Color textPrimary = ProjectTheme.getTextPrimary(context);
 
     return Dialog(
       backgroundColor: bg,
@@ -65,8 +66,8 @@ class _ProjectModalState extends State<ProjectModal> {
                 children: [
                   Text(
                     isEditing ? 'Edit Project' : 'Create New Project',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: textPrimary,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Outfit',
@@ -74,7 +75,7 @@ class _ProjectModalState extends State<ProjectModal> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: textMuted, size: 20),
+                    icon: Icon(Icons.close, color: textMuted, size: 20),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                   ),
@@ -85,25 +86,29 @@ class _ProjectModalState extends State<ProjectModal> {
                 isEditing
                     ? 'Update project details in your workspace.'
                     : 'Add a new project to your workspace. You will be assigned as the Admin.',
-                style: const TextStyle(color: textMuted, fontSize: 13),
+                style: TextStyle(color: textMuted, fontSize: 13),
               ),
               const SizedBox(height: 24),
-              _buildLabel('Project Name'),
+              _buildLabel('Project Name', textPrimary),
               const SizedBox(height: 8),
               _buildTextField(
                 controller: _nameController,
                 hint: 'e.g. Website Redesign',
                 inputBg: inputBg,
                 border: border,
+                textColor: textPrimary,
+                hintColor: textMuted,
               ),
               const SizedBox(height: 20),
-              _buildLabel('Description'),
+              _buildLabel('Description', textPrimary),
               const SizedBox(height: 8),
               _buildTextField(
                 controller: _descriptionController,
                 hint: 'Brief description of the project...',
                 inputBg: inputBg,
                 border: border,
+                textColor: textPrimary,
+                hintColor: textMuted,
                 maxLines: 4,
               ),
               const SizedBox(height: 24),
@@ -119,11 +124,11 @@ class _ProjectModalState extends State<ProjectModal> {
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
+                        children: [
                           Text(
                             'Billable Project',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: textPrimary,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
@@ -184,11 +189,11 @@ class _ProjectModalState extends State<ProjectModal> {
     );
   }
 
-  Widget _buildLabel(String label) {
+  Widget _buildLabel(String label, Color color) {
     return Text(
       label,
-      style: const TextStyle(
-        color: Colors.white,
+      style: TextStyle(
+        color: color,
         fontSize: 14,
         fontWeight: FontWeight.w600,
       ),
@@ -200,6 +205,8 @@ class _ProjectModalState extends State<ProjectModal> {
     required String hint,
     required Color inputBg,
     required Color border,
+    required Color textColor,
+    required Color hintColor,
     int maxLines = 1,
   }) {
     return Container(
@@ -211,10 +218,10 @@ class _ProjectModalState extends State<ProjectModal> {
       child: TextField(
         controller: controller,
         maxLines: maxLines,
-        style: const TextStyle(color: Colors.white, fontSize: 14),
+        style: TextStyle(color: textColor, fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(color: Color(0xFF5A6E95), fontSize: 14),
+          hintStyle: TextStyle(color: hintColor, fontSize: 14),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(12),
         ),

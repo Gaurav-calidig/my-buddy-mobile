@@ -78,6 +78,11 @@ class _AddAssetModalState extends State<AddAssetModal> {
       return;
     }
 
+    List<String> finalRoles = List.from(_selectedRoles);
+    if (finalRoles.isEmpty) {
+      finalRoles.addAll(['admin', 'project_lead']);
+    }
+
     if (widget.asset != null) {
       context.read<ProjectDetailBloc>().add(
             UpdateProjectAsset(
@@ -87,7 +92,7 @@ class _AddAssetModalState extends State<AddAssetModal> {
               type: _selectedType,
               environment: _selectedEnv,
               value: _valueController.text,
-              allowedRoles: _selectedRoles.join(','),
+              allowedRoles: finalRoles.join(','),
               allowedUserIds: _selectedUserIds.join(','),
             ),
           );
@@ -99,7 +104,7 @@ class _AddAssetModalState extends State<AddAssetModal> {
               type: _selectedType,
               environment: _selectedEnv,
               value: _valueController.text,
-              allowedRoles: _selectedRoles.join(','),
+              allowedRoles: finalRoles.join(','),
               allowedUserIds: _selectedUserIds.join(','),
             ),
           );
