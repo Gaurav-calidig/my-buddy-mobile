@@ -44,6 +44,12 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
       backgroundColor: backgroundColor,
       drawer: const TemplateFeatureDrawer(),
       appBar: const CustomAppBar(title: 'Capacity Planner'),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {},
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text('Add Allocation', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.kcPrimaryColor,
+      ),
       body: BlocBuilder<CapacityPlannerBloc, CapacityPlannerState>(
         builder: (context, state) {
           if (state is CapacityPlannerLoading) {
@@ -72,6 +78,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
           _buildTableControls(isDark),
           const SizedBox(height: 12),
           _buildDataTable(state, isDark),
+          const SizedBox(height: 80),
         ],
       ),
     );
@@ -162,7 +169,6 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
 
   Widget _buildHeaderControls(bool isDark) {
     final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTextPrimary;
-    final cardColor = isDark ? AppColors.kcDarkCard : AppColors.kcLightCard;
     final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
 
     Widget dateControl;
@@ -232,30 +238,18 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Container(
+              constraints: const BoxConstraints(maxWidth: 480),
               decoration: BoxDecoration(
-                color: cardColor,
                 border: Border.all(color: borderColor),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  _buildTab('Quarterly', CapacityViewType.quarterly, isDark),
+                  _buildTab('Quarterly', CapacityViewType.quarterly, isDark, isFirst: true),
                   _buildTab('Monthly', CapacityViewType.monthly, isDark),
                   _buildTab('Weekly', CapacityViewType.weekly, isDark),
-                  _buildTab('Custom', CapacityViewType.custom, isDark),
+                  _buildTab('Custom', CapacityViewType.custom, isDark, isLast: true),
                 ],
-              ),
-            ),
-            ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add Allocation'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.kcPrimaryColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
           ],
@@ -264,45 +258,59 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
     );
   }
 
-  Widget _buildTab(String text, CapacityViewType type, bool isDark) {
+  Widget _buildTab(String text, CapacityViewType type, bool isDark, {bool isFirst = false, bool isLast = false}) {
     final isSelected = _viewType == type;
-    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTextPrimary;
-    final mutedColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
+    final textColor = isDark ? Colors.white : AppColors.kcLightTextPrimary;
+    final mutedColor = isDark ? const Color(0xFF94A3B8) : AppColors.kcLightTextMuted;
+    final selectedBg = isDark ? const Color(0xFF1E293B) : AppColors.kcPrimaryColor.withValues(alpha: 0.1);
+    final borderColor = isDark ? const Color(0xFF334155) : AppColors.kcLightBorder;
 
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _viewType = type;
-          final now = DateTime.now();
-          switch (type) {
-            case CapacityViewType.quarterly:
-              int quarter = (now.month - 1) ~/ 3;
-              _startDate = DateTime(now.year, quarter * 3 + 1, 1);
-              _endDate = DateTime(now.year, (quarter + 1) * 3, 0);
-              break;
-            case CapacityViewType.monthly:
-              _startDate = DateTime(now.year, now.month, 1);
-              _endDate = DateTime(now.year, now.month + 1, 0);
-              break;
-            case CapacityViewType.weekly:
-              _startDate = now.subtract(Duration(days: now.weekday - 1));
-              _endDate = _startDate.add(const Duration(days: 6));
-              break;
-            case CapacityViewType.custom:
-              _startDate = DateTime(now.year, now.month, 1);
-              _endDate = DateTime(now.year, now.month + 1, 0);
-              break;
-          }
-        });
-        _fetchData();
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Text(
-          text,
-          style: TextStyle(
-            color: isSelected ? textColor : mutedColor,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _viewType = type;
+            final now = DateTime.now();
+            switch (type) {
+              case CapacityViewType.quarterly:
+                int quarter = (now.month - 1) ~/ 3;
+                _startDate = DateTime(now.year, quarter * 3 + 1, 1);
+                _endDate = DateTime(now.year, (quarter + 1) * 3, 0);
+                break;
+              case CapacityViewType.monthly:
+                _startDate = DateTime(now.year, now.month, 1);
+                _endDate = DateTime(now.year, now.month + 1, 0);
+                break;
+              case CapacityViewType.weekly:
+                _startDate = now.subtract(Duration(days: now.weekday - 1));
+                _endDate = _startDate.add(const Duration(days: 6));
+                break;
+              case CapacityViewType.custom:
+                _startDate = DateTime(now.year, now.month, 1);
+                _endDate = DateTime(now.year, now.month + 1, 0);
+                break;
+            }
+          });
+          _fetchData();
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? selectedBg : Colors.transparent,
+            border: isLast ? null : Border(right: BorderSide(color: borderColor)),
+            borderRadius: BorderRadius.horizontal(
+              left: isFirst ? const Radius.circular(8) : Radius.zero,
+              right: isLast ? const Radius.circular(8) : Radius.zero,
+            ),
+          ),
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: isSelected ? textColor : mutedColor,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              fontSize: 13,
+            ),
           ),
         ),
       ),
@@ -435,10 +443,11 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
                 _showNumbers = val;
               });
             },
+            activeTrackColor: AppColors.kcPrimaryColor.withValues(alpha: 0.5),
             activeThumbColor: AppColors.kcPrimaryColor,
           ),
           Text('Show #', style: TextStyle(color: _showNumbers ? textColor : mutedColor, fontSize: 12)),
-          const SizedBox(width: 16),
+          const SizedBox(width: 24),
           Text('Daily', style: TextStyle(color: !_isMonthlyWeeklyView ? textColor : mutedColor, fontSize: 12)),
           Switch(
             value: _isMonthlyWeeklyView,
@@ -447,6 +456,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
                 _isMonthlyWeeklyView = val;
               });
             },
+            activeTrackColor: AppColors.kcPrimaryColor.withValues(alpha: 0.5),
             activeThumbColor: AppColors.kcPrimaryColor,
           ),
           Text('Weekly', style: TextStyle(color: _isMonthlyWeeklyView ? textColor : mutedColor, fontSize: 12)),
@@ -519,7 +529,7 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
     if (_viewType == CapacityViewType.quarterly && !_isQuarterlyMonthlyView) {
       minTableWidth = 1200; // Increased for 13 weeks
     } else if (_viewType == CapacityViewType.monthly) {
-      minTableWidth = 900;
+      minTableWidth = _isMonthlyWeeklyView ? 1000 : 1800;
     } else if (_viewType == CapacityViewType.weekly) {
       minTableWidth = 800;
     } else if (_viewType == CapacityViewType.quarterly && _isQuarterlyMonthlyView) {
@@ -573,16 +583,25 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
         ];
       }
     } else if (_viewType == CapacityViewType.monthly) {
-      children = [
-        _col(2, totalWidth, 9, Text('Team Member', style: headerStyle)),
-        _col(1, totalWidth, 9, Text('Billability %', style: headerStyle, textAlign: TextAlign.center)),
-        _col(1, totalWidth, 9, Column(children: [Text('W1', style: headerStyle), Text('May 1-1', style: headerStyle.copyWith(fontSize: 9, fontWeight: FontWeight.normal))])),
-        _col(1, totalWidth, 9, Column(children: [Text('W2', style: headerStyle), Text('May 4-8', style: headerStyle.copyWith(fontSize: 9, fontWeight: FontWeight.normal))])),
-        _col(1, totalWidth, 9, Column(children: [Text('W3', style: headerStyle), Text('May 11-15', style: headerStyle.copyWith(fontSize: 9, fontWeight: FontWeight.normal))])),
-        _col(1, totalWidth, 9, Column(children: [Text('W4', style: headerStyle), Text('May 18-22', style: headerStyle.copyWith(fontSize: 9, fontWeight: FontWeight.normal))])),
-        _col(1, totalWidth, 9, Column(children: [Text('W5', style: headerStyle), Text('May 25-29', style: headerStyle.copyWith(fontSize: 9, fontWeight: FontWeight.normal))])),
-        _col(2, totalWidth, 9, Text('Monthly Summary', style: headerStyle, textAlign: TextAlign.center)),
-      ];
+      if (_isMonthlyWeeklyView) {
+        children = [
+          _col(2, totalWidth, 10, Text('Team Member', style: headerStyle)),
+          _col(1, totalWidth, 10, Text('Billability %', style: headerStyle, textAlign: TextAlign.center)),
+          _col(1, totalWidth, 10, Column(children: [Text('W1', style: headerStyle), Text('Aug 3–7', style: headerStyle.copyWith(fontSize: 9, fontWeight: FontWeight.normal))])),
+          _col(1, totalWidth, 10, Column(children: [Text('W2', style: headerStyle), Text('Aug 10–14', style: headerStyle.copyWith(fontSize: 9, fontWeight: FontWeight.normal))])),
+          _col(1, totalWidth, 10, Column(children: [Text('W3', style: headerStyle), Text('Aug 17–21', style: headerStyle.copyWith(fontSize: 9, fontWeight: FontWeight.normal))])),
+          _col(1, totalWidth, 10, Column(children: [Text('W4', style: headerStyle), Text('Aug 24–28', style: headerStyle.copyWith(fontSize: 9, fontWeight: FontWeight.normal))])),
+          _col(1, totalWidth, 10, Column(children: [Text('W5', style: headerStyle), Text('Aug 31–31', style: headerStyle.copyWith(fontSize: 9, fontWeight: FontWeight.normal))])),
+          _col(2, totalWidth, 10, Text('Monthly Summary', style: headerStyle, textAlign: TextAlign.center)),
+        ];
+      } else {
+        children = [
+          _col(3, totalWidth, 40, Text('Team Member', style: headerStyle)),
+          _col(2, totalWidth, 40, Text('Billability %', style: headerStyle, textAlign: TextAlign.center)),
+          ...List.generate(31, (i) => _col(1, totalWidth, 40, Text('${i + 1}', style: headerStyle, textAlign: TextAlign.center))),
+          _col(4, totalWidth, 40, Text('Monthly Summary', style: headerStyle, textAlign: TextAlign.center)),
+        ];
+      }
     } else if (_viewType == CapacityViewType.weekly) {
       children = [
         _col(2, totalWidth, 9, Text('Team Member', style: headerStyle)),
@@ -618,10 +637,19 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
 
   Widget _buildBlock(String text, Color color) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4)),
-      child: Text(text, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 12)),
+      margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+      height: 28,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      alignment: Alignment.center,
+      child: _showNumbers && text.isNotEmpty
+          ? Text(
+              text,
+              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+            )
+          : null,
     );
   }
 
@@ -662,10 +690,10 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
         children = [
           _col(2, totalWidth, 9, Text(userName, style: textStyle)),
           _col(1, totalWidth, 9, Text(billabilityText, style: TextStyle(color: billabilityColor, fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
-          _col(1, totalWidth, 9, _buildBlock('176', redBg)),
-          _col(2, totalWidth, 9, Row(children: [Expanded(flex: 2, child: _buildBlock('120', activeColor)), Expanded(flex: 1, child: _buildBlock('48', redBg))])),
-          _col(1, totalWidth, 9, _buildBlock('176', activeColor)),
-          _col(2, totalWidth, 9, Row(children: [Expanded(child: _buildBlock('296', activeColor)), Expanded(child: _buildBlock('224', redBg))])),
+          _col(1, totalWidth, 9, _buildBlock('176h', redBg)),
+          _col(2, totalWidth, 9, Row(children: [Expanded(flex: 2, child: _buildBlock('120h', activeColor)), Expanded(flex: 1, child: _buildBlock('48h', redBg))])),
+          _col(1, totalWidth, 9, _buildBlock('176h', activeColor)),
+          _col(2, totalWidth, 9, Row(children: [Expanded(child: _buildBlock('296h', activeColor)), Expanded(child: _buildBlock('224h', redBg))])),
         ];
       } else {
         children = [
@@ -674,36 +702,41 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
           _col(5, totalWidth, 20, Row(children: List.generate(5, (index) => Expanded(child: _buildEmptyBlock(redBg, '$userName • W${index + 1} • Apr\nBillable: 40h\nInternal: 0h\nAvailable: 0h'))))),
           _col(4, totalWidth, 20, Row(children: List.generate(4, (index) => Expanded(child: _buildEmptyBlock(activeColor, '$userName • W${index + 6} • May\nBillable: 40h\nInternal: 0h\nAvailable: 0h'))))),
           _col(4, totalWidth, 20, Row(children: List.generate(4, (index) => Expanded(child: _buildEmptyBlock(activeColor, '$userName • W${index + 10} • Jun\nBillable: 40h\nInternal: 0h\nAvailable: 0h'))))),
-          _col(2, totalWidth, 20, Row(children: [Expanded(child: _buildBlock('296', activeColor)), Expanded(child: _buildBlock('224', redBg))])),
+          _col(2, totalWidth, 20, Row(children: [Expanded(child: _buildBlock('296h', activeColor)), Expanded(child: _buildBlock('224h', redBg))])),
         ];
       }
     } else if (_viewType == CapacityViewType.monthly) {
-      children = [
-        _col(2, totalWidth, 9, Text(userName, style: textStyle)),
-        _col(1, totalWidth, 9, Text('71%', style: TextStyle(color: activeColor, fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
-        _col(1, totalWidth, 9, _buildBlock('8', redBg)),
-        _col(1, totalWidth, 9, _buildBlock('40', redBg)),
-        _col(1, totalWidth, 9, _buildBlock('40', activeColor)),
-        _col(1, totalWidth, 9, _buildBlock('40', activeColor)),
-        _col(1, totalWidth, 9, _buildBlock('40', activeColor)),
-        _col(2, totalWidth, 9, Row(children: [Expanded(flex: 2, child: _buildBlock('120', activeColor)), Expanded(flex: 1, child: _buildBlock('48', redBg))])),
-      ];
+      if (_isMonthlyWeeklyView) {
+        children = [
+          _col(2, totalWidth, 10, Text(userName, style: textStyle)),
+          _col(1, totalWidth, 10, Text(billabilityText, style: TextStyle(color: billabilityColor, fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
+          ...List.generate(5, (i) => _col(1, totalWidth, 10, _buildBlock('168h', i % 2 == 0 ? activeColor : redBg))),
+          _col(2, totalWidth, 10, Row(children: [Expanded(flex: 2, child: _buildBlock('120h', activeColor)), Expanded(flex: 1, child: _buildBlock('48h', redBg))])),
+        ];
+      } else {
+        children = [
+          _col(3, totalWidth, 40, Text(userName, style: textStyle)),
+          _col(2, totalWidth, 40, Text(billabilityText, style: TextStyle(color: billabilityColor, fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
+          ...List.generate(31, (i) => _col(1, totalWidth, 40, _buildBlock((i + 1) % 7 == 0 || (i + 1) % 7 == 6 ? '' : '8h', (i + 1) % 7 == 0 || (i + 1) % 7 == 6 ? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9)) : activeColor))),
+          _col(4, totalWidth, 40, Row(children: [Expanded(flex: 2, child: _buildBlock('120h', activeColor)), Expanded(flex: 1, child: _buildBlock('48h', redBg))])),
+        ];
+      }
     } else if (_viewType == CapacityViewType.weekly) {
       children = [
         _col(2, totalWidth, 9, Text(userName, style: textStyle)),
         _col(1, totalWidth, 9, Text('100%', style: TextStyle(color: activeColor, fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
-        _col(1, totalWidth, 9, _buildBlock('8', activeColor)),
-        _col(1, totalWidth, 9, _buildBlock('8', activeColor)),
-        _col(1, totalWidth, 9, _buildBlock('8', activeColor)),
-        _col(1, totalWidth, 9, _buildBlock('8', activeColor)),
-        _col(1, totalWidth, 9, _buildBlock('8', activeColor)),
+        _col(1, totalWidth, 9, _buildBlock('8h', activeColor)),
+        _col(1, totalWidth, 9, _buildBlock('8h', activeColor)),
+        _col(1, totalWidth, 9, _buildBlock('8h', activeColor)),
+        _col(1, totalWidth, 9, _buildBlock('8h', activeColor)),
+        _col(1, totalWidth, 9, _buildBlock('8h', activeColor)),
         _col(1, totalWidth, 9, Text('40h', style: textStyle, textAlign: TextAlign.center)),
       ];
     } else if (_viewType == CapacityViewType.custom) {
       children = [
         _col(2, totalWidth, 7, Text(userName, style: textStyle)),
         _col(2, totalWidth, 7, Text('75%', style: TextStyle(color: activeColor, fontWeight: FontWeight.bold), textAlign: TextAlign.center)),
-        _col(3, totalWidth, 7, Row(children: [Expanded(flex: 2, child: _buildBlock('120', activeColor)), Expanded(flex: 1, child: _buildBlock('48', redBg))])),
+        _col(3, totalWidth, 7, Row(children: [Expanded(flex: 2, child: _buildBlock('120h', activeColor)), Expanded(flex: 1, child: _buildBlock('48h', redBg))])),
       ];
     }
 
