@@ -9,6 +9,7 @@ import 'package:core/core/dependency_injection/modules/firebase_module.dart';
 import 'package:core/core/dependency_injection/modules/payments_module.dart';
 import 'package:core/core/dependency_injection/modules/settings_module.dart';
 import 'package:core/core/dependency_injection/modules/taskhub_module.dart';
+import 'package:core/core/dependency_injection/modules/capacity_planner_module.dart';
 import 'package:get_it/get_it.dart';
 import 'package:core/core/dependency_injection/modules/project_module.dart';
 
@@ -21,7 +22,7 @@ Future<void> init() async {
   registerProjectModule(sl);
   registerTaskHubModule(sl);
   registerSettingsModule(sl);
-
+  registerCapacityPlannerModule(sl);
 
   if (FeatureFlags.enableFirebase) {
     registerFirebaseModule(sl);

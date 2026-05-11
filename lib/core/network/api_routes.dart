@@ -149,4 +149,7 @@ class ApiRoutes {
   static String userTagDetail(int tagId) => '$base/api/user-tags/$tagId';
   static String userTagProjects(int tagId) => '$base/api/user-tags/$tagId/projects';
   static String get userProjectTags => '$base/api/user-project-tags';
+
+  // Capacity Planner
+  static String get capacityPlans => '$base/api/capacity-plans';
 }

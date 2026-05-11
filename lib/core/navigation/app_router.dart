@@ -49,6 +49,8 @@ import 'package:core/features/projects/presentation/screens/project_detail_scree
 import 'package:core/features/projects/domain/entities/project_entity.dart';
 import 'package:core/features/taskhub/presentation/screens/task_hub_screen.dart';
 import 'package:core/features/settings/presentation/screens/settings_screen.dart';
+import 'package:core/features/capacity_planner/presentation/pages/capacity_planner_screen.dart';
+import 'package:core/features/capacity_planner/presentation/bloc/capacity_planner_bloc.dart';
 
 
 /// Navigator key used by GoRouter to show dialogs outside the current route context.
@@ -113,8 +115,11 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.capacityPlanner,
-        pageBuilder: (_, state) => const NoTransitionPage<Widget>(
-          child: _DarkPlaceholderScreen(title: 'Capacity Planner Screen'),
+        pageBuilder: (_, state) => NoTransitionPage<Widget>(
+          child: BlocProvider(
+            create: (context) => sl<CapacityPlannerBloc>(),
+            child: const CapacityPlannerScreen(),
+          ),
         ),
       ),
       GoRoute(
