@@ -1,4 +1,6 @@
 import 'package:core/core/theme/app_colors.dart';
+import 'package:core/features/auth/domain/entities/user_entity.dart';
+import 'package:core/features/projects/domain/entities/project_entity.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,6 +10,8 @@ import 'package:core/features/capacity_planner/presentation/bloc/capacity_planne
 import 'package:core/features/capacity_planner/domain/entities/capacity_plan_entity.dart';
 import 'package:core/core/widgets/custom_app_bar.dart';
 import 'package:core/core/widgets/template_feature_drawer.dart';
+import 'package:core/features/capacity_planner/presentation/widgets/add_allocation_dialog.dart';
+
 
 class CapacityPlannerScreen extends StatefulWidget {
   const CapacityPlannerScreen({super.key});
@@ -44,11 +48,29 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
       backgroundColor: backgroundColor,
       drawer: const TemplateFeatureDrawer(),
       appBar: const CustomAppBar(title: 'Capacity Planner'),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Add Allocation', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        backgroundColor: AppColors.kcPrimaryColor,
+      floatingActionButton:
+          BlocBuilder<CapacityPlannerBloc, CapacityPlannerState>(
+            builder: (context, state) {
+              if (state is CapacityPlannerLoaded) {
+                return FloatingActionButton.extended(
+                  onPressed: () => _showAddAllocationDialog(
+                    context,
+                    state.users,
+                    state.projects,
+                  ),
+                  icon: const Icon(Icons.add, color: Colors.white),
+                  label: const Text(
+                    'Add Allocation',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  backgroundColor: AppColors.kcPrimaryColor,
+                );
+              }
+              return const SizedBox.shrink();
+            },
       ),
       body: BlocBuilder<CapacityPlannerBloc, CapacityPlannerState>(
         builder: (context, state) {
@@ -62,6 +84,18 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
           return const SizedBox.shrink();
         },
       ),
+    );
+  }
+
+  void _showAddAllocationDialog(
+    BuildContext context,
+    List<UserEntity> users,
+    List<ProjectEntity> projects,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) =>
+          AddAllocationDialog(members: users, projects: projects),
     );
   }
 

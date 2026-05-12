@@ -21,5 +21,11 @@ void registerCapacityPlannerModule(GetIt sl) {
   sl.registerLazySingleton(() => GetCapacityPlansUseCase(sl()));
 
   // Blocs
-  sl.registerFactory(() => CapacityPlannerBloc(getCapacityPlansUseCase: sl()));
+  sl.registerFactory(
+    () => CapacityPlannerBloc(
+      getCapacityPlansUseCase: sl(),
+      getAllUsersUseCase: sl(),
+      getProjectsUseCase: sl(),
+    ),
+  );
 }
