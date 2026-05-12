@@ -16,3 +16,24 @@ class LoadCapacityPlans extends CapacityPlannerEvent {
   @override
   List<Object?> get props => [startDate, endDate];
 }
+
+class CreateCapacityPlan extends CapacityPlannerEvent {
+  final String userId;
+  final int projectId;
+  final DateTime startDate;
+  final DateTime? endDate;
+  final bool isOngoing;
+  final String hoursPerDay;
+
+  const CreateCapacityPlan({
+    required this.userId,
+    required this.projectId,
+    required this.startDate,
+    this.endDate,
+    required this.isOngoing,
+    required this.hoursPerDay,
+  });
+
+  @override
+  List<Object?> get props => [userId, projectId, startDate, endDate, isOngoing, hoursPerDay];
+}

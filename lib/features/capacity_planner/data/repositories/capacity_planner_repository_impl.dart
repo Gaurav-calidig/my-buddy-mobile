@@ -17,4 +17,23 @@ class CapacityPlannerRepositoryImpl implements CapacityPlannerRepository {
       endDate: endDate,
     );
   }
+
+  @override
+  Future<void> createCapacityPlan({
+    required String userId,
+    required int projectId,
+    required DateTime startDate,
+    required DateTime? endDate,
+    required bool isOngoing,
+    required String hoursPerDay,
+  }) async {
+    return await remoteDataSource.createCapacityPlan(
+      userId: userId,
+      projectId: projectId,
+      startDate: startDate,
+      endDate: endDate,
+      isOngoing: isOngoing,
+      hoursPerDay: hoursPerDay,
+    );
+  }
 }

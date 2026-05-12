@@ -7,11 +7,13 @@ import 'package:intl/intl.dart';
 class AddAllocationDialog extends StatefulWidget {
   final List<UserEntity> members;
   final List<ProjectEntity> projects;
+  final Function(String userId, int projectId, DateTime startDate, DateTime? endDate, bool isOngoing, String hoursPerDay) onAdd;
 
   const AddAllocationDialog({
     super.key,
     required this.members,
     required this.projects,
+    required this.onAdd,
   });
 
   @override
@@ -272,8 +274,21 @@ class _AddAllocationDialogState extends State<AddAllocationDialog> {
                     const SizedBox(width: 12),
                     ElevatedButton(
                       onPressed: () {
-                        // Handle Add
-                        Navigator.pop(context);
+                        if (_selectedMember != null && _selectedProject != null) {
+                          widget.onAdd(
+                            _selectedMember!.id,
+                            _selectedProject!.id,
+                            _startDate,
+                            _isOngoing ? null : (_useEndDate ? _endDate : _startDate.add(Duration(days: _numberOfDays))),
+                            _isOngoing,
+                            _hoursPerDay,
+                          );
+                          Navigator.pop(context);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please select a member and project')),
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isDark ? const Color(0xFF334F9A) : AppColors.kcPrimaryColor,
