@@ -11,7 +11,7 @@ import 'package:core/features/taskhub/domain/enums/task_board_type.dart';
 import 'package:core/features/taskhub/presentation/bloc/task_hub_cubit.dart';
 import 'package:core/features/taskhub/presentation/bloc/task_hub_state.dart';
 import 'package:core/features/taskhub/presentation/widgets/task_status_column.dart';
-import 'package:core/features/taskhub/presentation/widgets/task_hub_task_dialog.dart';
+import 'package:core/features/taskhub/presentation/screens/task_hub_task_screen.dart';
 import 'package:core/features/taskhub/presentation/widgets/manage_states_dialog.dart';
 import 'package:core/features/taskhub/presentation/widgets/manage_sprints_dialog.dart';
 import 'package:core/features/taskhub/presentation/widgets/export_tasks_dialog.dart';
@@ -338,19 +338,44 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
 
   void _onTaskTap(BuildContext context, TaskEntity task) async {
     final cubit = context.read<TaskHubCubit>();
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => BlocProvider.value(
-        value: cubit,
-        child: TaskHubTaskDialog(
-          task: task,
-          project: widget.project,
-          boardType: cubit.state.boardType,
-          columns: cubit.state.columns,
-          defaultColumnId: task.columnId,
-          allTasks: cubit.state.tasksByColumnId.values.expand((x) => x).toList(),
-          sprints: cubit.state.sprints,
-          initialSprintId: task.sprintId,
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(
+          value: cubit,
+          child: TaskHubTaskScreen(
+            task: task,
+            project: widget.project,
+            boardType: cubit.state.boardType,
+            columns: cubit.state.columns,
+            defaultColumnId: task.columnId,
+            allTasks: cubit.state.tasksByColumnId.values.expand((x) => x).toList(),
+            sprints: cubit.state.sprints,
+            initialSprintId: task.sprintId,
+          ),
+        ),
+      ),
+    );
+    if (result == true) {
+      cubit.load(boardType: cubit.state.boardType);
+    }
+
+  }
+
+    void _onAddTask(BuildContext context, BoardColumnEntity column) async {
+    final cubit = context.read<TaskHubCubit>();
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (ctx) => BlocProvider.value(
+          value: cubit,
+          child: TaskHubTaskScreen(
+            project: widget.project,
+            boardType: cubit.state.boardType,
+            columns: cubit.state.columns,
+            defaultColumnId: column.id,
+            allTasks: cubit.state.tasksByColumnId.values.expand((x) => x).toList(),
+            sprints: cubit.state.sprints,
+            initialSprintId: cubit.state.selectedSprintId == -1 ? null : cubit.state.selectedSprintId,
+          ),
         ),
       ),
     );
@@ -359,29 +384,7 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
     }
   }
 
-  void _onAddTask(BuildContext context, BoardColumnEntity column) async {
-    final cubit = context.read<TaskHubCubit>();
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => BlocProvider.value(
-        value: cubit,
-        child: TaskHubTaskDialog(
-          project: widget.project,
-          boardType: cubit.state.boardType,
-          columns: cubit.state.columns,
-          defaultColumnId: column.id,
-          allTasks: cubit.state.tasksByColumnId.values.expand((x) => x).toList(),
-          sprints: cubit.state.sprints,
-          initialSprintId: cubit.state.selectedSprintId == -1
-              ? null
-              : cubit.state.selectedSprintId,
-        ),
-      ),
-    );
-    if (result == true) {
-      cubit.load(boardType: cubit.state.boardType);
-    }
-  }
+
 
   void _onAddColumn(BuildContext context) async {
     final nameController = TextEditingController();

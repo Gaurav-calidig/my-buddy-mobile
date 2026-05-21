@@ -2,21 +2,26 @@
 
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:file_saver/file_saver.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:logger/logger.dart';
 import 'package:mime/mime.dart';
+import 'package:open_filex/open_filex.dart';
 import 'package:path/path.dart';
 
 import 'package:core/core/constants/pref_keys.dart';
 import 'package:core/core/offline_sync/offline_api_request.dart';
 import 'package:core/core/offline_sync/offline_api_sync_service.dart';
+import 'package:path_provider/path_provider.dart';
 import 'api_routes.dart';
 import 'crashlog_model.dart';
 
@@ -445,6 +450,88 @@ class ApiService {
     );
   }
 
+
+  Future<String> downloadFile(
+  String url,
+  String fileName, {
+  void Function(double progress)? onProgress,
+}) async {
+  _syncBaseUrl();
+
+  final dir = await getApplicationDocumentsDirectory();
+  final savePath = '${dir.path}/$fileName';
+
+  await _dio.download(
+    url,
+    savePath,
+    onReceiveProgress: (received, total) {
+      if (onProgress != null && total > 0) {
+        onProgress(received / total);
+      }
+    },
+  );
+
+  return savePath;
+}
+
+Future<void> downloadAndOpenFile(
+  BuildContext context, {
+  required String url,
+  required String fileName,
+}) async {
+  try {
+    final response = await _dio.get<List<int>>(
+      url,
+      options: Options(
+        responseType: ResponseType.bytes,
+      ),
+    );
+
+    final bytes = Uint8List.fromList(response.data!);
+
+    final extension = fileName.contains('.')
+        ? fileName.split('.').last
+        : 'pdf';
+
+    final name = fileName.replaceAll('.$extension', '');
+
+    final mime = lookupMimeType(fileName) ?? 'application/octet-stream';
+
+final savedPath = await FileSaver.instance.saveFile(
+  name: fileName.split('.').first,
+  bytes: bytes,
+  fileExtension: fileName.split('.').last,
+  mimeType: MimeType.custom,
+  customMimeType:
+      lookupMimeType(fileName) ?? 'application/octet-stream',
+);
+
+  final result = await OpenFilex.open(savedPath);
+
+if (!context.mounted) return;
+
+if (result.type == ResultType.done) {
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      const SnackBar(
+        content: Text('File opened successfully'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+}
+  } catch (e) {
+    debugPrint('DOWNLOAD ERROR: $e');
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Could not download file'),
+      ),
+    );
+  }
+}
 
 }
 

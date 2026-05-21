@@ -12,7 +12,6 @@ import 'package:core/core/utils/date_time_utils.dart';
 import 'package:core/core/theme/date_format_cubit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:core/features/settings/presentation/bloc/user_tag_bloc.dart';
-import 'package:core/features/settings/domain/entities/user_tag_entity.dart';
 
 class ProjectsTable extends StatelessWidget {
   final List<ProjectEntity> projects;
@@ -34,71 +33,81 @@ class ProjectsTable extends StatelessWidget {
     final headerBg = isDark ? const Color(0xFF142548) : AppColors.kcPrimaryColor.withValues(alpha: 0.1);
     final headerTextColor = isDark ? const Color(0xFFA5B9DE) : AppColors.kcLightTextSecondary;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: panel,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: border.withValues(alpha: 0.7)),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: Scrollbar(
-          thumbVisibility: true,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: 1000,
-              child: Scrollbar(
-                thumbVisibility: true,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: <Widget>[
-                      Container(
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: headerBg,
-                          border: Border(
-                            bottom: BorderSide(
-                              color: border.withValues(alpha: 0.5),
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        final isSuperAdmin =
+            authState is AuthSuccess && authState.user.portalRole == 'super_admin';
+        final actionWidth = isSuperAdmin ? 250.0 : 170.0;
+        final tableWidth = 30 + 250 + 110 + 90 + 90 + 70 + 110 + actionWidth;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: panel,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: border.withValues(alpha: 0.7)),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: tableWidth,
+                  child: Scrollbar(
+                    thumbVisibility: true,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: <Widget>[
+                          Container(
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: headerBg,
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: border.withValues(alpha: 0.5),
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              children: <Widget>[
+                                const _HeadCell(width: 30, label: ''),
+                                _HeadCell(width: 250, label: 'Project Name', color: headerTextColor),
+                                _HeadCell(width: 110, label: 'Billable', alignment: TextAlign.center, color: headerTextColor),
+                                _HeadCell(width: 90, label: 'Members', alignment: TextAlign.center, color: headerTextColor),
+                                _HeadCell(width: 90, label: 'Assets', alignment: TextAlign.center, color: headerTextColor),
+                                _HeadCell(width: 70, label: 'Tags', alignment: TextAlign.center, color: headerTextColor),
+                                _HeadCell(width: 110, label: 'Created', alignment: TextAlign.center, color: headerTextColor),
+                                _HeadCell(width: actionWidth, label: 'Action', color: headerTextColor),
+                              ],
                             ),
                           ),
-                        ),
-                        child: Row(
-                          children: <Widget>[
-                            const _HeadCell(width: 30, label: ''),
-                            _HeadCell(width: 250, label: 'Project Name', color: headerTextColor),
-                            _HeadCell(width: 110, label: 'Billable', alignment: TextAlign.center, color: headerTextColor),
-                            _HeadCell(width: 90, label: 'Members', alignment: TextAlign.center, color: headerTextColor),
-                            _HeadCell(width: 90, label: 'Assets', alignment: TextAlign.center, color: headerTextColor),
-                            _HeadCell(width: 70, label: 'Tags', alignment: TextAlign.center, color: headerTextColor),
-                            _HeadCell(width: 110, label: 'Created', alignment: TextAlign.center, color: headerTextColor),
-                            _HeadCell(width: 250, label: 'Action', color: headerTextColor),
-                          ],
-                        ),
+                          if (projects.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Text(
+                                'No projects found',
+                                style: TextStyle(color: isDark ? const Color(0xFF9EB4DA) : AppColors.kcLightTextMuted),
+                              ),
+                            )
+                          else
+                            ...projects.map(
+                              (project) => ProjectTableRow(
+                                project: project,
+                                tagState: tagState,
+                                actionWidth: actionWidth,
+                              ),
+                            ),
+                        ],
                       ),
-                      if (projects.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Text(
-                            'No projects found',
-                            style: TextStyle(color: isDark ? const Color(0xFF9EB4DA) : AppColors.kcLightTextMuted),
-                          ),
-                        )
-                      else
-                        ...projects.map(
-                          (project) => ProjectTableRow(
-                            project: project,
-                            tagState: tagState,
-                          ),
-                        ),
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -138,10 +147,12 @@ class ProjectTableRow extends StatelessWidget {
     super.key,
     required this.project,
     required this.tagState,
+    required this.actionWidth,
   });
 
   final ProjectEntity project;
   final UserTagState tagState;
+  final double actionWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -295,7 +306,7 @@ class ProjectTableRow extends StatelessWidget {
               ),
             ),
             SizedBox(
-              width: 250,
+              width: actionWidth,
               child: BlocBuilder<AuthBloc, AuthState>(
                 builder: (context, authState) {
                   final isSuperAdmin = authState is AuthSuccess &&

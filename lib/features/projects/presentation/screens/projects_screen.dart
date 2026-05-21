@@ -1,6 +1,5 @@
 import 'package:core/core/widgets/custom_app_bar.dart';
 import 'package:core/core/widgets/template_feature_drawer.dart';
-import 'package:core/core/dependency_injection/injection_container.dart';
 import 'package:core/core/theme/app_colors.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
 import 'package:core/features/projects/presentation/bloc/project_bloc.dart';
@@ -15,7 +14,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/features/projects/presentation/widgets/project_card.dart';
 import 'package:core/features/projects/presentation/widgets/project_list_item.dart';
 import 'package:core/features/settings/presentation/bloc/user_tag_bloc.dart';
-import 'package:core/features/settings/domain/entities/user_tag_entity.dart';
 
 class ProjectsScreen extends StatefulWidget {
   const ProjectsScreen({super.key});
@@ -213,25 +211,37 @@ class ProjectsView extends StatelessWidget {
                 border: Border.all(color: border.withValues(alpha: 0.65)),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: TextField(
-                controller: searchController,
-                onChanged: onSearchChanged,
-                style: TextStyle(color: isDark ? const Color(0xFFDCE8FF) : AppColors.kcLightTitle, fontSize: 15),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  prefixIcon: Icon(
-                    Icons.search,
-                    size: 18,
-                    color: isDark ? const Color(0xFF7F95BE) : AppColors.kcLightTextSecondary,
+           child: TextField(
+                  controller: searchController,
+                  onChanged: onSearchChanged,
+                  textAlignVertical: TextAlignVertical.center,
+                  style: TextStyle(
+                    color: isDark
+                        ? const Color(0xFFDCE8FF)
+                        : AppColors.kcLightTitle,
+                    fontSize: 15,
                   ),
-                  hintText: 'Search projects...',
-                  hintStyle: TextStyle(color: hintColor, fontSize: 15),
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 8,
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    prefixIcon: Icon(
+                      Icons.search,
+                      size: 18,
+                      color: isDark
+                          ? const Color(0xFF7F95BE)
+                          : AppColors.kcLightTextSecondary,
+                    ),
+                    hintText: 'Search projects...',
+                    isDense: true,
+                    hintStyle: TextStyle(
+                      color: hintColor,
+                      fontSize: 15,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 8,
+                    ),
                   ),
                 ),
-              ),
             );
 
             final createButton = isSuperAdmin
@@ -377,6 +387,10 @@ class ProjectsView extends StatelessWidget {
       final allProjects = (state as ProjectLoaded).projects;
       final projects = filterProjects(allProjects);
 
+      if (allProjects.isEmpty) {
+        return _noProjectsYetCard(panel: panel, border: border, isDark: isDark);
+      }
+
       if (isListView) {
         return ProjectsTable(
           projects: projects,
@@ -389,6 +403,72 @@ class ProjectsView extends StatelessWidget {
       }
     }
     return const SizedBox();
+  }
+
+  static Widget _noProjectsYetCard({
+    required Color panel,
+    required Color border,
+    required bool isDark,
+  }) {
+    final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final subTitleColor = isDark ? const Color(0xFFA9BDE1) : AppColors.kcLightTextSecondary;
+    final iconBg = isDark ? const Color(0xFF152445) : AppColors.kcLightInput;
+    final iconColor = isDark ? const Color(0xFFBBD0F6) : AppColors.kcLightTextSecondary;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: panel,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: border.withValues(alpha: 0.7)),
+      ),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: border.withValues(alpha: 0.4)),
+                  ),
+                  child: Icon(
+                    Icons.folder_open_rounded,
+                    color: iconColor,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No projects yet',
+                  style: TextStyle(
+                    color: titleColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Create your first project to start managing assets\nand team members securely.',
+                  style: TextStyle(
+                    color: subTitleColor,
+                    fontSize: 13,
+                    height: 1.35,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   static Widget _viewToggle({

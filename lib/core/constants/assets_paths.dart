@@ -27,6 +27,7 @@ class AssetPaths {
   static const String securityBackground = 'assets/images/security-bg.jpg';
   static const String calidigLogo = 'assets/images/calidig-logo.svg';
   static const String secureOpsLogoText = 'assets/images/secureops-logo-text.png';
+  static const String secureOpsLogo = 'assets/images/secureops-logo.png';
 
   static const String heroAnimation = 'assets/animations/analytics.json';
   static const String dashboardAnimation = 'assets/animations/dashboard.json';

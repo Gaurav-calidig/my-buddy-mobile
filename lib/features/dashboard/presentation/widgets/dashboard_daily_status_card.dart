@@ -1,3 +1,4 @@
+import 'package:core/core/navigation/app_routes.dart';
 import 'package:core/features/dashboard/domain/entities/dashboard_highlights_entity.dart';
 import 'package:core/features/dashboard/presentation/widgets/dashboard_card_shell.dart';
 import 'package:core/features/dashboard/presentation/widgets/dashboard_entry_header.dart';
@@ -5,6 +6,7 @@ import 'package:core/features/dashboard/presentation/widgets/dashboard_entry_row
 import 'package:core/features/dashboard/presentation/widgets/dashboard_metric_tile.dart';
 import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class DashboardDailyStatusCard extends StatelessWidget {
   const DashboardDailyStatusCard({required this.highlights, super.key});
@@ -34,7 +36,7 @@ class DashboardDailyStatusCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'My Daily Status',
+                    'Daily Status Report',
                     style: TextStyle(
                       color: textColor,
                       fontSize: 14,
@@ -42,6 +44,23 @@ class DashboardDailyStatusCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                      InkWell(
+                  onTap: () {
+                    context.go(AppRoutes.myDsr);
+                  },
+                  child: Row(
+                    spacing: 5,
+                    children: [
+                      Text('View DSR', style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.kcDarkBorder
+                      ),),
+                      Icon(Icons.arrow_forward, fontWeight: FontWeight.w600, size: 16,
+                       color: AppColors.kcDarkBorder
+                      )
+                    ],
+                  ),
+                )
               ],
             ),
             const SizedBox(height: 8),

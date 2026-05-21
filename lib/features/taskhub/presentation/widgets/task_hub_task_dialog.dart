@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:core/core/dependency_injection/injection_container.dart';
+import 'package:core/core/network/api_service.dart';
 import 'package:core/core/theme/app_colors.dart';
 import 'package:core/core/utils/utils.dart';
 import 'package:core/core/widgets/custom_video_player.dart';
@@ -90,6 +91,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
   final _deleteAttachmentUseCase = sl<DeleteAttachmentUseCase>();
   final _createLinkUseCase = sl<CreateLinkUseCase>();
   final _deleteLinkUseCase = sl<DeleteLinkUseCase>();
+  final apiService = sl<ApiService>();
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
@@ -298,7 +300,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
         }
 
         if (!mounted) return;
-        Navigator.of(context).pop<TaskEntity>(created);
+        Navigator.of(context).pop(true);
       } else {
         final descriptionText = _descriptionController.text.trim();
         final descriptionHtml = descriptionText.isEmpty
@@ -331,7 +333,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
         }
 
         if (!mounted) return;
-        Navigator.of(context).pop<TaskEntity>(updated);
+        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (!mounted) return;
@@ -424,18 +426,34 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
       if (mounted) setState(() => _busy = false);
     }
   }
+Future<void> _downloadFile(String url, String fileName) async {
+  try {
+ await apiService.downloadAndOpenFile(
+  context,
+  url: url,
+  fileName: fileName,
+);
 
-  Future<void> _downloadFile(String url, String fileName) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Could not download file')));
-    }
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('File downloaded successfully'),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+
+    // print(path);
+  } catch (e) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Could not download file'),
+      ),
+    );
   }
+}
 
   Future<void> _deleteAttachment(int attachmentId) async {
     final confirm = await showDialog<bool>(

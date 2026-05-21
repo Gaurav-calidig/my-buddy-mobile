@@ -1,3 +1,4 @@
+import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -19,7 +20,7 @@ class OnboardingPagerBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isLast = pageIndex == totalPages - 1;
     return Container(
-      padding: EdgeInsets.fromLTRB(14.w, 8.h, 14.w, 12.h),
+      padding: EdgeInsets.fromLTRB(14.w, 14.h, 14.w, 14.h),
       decoration: BoxDecoration(
         color: const Color(0xFF031024).withValues(alpha: 0.92),
         border: const Border(top: BorderSide(color: Color(0x223D8BFF))),
@@ -63,7 +64,7 @@ class OnboardingPagerBar extends StatelessWidget {
             ),
             child: Text(
               isLast ? 'Get Started' : 'Next',
-              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5.sp),
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5.sp, color: AppColors.kcSecondaryColorLight),
             ),
           ),
         ],

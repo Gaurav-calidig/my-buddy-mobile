@@ -6,7 +6,7 @@
 class AppConstants {
   /// Base URL for development API endpoints
   //static const String devBaseUrl = 'https://example.com';
-  static const String devBaseUrl = 'https://busy-roland-comparative-daisy.trycloudflare.com'; 
+  static const String devBaseUrl = 'https://holmes-logo-assume-polymer.trycloudflare.com'; 
   //https://dummyjson.com';
 
   /// URL for the About Us page

@@ -84,7 +84,7 @@ class UploadFailedDialog extends StatelessWidget {
                     onPressed: () {
                       Navigator.of(context).pop();
                     },
-                    isOutlined: true,
+                    isOutlined: true, 
                     backgroundColor: AppColors.kcLightGreyColor,
                     textStyle: TextStyle(
                       color: Colors.black,

@@ -1,11 +1,13 @@
 import 'dart:math' as math;
 
+import 'package:core/core/navigation/app_routes.dart';
 import 'package:core/features/dashboard/domain/entities/dashboard_ams_leave_overview_entity.dart';
 import 'package:core/features/dashboard/presentation/widgets/dashboard_attendance_header_row.dart';
 import 'package:core/features/dashboard/presentation/widgets/dashboard_attendance_row.dart';
 import 'package:core/features/dashboard/presentation/widgets/dashboard_card_shell.dart';
 import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class DashboardAttendanceCard extends StatelessWidget {
   const DashboardAttendanceCard({required this.overview, super.key});
@@ -46,14 +48,31 @@ class DashboardAttendanceCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                Text(
-                  'Pending ${overview?.pendingApprovalCount ?? 0}',
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                InkWell(
+                  onTap: () {
+                    context.go(AppRoutes.attendance);
+                  },
+                  child: Row(
+                    spacing: 5,
+                    children: [
+                      Text('View AMS', style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.kcDarkBorder
+                      ),),
+                      Icon(Icons.arrow_forward, fontWeight: FontWeight.w600, size: 16,
+                       color: AppColors.kcDarkBorder
+                      )
+                    ],
                   ),
-                ),
+                )
+                // Text(
+                //   'Pending ${overview?.pendingApprovalCount ?? 0}',
+                //   style: TextStyle(
+                //     color: textColor,
+                //     fontSize: 12,
+                //     fontWeight: FontWeight.w700,
+                //   ),
+                // ),
               ],
             ),
             const SizedBox(height: 8),

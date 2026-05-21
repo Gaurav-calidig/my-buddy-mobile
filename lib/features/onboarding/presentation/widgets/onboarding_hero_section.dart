@@ -1,9 +1,11 @@
 import 'package:core/core/constants/assets_paths.dart';
 import 'package:core/core/dependency_injection/injection_container.dart';
+import 'package:core/core/theme/app_colors.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:core/features/auth/presentation/bloc/auth_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
 
@@ -71,13 +73,23 @@ class OnboardingHeroSection extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 26),
-                Image.asset(
-                  AssetPaths.secureOpsLogoText,
-                  width: 122,
-                  fit: BoxFit.contain,
+                 SizedBox(height: 18.h),
+                // Image.asset(
+                //   AssetPaths.secureOpsLogoText,
+                //   width: 122,
+                //   fit: BoxFit.contain,
+                // ),
+                Row(
+                  spacing: 8.w,
+                  children: [
+                    Icon(Icons.security, color: AppColors.kcDarkBorder,),
+                    Text("SecureOps", style: TextStyle(
+                      color: AppColors.kcDarkBorder,
+                      fontWeight: FontWeight.w600
+                    ),)
+                  ],
                 ),
-                const SizedBox(height: 16),
+                 SizedBox(height: 16.h),
                 const Text(
                   "Your Team's Secure",
                   style: TextStyle(
@@ -101,7 +113,7 @@ class OnboardingHeroSection extends StatelessWidget {
                   'Manage projects, track tasks, secure credentials, log daily work, and run sales operations - all in one role-controlled platform.',
                   style: TextStyle(
                     color: Color(0xFFDDE8F9),
-                    fontSize: 24,
+                    fontSize: 18,
                     height: 1.36,
                     fontWeight: FontWeight.w400,
                   ),
@@ -122,7 +134,7 @@ class OnboardingHeroSection extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  label: const Text('Get Started'),
+                  label: const Text('Get Started',),
                   icon: const Icon(Icons.arrow_forward, size: 16),
                 ),
                 const SizedBox(height: 14),
@@ -146,29 +158,30 @@ class OnboardingHeroSection extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 44),
-                const Center(
-                  child: Text(
-                    'Everything Your Team Needs',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 34,
-                      height: 1.1,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Six integrated modules working together to keep your operations secure, transparent, and productive.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFFCFDCF4),
-                    fontSize: 20,
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 16),
+                // const Center(
+                //   child: Text(
+                //     'Everything Your Team Needs',
+                //     textAlign: TextAlign.center,
+                //     style: TextStyle(
+                //       color: Colors.white,
+                //       fontSize: 34,
+                //       height: 1.1,
+                //       fontWeight: FontWeight.w800,
+                //     ),
+                //   ),
+                // ),
+                // const SizedBox(height: 12),
+                // const Text(
+                //   'Six integrated modules working together to keep your operations secure, transparent, and productive.',
+                //   textAlign: TextAlign.center,
+                //   style: TextStyle(
+                //     color: Color(0xFFCFDCF4),
+                //     fontSize: 20,
+                //     height: 1.35,
+                //   ),
+                // ),
+               
+                // const SizedBox(height: 16),
               ],
             ),
           ),

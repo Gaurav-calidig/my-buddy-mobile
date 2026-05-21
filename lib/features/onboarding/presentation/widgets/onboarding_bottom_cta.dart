@@ -1,3 +1,4 @@
+import 'package:core/core/theme/app_colors.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:core/features/auth/presentation/bloc/auth_event.dart';
 import 'package:flutter/material.dart';
@@ -63,13 +64,14 @@ class OnboardingBottomCta extends StatelessWidget {
               const SizedBox(height: 14),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
+                child: ElevatedButton.icon(
                   onPressed: (){
                         context.read<AuthBloc>().add(
                               const SignInWithGoogle(),
                             );
 
                   },
+                icon: Icon(Icons.arrow_forward, fontWeight: FontWeight.w700, color:AppColors.kcSecondaryColorLight),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(52),
                     backgroundColor: const Color(0xFF3D8BFF),
@@ -78,9 +80,10 @@ class OnboardingBottomCta extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  child: const Text(
-                    'Sign In Now   ->',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                  iconAlignment: IconAlignment.end,
+                  label: const Text(
+                    'Sign In Now',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: AppColors.kcSecondaryColorLight),
                   ),
                 ),
               ),

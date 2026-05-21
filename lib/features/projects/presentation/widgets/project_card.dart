@@ -260,7 +260,7 @@ class ProjectCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        '\$ Yes',
+        '\$ Biilable',
         style: TextStyle(
           color: isDark ? const Color(0xFF43D9A3) : const Color(0xFF00A36C),
           fontSize: 11,

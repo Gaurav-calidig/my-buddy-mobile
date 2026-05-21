@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_onboarding_slider/flutter_onboarding_slider.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class FlutterOnboardingSliderTestScreen extends StatelessWidget {
   const FlutterOnboardingSliderTestScreen({super.key});
@@ -27,12 +28,15 @@ class FlutterOnboardingSliderTestScreen extends StatelessWidget {
           borderRadius: BorderRadius.all(Radius.circular(14)),
         ),
       ),
-      skipTextButton: const Text(
-        'Skip',
-        style: TextStyle(
-          color: Colors.white70,
-          fontWeight: FontWeight.w600,
-          fontSize: 15,
+      skipTextButton: Padding(
+        padding: EdgeInsetsGeometry.only(top: 15.h),
+        child: const Text(
+          'Skip',
+          style: TextStyle(
+            color: Colors.white70,
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
         ),
       ),
       trailing: const Text(

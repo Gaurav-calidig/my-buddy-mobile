@@ -65,8 +65,8 @@ import GoogleMaps
     WorkmanagerPlugin.setPluginRegistrantCallback { registry in
       GeneratedPluginRegistrant.register(with: registry)
     }
-    WorkmanagerPlugin.registerTask(withIdentifier: "ios_sync_task")
-    WorkmanagerPlugin.registerTask(withIdentifier: "ios_cleanup_task")
+    WorkmanagerPlugin.registerBGProcessingTask(withIdentifier: "ios_sync_task")
+    WorkmanagerPlugin.registerBGProcessingTask(withIdentifier: "ios_cleanup_task")
     GeneratedPluginRegistrant.register(with: self)
     WorkmanagerPlugin.registerPeriodicTask(
       withIdentifier: "com.example.commonModule.backgroundLocationTask",

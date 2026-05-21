@@ -54,15 +54,12 @@ Future<void> main() async {
       WidgetsFlutterBinding.ensureInitialized();
       await SystemChrome.setPreferredOrientations(const <DeviceOrientation>[
         DeviceOrientation.portraitUp,
-        DeviceOrientation.portraitDown,
-        DeviceOrientation.landscapeRight,
-        DeviceOrientation.landscapeLeft,
       ]);
 
       await _initializeApplication();
       runApp(
         DevicePreview(
-          enabled: kDebugMode,
+          enabled: false,
           builder: (context) => const MyApp(),
         ),
        // MyApp(),
@@ -213,7 +210,10 @@ class MyApp extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color appChrome = isDark ? const Color(0xFF101C34) : AppColors.kcLightPage;
 
-    return Scaffold(backgroundColor: appChrome, body: child);
+    return Scaffold(
+        backgroundColor: appChrome,
+        body: SafeArea(child: child),
+      );
   }
 
   Widget _buildWithGoRouter(BuildContext context) {
@@ -267,6 +267,7 @@ class MyApp extends StatelessWidget {
           builder: (context, child) {
             final Widget previewChild = DevicePreview.appBuilder(
               context,
+            
               child ?? const SizedBox.shrink(),
             );
             return RepaintBoundary(
