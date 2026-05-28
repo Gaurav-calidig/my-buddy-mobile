@@ -1,12 +1,10 @@
 import 'package:core/features/projects/domain/entities/project_entity.dart';
 import 'package:core/features/taskhub/domain/enums/task_board_type.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/features/taskhub/domain/entities/task_entity.dart';
 import 'package:core/features/taskhub/domain/entities/board_column_entity.dart';
 import 'package:core/features/taskhub/domain/entities/sprint_entity.dart';
 import 'package:core/features/taskhub/presentation/widgets/task_hub_task_dialog.dart';
-import 'package:core/features/taskhub/presentation/bloc/task_hub_cubit.dart';
 
 class TaskHubTaskScreen extends StatelessWidget {
   const TaskHubTaskScreen({

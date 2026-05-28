@@ -117,17 +117,21 @@ class ProjectCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Expanded(
-                child: Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
+                child: Row(
                   children: <Widget>[
                     _pill('${project.memberCount} members', isDark),
+                    const SizedBox(width: 6),
+
                     _pill('${project.assetCount} assets', isDark),
-                    if (project.isBillable) _billablePill(isDark),
+
+                    if (project.isBillable) ...[
+                      const SizedBox(width: 6),
+                      _billablePill(isDark),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               BlocBuilder<DateFormatCubit, String>(
                 builder: (context, format) {
                   return Text(

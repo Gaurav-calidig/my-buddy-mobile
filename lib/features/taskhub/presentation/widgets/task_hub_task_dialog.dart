@@ -7,7 +7,6 @@ import 'package:core/core/utils/utils.dart';
 import 'package:core/core/widgets/custom_video_player.dart';
 import 'package:core/core/widgets/document_viewer.dart';
 import 'package:core/features/taskhub/domain/entities/sprint_entity.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
 import 'package:core/features/taskhub/domain/usecases/create_attachment_metadata_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/create_attachment_upload_url_usecase.dart';
@@ -15,11 +14,13 @@ import 'package:core/features/taskhub/domain/usecases/create_comment_usecase.dar
 import 'package:core/features/taskhub/domain/usecases/create_link_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/create_task_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/delete_attachment_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/delete_comment_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/delete_task_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/get_attachments_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/get_comments_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/get_links_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/get_project_assignees_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/update_comment_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/update_task_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/upload_to_presigned_url_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/delete_link_usecase.dart';
@@ -40,6 +41,18 @@ import 'package:core/core/theme/date_format_cubit.dart';
 import 'package:mime/mime.dart';
 
 enum TaskTicketType { task, bug }
+
+class TaskHubTaskSaveResult {
+  const TaskHubTaskSaveResult({
+    required this.taskId,
+    required this.taskNumber,
+    required this.created,
+  });
+
+  final int taskId;
+  final int taskNumber;
+  final bool created;
+}
 
 extension on TaskTicketType {
   String get apiValue => this == TaskTicketType.bug ? 'bug' : 'task';
@@ -88,6 +101,8 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
   final _updateTaskUseCase = sl<UpdateTaskUseCase>();
   final _deleteTaskUseCase = sl<DeleteTaskUseCase>();
   final _createCommentUseCase = sl<CreateCommentUseCase>();
+  final _updateCommentUseCase = sl<UpdateCommentUseCase>();
+  final _deleteCommentUseCase = sl<DeleteCommentUseCase>();
   final _deleteAttachmentUseCase = sl<DeleteAttachmentUseCase>();
   final _createLinkUseCase = sl<CreateLinkUseCase>();
   final _deleteLinkUseCase = sl<DeleteLinkUseCase>();
@@ -99,6 +114,7 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
   final ScrollController _scrollController = ScrollController();
 
   bool _busy = false;
+  bool _isFullView = false;
   TaskTicketType _ticketType = TaskTicketType.task;
   TaskPriority _priority = TaskPriority.medium;
   String? _assigneeId;
@@ -300,7 +316,13 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
         }
 
         if (!mounted) return;
-        Navigator.of(context).pop(true);
+        Navigator.of(context).pop(
+          TaskHubTaskSaveResult(
+            taskId: created.id,
+            taskNumber: created.taskNumber,
+            created: true,
+          ),
+        );
       } else {
         final descriptionText = _descriptionController.text.trim();
         final descriptionHtml = descriptionText.isEmpty
@@ -333,7 +355,13 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
         }
 
         if (!mounted) return;
-        Navigator.of(context).pop(true);
+        Navigator.of(context).pop(
+          TaskHubTaskSaveResult(
+            taskId: updated.id,
+            taskNumber: updated.taskNumber,
+            created: false,
+          ),
+        );
       }
     } catch (e) {
       if (!mounted) return;
@@ -426,34 +454,164 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
       if (mounted) setState(() => _busy = false);
     }
   }
-Future<void> _downloadFile(String url, String fileName) async {
-  try {
- await apiService.downloadAndOpenFile(
-  context,
-  url: url,
-  fileName: fileName,
-);
 
-    if (!mounted) return;
+  Future<void> _editComment(TaskCommentEntity comment) async {
+    final task = widget.task;
+    if (task == null || _busy) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('File downloaded successfully'),
-        duration: const Duration(seconds: 3),
+    final controller = TextEditingController(text: comment.content);
+    final content = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.kcDarkCard,
+        surfaceTintColor: Colors.transparent,
+        title: const Text(
+          'Edit comment',
+          style: TextStyle(
+            color: AppColors.kcDarkTextPrimary,
+            fontWeight: FontWeight.w800,
+            fontFamily: 'Outfit',
+          ),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          minLines: 3,
+          maxLines: 6,
+          style: const TextStyle(color: AppColors.kcDarkTextPrimary),
+          decoration: InputDecoration(
+            hintText: 'Update comment...',
+            hintStyle: const TextStyle(color: AppColors.kcDarkTextMuted),
+            filled: true,
+            fillColor: AppColors.kcDarkInputAlt,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.kcDarkPrimary,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Save'),
+          ),
+        ],
       ),
     );
+    controller.dispose();
 
-    // print(path);
-  } catch (e) {
-    if (!mounted) return;
+    if (content == null || content.isEmpty || content == comment.content) {
+      return;
+    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Could not download file'),
-      ),
-    );
+    setState(() => _busy = true);
+    try {
+      await _updateCommentUseCase(
+        projectId: widget.project.id,
+        taskId: task.id,
+        commentId: comment.id,
+        content: content,
+      );
+      await _reloadDetails();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to update comment: $e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
-}
+
+  Future<void> _deleteComment(TaskCommentEntity comment) async {
+    final task = widget.task;
+    if (task == null || _busy) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.kcDarkCard,
+        surfaceTintColor: Colors.transparent,
+        title: const Text(
+          'Delete comment?',
+          style: TextStyle(
+            color: AppColors.kcDarkTextPrimary,
+            fontWeight: FontWeight.w800,
+            fontFamily: 'Outfit',
+          ),
+        ),
+        content: const Text(
+          'This comment will be permanently deleted.',
+          style: TextStyle(color: AppColors.kcDarkTextSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7D1C1C),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _busy = true);
+    try {
+      await _deleteCommentUseCase(
+        projectId: widget.project.id,
+        taskId: task.id,
+        commentId: comment.id,
+      );
+      await _reloadDetails();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to delete comment: $e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _downloadFile(String url, String fileName) async {
+    try {
+      await apiService.downloadAndOpenFile(
+        context,
+        url: url,
+        fileName: fileName,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('File downloaded successfully'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+
+      // print(path);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Could not download file')));
+    }
+  }
 
   Future<void> _deleteAttachment(int attachmentId) async {
     final confirm = await showDialog<bool>(
@@ -583,10 +741,16 @@ Future<void> _downloadFile(String url, String fileName) async {
       view.viewInsets,
       view.devicePixelRatio,
     );
-    final dialogWidth = maxWidth < 720 ? maxWidth - 24 : 980.0;
+    final dialogWidth = _isFullView
+        ? maxWidth - 24
+        : maxWidth < 720
+        ? maxWidth - 24
+        : 980.0;
 
     // Stable height that doesn't change with keyboard
-    final availableHeight = (maxHeight * 0.9).clamp(300.0, 900.0);
+    final availableHeight = _isFullView
+        ? maxHeight - 24
+        : (maxHeight * 0.9).clamp(300.0, 900.0);
 
     // Calculate how much we can push up without hitting the top
     final topMargin = (maxHeight - availableHeight) / 2;
@@ -599,8 +763,12 @@ Future<void> _downloadFile(String url, String fileName) async {
 
     final dialogBg = isDark ? const Color(0xFF0B1730) : AppColors.kcLightPage;
     final titleColor = isDark ? AppColors.kcDarkTitle : AppColors.kcLightTitle;
-    final mutedColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
-    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+    final mutedColor = isDark
+        ? AppColors.kcDarkTextMuted
+        : AppColors.kcLightTextMuted;
+    final borderColor = isDark
+        ? AppColors.kcDarkBorderSoft
+        : AppColors.kcLightBorder;
 
     return AnimatedPadding(
       duration: const Duration(milliseconds: 200),
@@ -619,16 +787,16 @@ Future<void> _downloadFile(String url, String fileName) async {
             decoration: BoxDecoration(
               color: dialogBg,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: borderColor.withValues(alpha: 0.7),
-              ),
-              boxShadow: isDark ? null : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
+              border: Border.all(color: borderColor.withValues(alpha: 0.7)),
+              boxShadow: isDark
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
             ),
             child: Stack(
               fit: StackFit.expand,
@@ -657,14 +825,34 @@ Future<void> _downloadFile(String url, String fileName) async {
                               ),
                             ),
                             const Spacer(),
+                            if (!widget.isCreate)
+                              TextButton.icon(
+                                onPressed: _busy
+                                    ? null
+                                    : () => setState(
+                                        () => _isFullView = !_isFullView,
+                                      ),
+                                icon: Icon(
+                                  _isFullView
+                                      ? Icons.fullscreen_exit_rounded
+                                      : Icons.open_in_full_rounded,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  _isFullView
+                                      ? 'Exit full view'
+                                      : 'Open in full view',
+                                ),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: mutedColor,
+                                ),
+                              ),
+                            const SizedBox(width: 4),
                             IconButton(
                               onPressed: _busy
                                   ? null
                                   : () => Navigator.of(context).pop(),
-                              icon: Icon(
-                                Icons.close,
-                                color: mutedColor,
-                              ),
+                              icon: Icon(Icons.close, color: mutedColor),
                               splashRadius: 18,
                             ),
                           ],
@@ -693,25 +881,25 @@ Future<void> _downloadFile(String url, String fileName) async {
                           builder: (context, constraints) {
                             final isMobile = constraints.maxWidth < 720;
                             final items = [
-                                _dropdown<TaskTicketType>(
-                                 label: 'Type',
-                                 value: _ticketType,
-                                 items: TaskTicketType.values,
-                                 labelFor: (t) => t.label,
-                                 onChanged: (v) =>
-                                     setState(() => _ticketType = v),
-                                 isDark: isDark,
-                               ),
-                               _dropdown<TaskPriority>(
-                                 label: 'Priority',
-                                 value: _priority,
-                                 items: TaskPriority.values,
-                                 labelFor: (p) =>
-                                     p.name[0].toUpperCase() +
-                                     p.name.substring(1),
-                                 onChanged: (v) => setState(() => _priority = v),
-                                 isDark: isDark,
-                               ),
+                              _dropdown<TaskTicketType>(
+                                label: 'Type',
+                                value: _ticketType,
+                                items: TaskTicketType.values,
+                                labelFor: (t) => t.label,
+                                onChanged: (v) =>
+                                    setState(() => _ticketType = v),
+                                isDark: isDark,
+                              ),
+                              _dropdown<TaskPriority>(
+                                label: 'Priority',
+                                value: _priority,
+                                items: TaskPriority.values,
+                                labelFor: (p) =>
+                                    p.name[0].toUpperCase() +
+                                    p.name.substring(1),
+                                onChanged: (v) => setState(() => _priority = v),
+                                isDark: isDark,
+                              ),
                               _assigneeDropdown(isDark),
                               _dueDateField(isDark),
                               _dropdown<int>(
@@ -786,11 +974,7 @@ Future<void> _downloadFile(String url, String fileName) async {
                           },
                         ),
                         const SizedBox(height: 16),
-                        Divider(
-                          color: borderColor.withValues(
-                            alpha: 0.45,
-                          ),
-                        ),
+                        Divider(color: borderColor.withValues(alpha: 0.45)),
                         const SizedBox(height: 12),
                         _sectionHeader(
                           icon: Icons.attach_file,
@@ -924,10 +1108,17 @@ Future<void> _downloadFile(String url, String fileName) async {
                             child: ElevatedButton(
                               onPressed: _busy ? null : _postComment,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: isDark ? AppColors.kcDarkPrimarySoft : AppColors.kcPrimaryColor.withValues(alpha: 0.8),
+                                backgroundColor: isDark
+                                    ? AppColors.kcDarkPrimarySoft
+                                    : AppColors.kcPrimaryColor.withValues(
+                                        alpha: 0.8,
+                                      ),
                                 foregroundColor: Colors.white,
-                                disabledBackgroundColor: (isDark ? AppColors.kcDarkPrimarySoft : AppColors.kcPrimaryColor)
-                                    .withValues(alpha: 0.4),
+                                disabledBackgroundColor:
+                                    (isDark
+                                            ? AppColors.kcDarkPrimarySoft
+                                            : AppColors.kcPrimaryColor)
+                                        .withValues(alpha: 0.4),
                               ),
                               child: const Text('Post'),
                             ),
@@ -937,15 +1128,11 @@ Future<void> _downloadFile(String url, String fileName) async {
                             Column(
                               children: _comments
                                   .map(
-                                    (c) => _commentRow(
-                                      user: c.userName,
-                                      content: c.content,
-                                      createdAt: c.createdAt,
-                                      isDark: isDark,
-                                    ),
+                                    (c) =>
+                                        _commentRow(comment: c, isDark: isDark),
                                   )
                                   .toList(growable: false),
-                             ),
+                            ),
                         ],
                         const SizedBox(height: 18),
                         Row(
@@ -974,11 +1161,11 @@ Future<void> _downloadFile(String url, String fileName) async {
                                   ? null
                                   : () => Navigator.of(context).pop(),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
+                                foregroundColor: isDark
+                                    ? AppColors.kcDarkTextPrimary
+                                    : AppColors.kcLightTitle,
                                 side: BorderSide(
-                                  color: borderColor.withValues(
-                                    alpha: 0.85,
-                                  ),
+                                  color: borderColor.withValues(alpha: 0.85),
                                 ),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 18,
@@ -994,7 +1181,9 @@ Future<void> _downloadFile(String url, String fileName) async {
                             ElevatedButton(
                               onPressed: _busy ? null : _createOrSave,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
+                                backgroundColor: isDark
+                                    ? AppColors.kcDarkPrimary
+                                    : AppColors.kcPrimaryColor,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 22,
@@ -1021,7 +1210,9 @@ Future<void> _downloadFile(String url, String fileName) async {
                       ),
                       child: Center(
                         child: CircularProgressIndicator(
-                          color: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
+                          color: isDark
+                              ? AppColors.kcDarkPrimary
+                              : AppColors.kcPrimaryColor,
                         ),
                       ),
                     ),
@@ -1049,7 +1240,9 @@ Future<void> _downloadFile(String url, String fileName) async {
     return Text(
       text,
       style: TextStyle(
-        color: isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary,
+        color: isDark
+            ? AppColors.kcDarkTextSecondary
+            : AppColors.kcLightTextSecondary,
         fontWeight: FontWeight.w600,
       ),
     );
@@ -1064,10 +1257,17 @@ Future<void> _downloadFile(String url, String fileName) async {
     return TextField(
       controller: controller,
       autofocus: autofocus,
-      style: TextStyle(color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle, fontSize: 16),
+      style: TextStyle(
+        color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
+        fontSize: 16,
+      ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted),
+        hintStyle: TextStyle(
+          color: isDark
+              ? AppColors.kcDarkTextMuted
+              : AppColors.kcLightTextMuted,
+        ),
         filled: true,
         fillColor: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
         contentPadding: const EdgeInsets.symmetric(
@@ -1077,7 +1277,9 @@ Future<void> _downloadFile(String url, String fileName) async {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder).withValues(alpha: 0.55),
+            color:
+                (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder)
+                    .withValues(alpha: 0.55),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -1100,14 +1302,19 @@ Future<void> _downloadFile(String url, String fileName) async {
   }) {
     return TextField(
       controller: controller,
-      style: TextStyle(color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle, fontSize: 16),
+      style: TextStyle(
+        color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
+        fontSize: 16,
+      ),
       keyboardType: TextInputType.multiline,
       minLines: minLines,
       maxLines: maxLines,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(
-          color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+          color: isDark
+              ? AppColors.kcDarkTextMuted
+              : AppColors.kcLightTextMuted,
           fontSize: 18,
         ),
         filled: true,
@@ -1119,7 +1326,9 @@ Future<void> _downloadFile(String url, String fileName) async {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder).withValues(alpha: 0.55),
+            color:
+                (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder)
+                    .withValues(alpha: 0.55),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -1153,16 +1362,26 @@ Future<void> _downloadFile(String url, String fileName) async {
             color: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder).withValues(alpha: 0.55),
+              color:
+                  (isDark
+                          ? AppColors.kcDarkBorderSoft
+                          : AppColors.kcLightBorder)
+                      .withValues(alpha: 0.55),
             ),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<T>(
               value: value,
-              dropdownColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
-              iconEnabledColor: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+              dropdownColor: isDark
+                  ? AppColors.kcDarkCard
+                  : AppColors.kcLightCard,
+              iconEnabledColor: isDark
+                  ? AppColors.kcDarkTextMuted
+                  : AppColors.kcLightTextMuted,
               style: TextStyle(
-                color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
+                color: isDark
+                    ? AppColors.kcDarkTextPrimary
+                    : AppColors.kcLightTitle,
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
               ),
@@ -1214,16 +1433,26 @@ Future<void> _downloadFile(String url, String fileName) async {
             color: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder).withValues(alpha: 0.55),
+              color:
+                  (isDark
+                          ? AppColors.kcDarkBorderSoft
+                          : AppColors.kcLightBorder)
+                      .withValues(alpha: 0.55),
             ),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String?>(
               value: effectiveValue,
-              dropdownColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
-              iconEnabledColor: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+              dropdownColor: isDark
+                  ? AppColors.kcDarkCard
+                  : AppColors.kcLightCard,
+              iconEnabledColor: isDark
+                  ? AppColors.kcDarkTextMuted
+                  : AppColors.kcLightTextMuted,
               style: TextStyle(
-                color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
+                color: isDark
+                    ? AppColors.kcDarkTextPrimary
+                    : AppColors.kcLightTitle,
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
               ),
@@ -1272,11 +1501,15 @@ Future<void> _downloadFile(String url, String fileName) async {
                                 surface: Colors.white,
                               ),
                         dialogTheme: DialogThemeData(
-                          backgroundColor: isDark ? const Color(0xFF121F3D) : Colors.white,
+                          backgroundColor: isDark
+                              ? const Color(0xFF121F3D)
+                              : Colors.white,
                         ),
                         textButtonTheme: TextButtonThemeData(
                           style: TextButton.styleFrom(
-                            foregroundColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
+                            foregroundColor: isDark
+                                ? AppColors.kcDarkPrimary
+                                : AppColors.kcPrimaryColor,
                           ),
                         ),
                       ),
@@ -1293,19 +1526,28 @@ Future<void> _downloadFile(String url, String fileName) async {
                 alignment: Alignment.centerLeft,
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
+                  color: isDark
+                      ? AppColors.kcDarkInputAlt
+                      : AppColors.kcLightInput,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder)
-                        .withValues(alpha: 0.55),
+                    color:
+                        (isDark
+                                ? AppColors.kcDarkBorderSoft
+                                : AppColors.kcLightBorder)
+                            .withValues(alpha: 0.55),
                   ),
                 ),
                 child: Text(
                   text,
                   style: TextStyle(
                     color: _dueDate == null
-                        ? (isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted)
-                        : (isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle),
+                        ? (isDark
+                              ? AppColors.kcDarkTextMuted
+                              : AppColors.kcLightTextMuted)
+                        : (isDark
+                              ? AppColors.kcDarkTextPrimary
+                              : AppColors.kcLightTitle),
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
                   ),
@@ -1326,9 +1568,15 @@ Future<void> _downloadFile(String url, String fileName) async {
     required VoidCallback? onAction,
     required bool isDark,
   }) {
-    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
-    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
-    final surfaceColor = isDark ? AppColors.kcDarkSurface : AppColors.kcLightInput;
+    final textColor = isDark
+        ? AppColors.kcDarkTextPrimary
+        : AppColors.kcLightTitle;
+    final borderColor = isDark
+        ? AppColors.kcDarkBorderSoft
+        : AppColors.kcLightBorder;
+    final surfaceColor = isDark
+        ? AppColors.kcDarkSurface
+        : AppColors.kcLightInput;
 
     return Row(
       children: [
@@ -1351,10 +1599,7 @@ Future<void> _downloadFile(String url, String fileName) async {
           ),
           child: Text(
             '$count',
-            style: TextStyle(
-              color: textColor,
-              fontWeight: FontWeight.w800,
-            ),
+            style: TextStyle(color: textColor, fontWeight: FontWeight.w800),
           ),
         ),
         const Spacer(),
@@ -1365,9 +1610,7 @@ Future<void> _downloadFile(String url, String fileName) async {
             label: Text(actionLabel),
             style: OutlinedButton.styleFrom(
               foregroundColor: textColor,
-              side: BorderSide(
-                color: borderColor.withValues(alpha: 0.85),
-              ),
+              side: BorderSide(color: borderColor.withValues(alpha: 0.85)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -1384,7 +1627,13 @@ Future<void> _downloadFile(String url, String fileName) async {
         for (int i = 0; i < rows.length; i++) ...[
           rows[i],
           if (i != rows.length - 1)
-            Divider(color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder).withValues(alpha: 0.35)),
+            Divider(
+              color:
+                  (isDark
+                          ? AppColors.kcDarkBorderSoft
+                          : AppColors.kcLightBorder)
+                      .withValues(alpha: 0.35),
+            ),
         ],
       ],
     );
@@ -1396,9 +1645,15 @@ Future<void> _downloadFile(String url, String fileName) async {
     required int linkId,
     required bool isDark,
   }) {
-    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
-    final secondaryColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
-    final mutedColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
+    final textColor = isDark
+        ? AppColors.kcDarkTextPrimary
+        : AppColors.kcLightTitle;
+    final secondaryColor = isDark
+        ? AppColors.kcDarkTextSecondary
+        : AppColors.kcLightTextSecondary;
+    final mutedColor = isDark
+        ? AppColors.kcDarkTextMuted
+        : AppColors.kcLightTextMuted;
     final inputBg = isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput;
 
     return Container(
@@ -1408,12 +1663,19 @@ Future<void> _downloadFile(String url, String fileName) async {
         color: inputBg.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder).withValues(alpha: 0.3),
+          color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder)
+              .withValues(alpha: 0.3),
         ),
       ),
       child: Row(
         children: [
-          Icon(Icons.link, size: 18, color: isDark ? AppColors.kcDarkPrimarySoft : AppColors.kcPrimaryColor),
+          Icon(
+            Icons.link,
+            size: 18,
+            color: isDark
+                ? AppColors.kcDarkPrimarySoft
+                : AppColors.kcPrimaryColor,
+          ),
           const SizedBox(width: 10),
           Text(
             displayId,
@@ -1438,11 +1700,7 @@ Future<void> _downloadFile(String url, String fileName) async {
           ),
           IconButton(
             onPressed: _busy ? null : () => _deleteLink(linkId),
-            icon: Icon(
-              Icons.close,
-              size: 18,
-              color: mutedColor,
-            ),
+            icon: Icon(Icons.close, size: 18, color: mutedColor),
             splashRadius: 18,
             tooltip: 'Remove link',
           ),
@@ -1502,7 +1760,9 @@ Future<void> _downloadFile(String url, String fileName) async {
       decoration: InputDecoration(
         hintText: 'Write a comment...',
         hintStyle: TextStyle(
-          color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+          color: isDark
+              ? AppColors.kcDarkTextMuted
+              : AppColors.kcLightTextMuted,
           fontSize: 18,
         ),
         filled: true,
@@ -1514,8 +1774,9 @@ Future<void> _downloadFile(String url, String fileName) async {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder)
-                .withValues(alpha: 0.55),
+            color:
+                (isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder)
+                    .withValues(alpha: 0.55),
           ),
         ),
         focusedBorder: OutlineInputBorder(
@@ -1530,15 +1791,13 @@ Future<void> _downloadFile(String url, String fileName) async {
   }
 
   Widget _commentRow({
-    required String user,
-    required String content,
+    required TaskCommentEntity comment,
     required bool isDark,
-    DateTime? createdAt,
   }) {
     String timeStr = '';
-    if (createdAt != null) {
+    if (comment.createdAt != null) {
       final now = DateTime.now();
-      final diff = now.difference(createdAt);
+      final diff = now.difference(comment.createdAt!);
       if (diff.inMinutes < 1) {
         timeStr = 'Just now';
       } else if (diff.inHours < 1) {
@@ -1546,14 +1805,21 @@ Future<void> _downloadFile(String url, String fileName) async {
       } else if (diff.inDays < 1) {
         timeStr = '${diff.inHours}h ago';
       } else {
-        timeStr = DateFormat('MMM d, h:mm a').format(createdAt);
+        timeStr = DateFormat('MMM d, h:mm a').format(comment.createdAt!);
       }
     }
 
-    final textColor = isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle;
-    final mutedColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
+    final user = comment.userName;
+    final textColor = isDark
+        ? AppColors.kcDarkTextPrimary
+        : AppColors.kcLightTitle;
+    final mutedColor = isDark
+        ? AppColors.kcDarkTextMuted
+        : AppColors.kcLightTextMuted;
     final inputBg = isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput;
-    final primarySoft = isDark ? AppColors.kcDarkPrimarySoft : AppColors.kcPrimaryColor;
+    final primarySoft = isDark
+        ? AppColors.kcDarkPrimarySoft
+        : AppColors.kcPrimaryColor;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -1599,6 +1865,34 @@ Future<void> _downloadFile(String url, String fileName) async {
                         ),
                       ),
                     ],
+                    IconButton(
+                      onPressed: _busy ? null : () => _editComment(comment),
+                      icon: Icon(
+                        Icons.edit_outlined,
+                        size: 18,
+                        color: mutedColor,
+                      ),
+                      tooltip: 'Edit comment',
+                      splashRadius: 18,
+                      constraints: const BoxConstraints(
+                        minWidth: 34,
+                        minHeight: 34,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: _busy ? null : () => _deleteComment(comment),
+                      icon: Icon(
+                        Icons.delete_outline,
+                        size: 18,
+                        color: mutedColor,
+                      ),
+                      tooltip: 'Delete comment',
+                      splashRadius: 18,
+                      constraints: const BoxConstraints(
+                        minWidth: 34,
+                        minHeight: 34,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -1613,7 +1907,7 @@ Future<void> _downloadFile(String url, String fileName) async {
                     ),
                   ),
                   child: Text(
-                    content,
+                    comment.content,
                     style: TextStyle(
                       color: textColor,
                       fontSize: 15,
@@ -1762,7 +2056,9 @@ class _AttachmentRow extends StatelessWidget {
                   Text(
                     fileName,
                     style: TextStyle(
-                      color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
+                      color: isDark
+                          ? AppColors.kcDarkTextPrimary
+                          : AppColors.kcLightTitle,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       fontFamily: 'Outfit',
@@ -1773,7 +2069,9 @@ class _AttachmentRow extends StatelessWidget {
                   Text(
                     '$kb KB',
                     style: TextStyle(
-                      color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+                      color: isDark
+                          ? AppColors.kcDarkTextMuted
+                          : AppColors.kcLightTextMuted,
                       fontWeight: FontWeight.w600,
                       fontSize: 12,
                     ),
@@ -1786,7 +2084,9 @@ class _AttachmentRow extends StatelessWidget {
               Text(
                 uploadedByName!,
                 style: TextStyle(
-                  color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+                  color: isDark
+                      ? AppColors.kcDarkTextMuted
+                      : AppColors.kcLightTextMuted,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
@@ -1802,7 +2102,9 @@ class _AttachmentRow extends StatelessWidget {
 
   Widget _typeIcon(String type, bool isDark) {
     IconData iconData = Icons.insert_drive_file_outlined;
-    Color iconColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
+    Color iconColor = isDark
+        ? AppColors.kcDarkTextSecondary
+        : AppColors.kcLightTextSecondary;
 
     if (type == 'pdf') {
       iconData = Icons.picture_as_pdf_outlined;
@@ -1888,16 +2190,28 @@ class _SearchTaskDialogState extends State<_SearchTaskDialog> {
               controller: _searchController,
               onChanged: _onSearch,
               autofocus: true,
-              style: TextStyle(color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle),
+              style: TextStyle(
+                color: isDark
+                    ? AppColors.kcDarkTextPrimary
+                    : AppColors.kcLightTitle,
+              ),
               decoration: InputDecoration(
                 hintText: 'Search by title or number...',
-                hintStyle: TextStyle(color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted),
+                hintStyle: TextStyle(
+                  color: isDark
+                      ? AppColors.kcDarkTextMuted
+                      : AppColors.kcLightTextMuted,
+                ),
                 prefixIcon: Icon(
                   Icons.search,
-                  color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+                  color: isDark
+                      ? AppColors.kcDarkTextMuted
+                      : AppColors.kcLightTextMuted,
                 ),
                 filled: true,
-                fillColor: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
+                fillColor: isDark
+                    ? AppColors.kcDarkInputAlt
+                    : AppColors.kcLightInput,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
@@ -1913,7 +2227,11 @@ class _SearchTaskDialogState extends State<_SearchTaskDialog> {
                         padding: const EdgeInsets.all(20),
                         child: Text(
                           'No tasks found',
-                          style: TextStyle(color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted),
+                          style: TextStyle(
+                            color: isDark
+                                ? AppColors.kcDarkTextMuted
+                                : AppColors.kcLightTextMuted,
+                          ),
                         ),
                       )
                     : ListView.builder(
@@ -1928,20 +2246,26 @@ class _SearchTaskDialogState extends State<_SearchTaskDialog> {
                             title: Text(
                               t.title,
                               style: TextStyle(
-                                color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
+                                color: isDark
+                                    ? AppColors.kcDarkTextPrimary
+                                    : AppColors.kcLightTitle,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             subtitle: Text(
                               ticket,
                               style: TextStyle(
-                                color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+                                color: isDark
+                                    ? AppColors.kcDarkTextMuted
+                                    : AppColors.kcLightTextMuted,
                                 fontSize: 12,
                               ),
                             ),
                             trailing: Icon(
                               Icons.add_link,
-                              color: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
+                              color: isDark
+                                  ? AppColors.kcDarkPrimary
+                                  : AppColors.kcPrimaryColor,
                               size: 20,
                             ),
                           );

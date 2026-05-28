@@ -91,6 +91,19 @@ abstract class TaskHubRemoteDataSource {
     required String content,
   });
 
+  Future<void> updateComment({
+    required int projectId,
+    required int taskId,
+    required int commentId,
+    required String content,
+  });
+
+  Future<void> deleteComment({
+    required int projectId,
+    required int taskId,
+    required int commentId,
+  });
+
   Future<void> deleteTask({required int projectId, required int taskId});
 
   Future<TaskModel> updateTask({
@@ -127,7 +140,7 @@ abstract class TaskHubRemoteDataSource {
     required int projectId,
     required int columnId,
   });
- 
+
   Future<void> moveTask({
     required int projectId,
     required int taskId,
@@ -142,7 +155,7 @@ abstract class TaskHubRemoteDataSource {
   });
 
   Future<List<SprintModel>> getSprints(int projectId);
-  
+
   Future<SprintModel> createSprint({
     required int projectId,
     required String name,
@@ -162,10 +175,7 @@ abstract class TaskHubRemoteDataSource {
     String? status,
   });
 
-  Future<void> deleteSprint({
-    required int projectId,
-    required int sprintId,
-  });
+  Future<void> deleteSprint({required int projectId, required int sprintId});
 }
 
 class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
@@ -496,6 +506,40 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
   }
 
   @override
+  Future<void> updateComment({
+    required int projectId,
+    required int taskId,
+    required int commentId,
+    required String content,
+  }) async {
+    try {
+      await apiService.patch(
+        ApiRoutes.taskCommentDetail(projectId, taskId, commentId),
+        {'content': content},
+      );
+    } catch (e) {
+      logger.e('Error updating comment', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteComment({
+    required int projectId,
+    required int taskId,
+    required int commentId,
+  }) async {
+    try {
+      await apiService.delete(
+        ApiRoutes.taskCommentDetail(projectId, taskId, commentId),
+      );
+    } catch (e) {
+      logger.e('Error deleting comment', error: e);
+      rethrow;
+    }
+  }
+
+  @override
   Future<void> deleteTask({required int projectId, required int taskId}) async {
     try {
       await apiService.delete(ApiRoutes.projectTask(projectId, taskId));
@@ -523,7 +567,8 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
         if (assigneeId != null) 'assigneeId': assigneeId,
         if (columnId != null) 'columnId': columnId,
         if (description != null) 'description': description,
-        'dueDate': dueDate, // Always send if provided, user said null is possible
+        'dueDate':
+            dueDate, // Always send if provided, user said null is possible
         if (priority != null) 'priority': priority,
         if (ticketType != null) 'ticketType': ticketType,
         if (title != null) 'title': title,
@@ -597,14 +642,13 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
     try {
       final response = await apiService.post(
         ApiRoutes.projectBoardColumns(projectId),
-        {
-          'name': name,
-          'boardType': boardType.apiValue,
-        },
+        {'name': name, 'boardType': boardType.apiValue},
       );
 
       if (response.data != null && response.data is Map) {
-        return BoardColumnModel.fromJson(Map<String, dynamic>.from(response.data));
+        return BoardColumnModel.fromJson(
+          Map<String, dynamic>.from(response.data),
+        );
       }
 
       throw Exception('Create board column failed');
@@ -620,7 +664,9 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
     required int columnId,
   }) async {
     try {
-      await apiService.delete(ApiRoutes.projectBoardColumn(projectId, columnId));
+      await apiService.delete(
+        ApiRoutes.projectBoardColumn(projectId, columnId),
+      );
     } catch (e) {
       logger.e('Error deleting board column', error: e);
       rethrow;
@@ -635,13 +681,10 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
     required int position,
   }) async {
     try {
-      await apiService.patch(
-        ApiRoutes.moveTask(projectId, taskId),
-        {
-          'columnId': columnId,
-          'position': position,
-        },
-      );
+      await apiService.patch(ApiRoutes.moveTask(projectId, taskId), {
+        'columnId': columnId,
+        'position': position,
+      });
     } catch (e) {
       logger.e('Error moving task', error: e);
       rethrow;
@@ -655,7 +698,9 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
     required int linkId,
   }) async {
     try {
-      await apiService.delete(ApiRoutes.taskLinkDetail(projectId, taskId, linkId));
+      await apiService.delete(
+        ApiRoutes.taskLinkDetail(projectId, taskId, linkId),
+      );
     } catch (e) {
       logger.e('Error deleting task link', error: e);
       rethrow;
@@ -665,9 +710,13 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
   @override
   Future<List<SprintModel>> getSprints(int projectId) async {
     try {
-      final response = await apiService.get(ApiRoutes.projectSprints(projectId));
+      final response = await apiService.get(
+        ApiRoutes.projectSprints(projectId),
+      );
       final data = response.data as List;
-      return data.map((json) => SprintModel.fromJson(json as Map<String, dynamic>)).toList();
+      return data
+          .map((json) => SprintModel.fromJson(json as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       logger.e('Error fetching sprints', error: e);
       rethrow;
@@ -684,16 +733,14 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
     required String status,
   }) async {
     try {
-      final response = await apiService.post(
-        ApiRoutes.projectSprints(projectId),
-        {
-          'name': name,
-          'startDate': startDate.toIso8601String().split('T')[0],
-          'endDate': endDate.toIso8601String().split('T')[0],
-          'goal': goal,
-          'status': status,
-        },
-      );
+      final response = await apiService
+          .post(ApiRoutes.projectSprints(projectId), {
+            'name': name,
+            'startDate': startDate.toIso8601String().split('T')[0],
+            'endDate': endDate.toIso8601String().split('T')[0],
+            'goal': goal,
+            'status': status,
+          });
       return SprintModel.fromJson(response.data as Map<String, dynamic>);
     } catch (e) {
       logger.e('Error creating sprint', error: e);
@@ -714,8 +761,10 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
     try {
       final data = <String, dynamic>{};
       if (name != null) data['name'] = name;
-      if (startDate != null) data['startDate'] = startDate.toIso8601String().split('T')[0];
-      if (endDate != null) data['endDate'] = endDate.toIso8601String().split('T')[0];
+      if (startDate != null)
+        data['startDate'] = startDate.toIso8601String().split('T')[0];
+      if (endDate != null)
+        data['endDate'] = endDate.toIso8601String().split('T')[0];
       if (goal != null) data['goal'] = goal;
       if (status != null) data['status'] = status;
 
@@ -736,7 +785,9 @@ class TaskHubRemoteDataSourceImpl implements TaskHubRemoteDataSource {
     required int sprintId,
   }) async {
     try {
-      await apiService.delete(ApiRoutes.projectSprintDetail(projectId, sprintId));
+      await apiService.delete(
+        ApiRoutes.projectSprintDetail(projectId, sprintId),
+      );
     } catch (e) {
       logger.e('Error deleting sprint', error: e);
       rethrow;

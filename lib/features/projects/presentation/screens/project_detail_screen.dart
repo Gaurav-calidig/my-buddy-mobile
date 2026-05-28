@@ -149,16 +149,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (widget.project.prefix.isNotEmpty)
-                        Text(
-                          widget.project.prefix,
-                          style: TextStyle(
-                            color: textMuted,
-                            fontSize: 12,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      // if (widget.project.prefix.isNotEmpty)
+                      //   Text(
+                      //     widget.project.prefix,
+                      //     style: TextStyle(
+                      //       color: textMuted,
+                      //       fontSize: 12,
+                      //     ),
+                      //     maxLines: 1,
+                      //     overflow: TextOverflow.ellipsis,
+                      //   ),
                     ],
                   ),
                 ),

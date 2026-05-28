@@ -2,52 +2,93 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+
 	<key>CFBundleDisplayName</key>
 	<string>$(APP_DISPLAY_NAME)</string>
+
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
+
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+
 	<key>CFBundleName</key>
 	<string>$(APP_BUNDLE_NAME)</string>
+
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
+
 	<key>CFBundleShortVersionString</key>
 	<string>$(FLUTTER_BUILD_NAME)</string>
+
 	<key>CFBundleSignature</key>
 	<string>????</string>
+
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+
+	<!-- Permissions -->
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs camera access to capture images.</string>
+
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app needs microphone access for video calls.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>This app may save processed images to your photo library.</string>
+
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs photo library access to upload images for compression.</string>
+
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This app may save processed images to your photo library.</string>
+
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app uses your location to test scheduled background location updates.</string>
+
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs background location access to fetch your location every 15 minutes.</string>
+
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>This app needs location access even when not in use for background task testing.</string>
+
+	<key>NSFaceIDUsageDescription</key>
+	<string>This app uses Face ID for authentication</string>
+
+	<!-- Background Tasks -->
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>ios_sync_task</string>
 		<string>ios_cleanup_task</string>
+		<string>com.calidig.mybuddy.backgroundLocationTask</string>
 	</array>
+
+	<!-- Background Modes -->
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>
 		<string>processing</string>
+		<string>location</string>
+		<string>remote-notification</string>
+		<string>voip</string>
+		<string>audio</string>
 	</array>
+
+	<!-- Scene Configuration -->
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
+
 		<key>UISceneConfigurations</key>
 		<dict>
 			<key>UIWindowSceneSessionRoleApplication</key>
@@ -55,28 +96,51 @@
 				<dict>
 					<key>UISceneClassName</key>
 					<string>UIWindowScene</string>
+
 					<key>UISceneConfigurationName</key>
 					<string>flutter</string>
+
 					<key>UISceneDelegateClassName</key>
 					<string>FlutterSceneDelegate</string>
+
 					<key>UISceneStoryboardFile</key>
 					<string>Main</string>
 				</dict>
 			</array>
 		</dict>
 	</dict>
+
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
+
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+
+	<!-- Google Sign In -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.174480345246-s02uhjigedu7cte9vj9j8d31dse95f8f</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- Supported Orientations -->
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
@@ -84,35 +148,6 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app needs photo library access to upload images for compression.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>This app may save processed images to your photo library.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>This app needs camera access to capture images.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app uses your location to test scheduled background location updates.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>This app needs background location access to fetch your location every 15 minutes.</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>This app needs location access even when not in use for background task testing.</string>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>processing</string>
-		<string>location</string>
-		<string>remote-notification</string>
-		<string>voip</string>
-		<string>audio</string>
-	</array>
-	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array>
-		<string>com.calidig.mybuddy.backgroundLocationTask</string>
-	</array>
-	<key>NSFaceIDUsageDescription</key>
-	<string>This app uses Face ID for authentication</string>
+
 </dict>
 </plist>

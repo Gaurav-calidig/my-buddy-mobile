@@ -225,16 +225,40 @@ class SearchField extends StatelessWidget {
         border: Border.all(color: ProjectTheme.getBorder(context)),
       ),
       child: TextField(
-        onChanged: onChanged,
-        style: TextStyle(color: ProjectTheme.getTextPrimary(context), fontSize: 13),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          prefixIcon: Icon(Icons.search, color: textMuted, size: 16),
-          hintText: hint,
-          hintStyle: TextStyle(color: textMuted, fontSize: 13),
-          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+      onChanged: onChanged,
+      textAlignVertical: TextAlignVertical.center,
+      style: TextStyle(
+        color: ProjectTheme.getTextPrimary(context),
+        fontSize: 13,
+        height: 1.2,
+      ),
+      decoration: InputDecoration(
+        border: InputBorder.none,
+        isDense: true,
+
+        prefixIcon: Icon(
+          Icons.search,
+          color: textMuted,
+          size: 16,
+        ),
+        prefixIconConstraints: const BoxConstraints(
+          minWidth: 36,
+          minHeight: 36,
+        ),
+
+        hintText: hint,
+        hintStyle: TextStyle(
+          color: textMuted,
+          fontSize: 13,
+          height: 1.2,
+        ),
+
+        // Remove vertical padding
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 8,
         ),
       ),
+    ),
     );
   }
 }

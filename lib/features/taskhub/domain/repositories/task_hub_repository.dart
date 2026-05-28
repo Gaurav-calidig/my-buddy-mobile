@@ -19,7 +19,9 @@ abstract class TaskHubRepository {
     required TaskBoardType boardType,
   });
 
-  Future<List<TaskAssigneeEntity>> getProjectAssignees({required int projectId});
+  Future<List<TaskAssigneeEntity>> getProjectAssignees({
+    required int projectId,
+  });
 
   Future<TaskEntity> createTask({
     required int projectId,
@@ -83,6 +85,19 @@ abstract class TaskHubRepository {
     required int projectId,
     required int taskId,
     required String content,
+  });
+
+  Future<void> updateComment({
+    required int projectId,
+    required int taskId,
+    required int commentId,
+    required String content,
+  });
+
+  Future<void> deleteComment({
+    required int projectId,
+    required int taskId,
+    required int commentId,
   });
 
   Future<void> deleteTask({required int projectId, required int taskId});
@@ -156,8 +171,5 @@ abstract class TaskHubRepository {
     String? status,
   });
 
-  Future<void> deleteSprint({
-    required int projectId,
-    required int sprintId,
-  });
+  Future<void> deleteSprint({required int projectId, required int sprintId});
 }

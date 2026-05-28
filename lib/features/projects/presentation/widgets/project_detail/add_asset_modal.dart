@@ -28,7 +28,7 @@ class _AddAssetModalState extends State<AddAssetModal> {
   String _selectedType = 'url';
   String _selectedEnv = 'Production';
   
-  final List<String> _selectedRoles = ['admin', 'project_lead'];
+  final List<String> _selectedRoles = [];
   final List<String> _selectedUserIds = [];
 
   final List<String> _allRoles = [
@@ -80,7 +80,7 @@ class _AddAssetModalState extends State<AddAssetModal> {
 
     List<String> finalRoles = List.from(_selectedRoles);
     if (finalRoles.isEmpty) {
-      finalRoles.addAll(['admin', 'project_lead']);
+      finalRoles.addAll([]);
     }
 
     if (widget.asset != null) {
@@ -185,7 +185,7 @@ class _AddAssetModalState extends State<AddAssetModal> {
                           _buildLabel('Type', textPrimary),
                           _buildDropdown(
                             value: _selectedType,
-                            items: ['url', 'Credential/Secret', 'File'],
+                            items: ['Document', 'Credential/Secret', 'Note'],
                             onChanged: (v) => setState(() => _selectedType = v!),
                             textPrimary: textPrimary,
                             textMuted: textMuted,

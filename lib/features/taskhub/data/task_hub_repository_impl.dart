@@ -20,20 +20,24 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     required TaskBoardType boardType,
     int? sprintId,
   }) => remoteDataSource.getTasks(
-        projectId: projectId,
-        boardType: boardType,
-        sprintId: sprintId,
-      );
+    projectId: projectId,
+    boardType: boardType,
+    sprintId: sprintId,
+  );
 
   @override
   Future<List<BoardColumnEntity>> getBoardColumns({
     required int projectId,
     required TaskBoardType boardType,
-  }) => remoteDataSource.getBoardColumns(projectId: projectId, boardType: boardType);
+  }) => remoteDataSource.getBoardColumns(
+    projectId: projectId,
+    boardType: boardType,
+  );
 
   @override
-  Future<List<TaskAssigneeEntity>> getProjectAssignees({required int projectId}) =>
-      remoteDataSource.getProjectAssignees(projectId: projectId);
+  Future<List<TaskAssigneeEntity>> getProjectAssignees({
+    required int projectId,
+  }) => remoteDataSource.getProjectAssignees(projectId: projectId);
 
   @override
   Future<TaskEntity> createTask({
@@ -49,18 +53,18 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     String? dueDateIso,
     int? sprintId,
   }) => remoteDataSource.createTask(
-        projectId: projectId,
-        boardType: boardType,
-        columnId: columnId,
-        title: title,
-        descriptionHtml: descriptionHtml,
-        assigneeId: assigneeId,
-        priority: priority,
-        ticketType: ticketType,
-        position: position,
-        dueDateIso: dueDateIso,
-        sprintId: sprintId,
-      );
+    projectId: projectId,
+    boardType: boardType,
+    columnId: columnId,
+    title: title,
+    descriptionHtml: descriptionHtml,
+    assigneeId: assigneeId,
+    priority: priority,
+    ticketType: ticketType,
+    position: position,
+    dueDateIso: dueDateIso,
+    sprintId: sprintId,
+  );
 
   @override
   Future<List<TaskAttachmentEntity>> getAttachments({
@@ -76,12 +80,12 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     required String fileName,
     required int fileSize,
   }) => remoteDataSource.createAttachmentUploadUrl(
-        projectId: projectId,
-        taskId: taskId,
-        contentType: contentType,
-        fileName: fileName,
-        fileSize: fileSize,
-      );
+    projectId: projectId,
+    taskId: taskId,
+    contentType: contentType,
+    fileName: fileName,
+    fileSize: fileSize,
+  );
 
   @override
   Future<void> uploadToPresignedUrl({
@@ -89,10 +93,10 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     required List<int> bytes,
     required String contentType,
   }) => remoteDataSource.uploadToPresignedUrl(
-        uploadUrl: uploadUrl,
-        bytes: bytes,
-        contentType: contentType,
-      );
+    uploadUrl: uploadUrl,
+    bytes: bytes,
+    contentType: contentType,
+  );
 
   @override
   Future<void> createAttachmentMetadata({
@@ -103,13 +107,13 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     required String filePath,
     required int fileSize,
   }) => remoteDataSource.createAttachmentMetadata(
-        projectId: projectId,
-        taskId: taskId,
-        contentType: contentType,
-        fileName: fileName,
-        filePath: filePath,
-        fileSize: fileSize,
-      );
+    projectId: projectId,
+    taskId: taskId,
+    contentType: contentType,
+    fileName: fileName,
+    filePath: filePath,
+    fileSize: fileSize,
+  );
 
   @override
   Future<List<TaskLinkEntity>> getLinks({
@@ -123,10 +127,10 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     required int taskId,
     required int linkedTaskId,
   }) => remoteDataSource.createLink(
-        projectId: projectId,
-        taskId: taskId,
-        linkedTaskId: linkedTaskId,
-      );
+    projectId: projectId,
+    taskId: taskId,
+    linkedTaskId: linkedTaskId,
+  );
 
   @override
   Future<List<TaskCommentEntity>> getComments({
@@ -140,10 +144,34 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     required int taskId,
     required String content,
   }) => remoteDataSource.createComment(
-        projectId: projectId,
-        taskId: taskId,
-        content: content,
-      );
+    projectId: projectId,
+    taskId: taskId,
+    content: content,
+  );
+
+  @override
+  Future<void> updateComment({
+    required int projectId,
+    required int taskId,
+    required int commentId,
+    required String content,
+  }) => remoteDataSource.updateComment(
+    projectId: projectId,
+    taskId: taskId,
+    commentId: commentId,
+    content: content,
+  );
+
+  @override
+  Future<void> deleteComment({
+    required int projectId,
+    required int taskId,
+    required int commentId,
+  }) => remoteDataSource.deleteComment(
+    projectId: projectId,
+    taskId: taskId,
+    commentId: commentId,
+  );
 
   @override
   Future<void> deleteTask({required int projectId, required int taskId}) =>
@@ -162,17 +190,17 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     String? title,
     int? sprintId,
   }) => remoteDataSource.updateTask(
-        projectId: projectId,
-        taskId: taskId,
-        assigneeId: assigneeId,
-        columnId: columnId,
-        description: description,
-        dueDate: dueDate,
-        priority: priority,
-        ticketType: ticketType,
-        title: title,
-        sprintId: sprintId,
-      );
+    projectId: projectId,
+    taskId: taskId,
+    assigneeId: assigneeId,
+    columnId: columnId,
+    description: description,
+    dueDate: dueDate,
+    priority: priority,
+    ticketType: ticketType,
+    title: title,
+    sprintId: sprintId,
+  );
 
   @override
   Future<void> deleteAttachment({
@@ -180,19 +208,19 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     required int taskId,
     required int attachmentId,
   }) => remoteDataSource.deleteAttachment(
-        projectId: projectId,
-        taskId: taskId,
-        attachmentId: attachmentId,
-      );
+    projectId: projectId,
+    taskId: taskId,
+    attachmentId: attachmentId,
+  );
 
   @override
   Future<List<BoardColumnEntity>> reorderBoardColumns({
     required int projectId,
     required List<int> columnIds,
   }) => remoteDataSource.reorderBoardColumns(
-        projectId: projectId,
-        columnIds: columnIds,
-      );
+    projectId: projectId,
+    columnIds: columnIds,
+  );
 
   @override
   Future<BoardColumnEntity> createBoardColumn({
@@ -200,19 +228,19 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     required String name,
     required TaskBoardType boardType,
   }) => remoteDataSource.createBoardColumn(
-        projectId: projectId,
-        name: name,
-        boardType: boardType,
-      );
+    projectId: projectId,
+    name: name,
+    boardType: boardType,
+  );
 
   @override
   Future<void> deleteBoardColumn({
     required int projectId,
     required int columnId,
   }) => remoteDataSource.deleteBoardColumn(
-        projectId: projectId,
-        columnId: columnId,
-      );
+    projectId: projectId,
+    columnId: columnId,
+  );
 
   @override
   Future<void> moveTask({
@@ -221,11 +249,11 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     required int columnId,
     required int position,
   }) => remoteDataSource.moveTask(
-        projectId: projectId,
-        taskId: taskId,
-        columnId: columnId,
-        position: position,
-      );
+    projectId: projectId,
+    taskId: taskId,
+    columnId: columnId,
+    position: position,
+  );
 
   @override
   Future<void> deleteLink({
@@ -233,10 +261,10 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     required int taskId,
     required int linkId,
   }) => remoteDataSource.deleteLink(
-        projectId: projectId,
-        taskId: taskId,
-        linkId: linkId,
-      );
+    projectId: projectId,
+    taskId: taskId,
+    linkId: linkId,
+  );
 
   @override
   Future<List<SprintEntity>> getSprints(int projectId) =>
@@ -250,15 +278,14 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     required DateTime endDate,
     required String goal,
     required String status,
-  }) =>
-      remoteDataSource.createSprint(
-        projectId: projectId,
-        name: name,
-        startDate: startDate,
-        endDate: endDate,
-        goal: goal,
-        status: status,
-      );
+  }) => remoteDataSource.createSprint(
+    projectId: projectId,
+    name: name,
+    startDate: startDate,
+    endDate: endDate,
+    goal: goal,
+    status: status,
+  );
 
   @override
   Future<SprintEntity> updateSprint({
@@ -269,24 +296,17 @@ class TaskHubRepositoryImpl implements TaskHubRepository {
     DateTime? endDate,
     String? goal,
     String? status,
-  }) =>
-      remoteDataSource.updateSprint(
-        projectId: projectId,
-        sprintId: sprintId,
-        name: name,
-        startDate: startDate,
-        endDate: endDate,
-        goal: goal,
-        status: status,
-      );
+  }) => remoteDataSource.updateSprint(
+    projectId: projectId,
+    sprintId: sprintId,
+    name: name,
+    startDate: startDate,
+    endDate: endDate,
+    goal: goal,
+    status: status,
+  );
 
   @override
-  Future<void> deleteSprint({
-    required int projectId,
-    required int sprintId,
-  }) =>
-      remoteDataSource.deleteSprint(
-        projectId: projectId,
-        sprintId: sprintId,
-      );
+  Future<void> deleteSprint({required int projectId, required int sprintId}) =>
+      remoteDataSource.deleteSprint(projectId: projectId, sprintId: sprintId);
 }

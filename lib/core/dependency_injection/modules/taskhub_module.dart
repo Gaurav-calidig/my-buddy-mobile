@@ -7,6 +7,7 @@ import 'package:core/features/taskhub/domain/usecases/create_comment_usecase.dar
 import 'package:core/features/taskhub/domain/usecases/create_link_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/create_task_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/delete_attachment_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/delete_comment_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/delete_task_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/get_attachments_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/get_board_columns_usecase.dart';
@@ -14,6 +15,7 @@ import 'package:core/features/taskhub/domain/usecases/get_comments_usecase.dart'
 import 'package:core/features/taskhub/domain/usecases/get_links_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/get_project_assignees_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/get_tasks_usecase.dart';
+import 'package:core/features/taskhub/domain/usecases/update_comment_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/update_task_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/upload_to_presigned_url_usecase.dart';
 import 'package:core/features/taskhub/domain/usecases/reorder_board_columns_usecase.dart';
@@ -49,6 +51,8 @@ void registerTaskHubModule(GetIt sl) {
   sl.registerLazySingleton(() => DeleteTaskUseCase(sl()));
   sl.registerLazySingleton(() => GetCommentsUseCase(sl()));
   sl.registerLazySingleton(() => CreateCommentUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateCommentUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteCommentUseCase(sl()));
   sl.registerLazySingleton(() => GetAttachmentsUseCase(sl()));
   sl.registerLazySingleton(() => DeleteAttachmentUseCase(sl()));
   sl.registerLazySingleton(() => CreateAttachmentUploadUrlUseCase(sl()));
@@ -66,4 +70,3 @@ void registerTaskHubModule(GetIt sl) {
   sl.registerLazySingleton(() => UpdateSprintUseCase(sl()));
   sl.registerLazySingleton(() => DeleteSprintUseCase(sl()));
 }
-

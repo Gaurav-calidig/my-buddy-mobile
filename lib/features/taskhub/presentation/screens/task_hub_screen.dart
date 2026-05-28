@@ -12,12 +12,12 @@ import 'package:core/features/taskhub/presentation/bloc/task_hub_cubit.dart';
 import 'package:core/features/taskhub/presentation/bloc/task_hub_state.dart';
 import 'package:core/features/taskhub/presentation/widgets/task_status_column.dart';
 import 'package:core/features/taskhub/presentation/screens/task_hub_task_screen.dart';
+import 'package:core/features/taskhub/presentation/widgets/task_hub_task_dialog.dart';
 import 'package:core/features/taskhub/presentation/widgets/manage_states_dialog.dart';
 import 'package:core/features/taskhub/presentation/widgets/manage_sprints_dialog.dart';
 import 'package:core/features/taskhub/presentation/widgets/export_tasks_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:core/core/utils/date_time_utils.dart';
 import 'package:core/core/theme/date_format_cubit.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
@@ -133,7 +133,9 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
           return BlocBuilder<TaskHubCubit, TaskHubState>(
             builder: (context, state) {
               return Scaffold(
-                backgroundColor: isDark ? AppColors.kcDarkPage : AppColors.kcLightPage,
+                backgroundColor: isDark
+                    ? AppColors.kcDarkPage
+                    : AppColors.kcLightPage,
                 body: Container(
                   decoration: BoxDecoration(
                     gradient: isDark
@@ -204,7 +206,9 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
                                   state.status == TaskHubLoadStatus.initial) {
                                 return Center(
                                   child: CircularProgressIndicator(
-                                    color: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
+                                    color: isDark
+                                        ? AppColors.kcDarkPrimary
+                                        : AppColors.kcPrimaryColor,
                                   ),
                                 );
                               }
@@ -338,7 +342,7 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
 
   void _onTaskTap(BuildContext context, TaskEntity task) async {
     final cubit = context.read<TaskHubCubit>();
-    final result = await Navigator.of(context).push<bool>(
+    final result = await Navigator.of(context).push<Object?>(
       MaterialPageRoute(
         builder: (_) => BlocProvider.value(
           value: cubit,
@@ -348,22 +352,31 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
             boardType: cubit.state.boardType,
             columns: cubit.state.columns,
             defaultColumnId: task.columnId,
-            allTasks: cubit.state.tasksByColumnId.values.expand((x) => x).toList(),
+            allTasks: cubit.state.tasksByColumnId.values
+                .expand((x) => x)
+                .toList(),
             sprints: cubit.state.sprints,
             initialSprintId: task.sprintId,
           ),
         ),
       ),
     );
-    if (result == true) {
+    if (result is TaskHubTaskSaveResult) {
+      await cubit.load(boardType: cubit.state.boardType);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Task updated successfully. Task id: ${result.taskId}'),
+        ),
+      );
+    } else if (result == true) {
       cubit.load(boardType: cubit.state.boardType);
     }
-
   }
 
-    void _onAddTask(BuildContext context, BoardColumnEntity column) async {
+  void _onAddTask(BuildContext context, BoardColumnEntity column) async {
     final cubit = context.read<TaskHubCubit>();
-    final result = await Navigator.of(context).push<bool>(
+    final result = await Navigator.of(context).push<TaskHubTaskSaveResult>(
       MaterialPageRoute(
         builder: (ctx) => BlocProvider.value(
           value: cubit,
@@ -372,19 +385,27 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
             boardType: cubit.state.boardType,
             columns: cubit.state.columns,
             defaultColumnId: column.id,
-            allTasks: cubit.state.tasksByColumnId.values.expand((x) => x).toList(),
+            allTasks: cubit.state.tasksByColumnId.values
+                .expand((x) => x)
+                .toList(),
             sprints: cubit.state.sprints,
-            initialSprintId: cubit.state.selectedSprintId == -1 ? null : cubit.state.selectedSprintId,
+            initialSprintId: cubit.state.selectedSprintId == -1
+                ? null
+                : cubit.state.selectedSprintId,
           ),
         ),
       ),
     );
-    if (result == true) {
-      cubit.load(boardType: cubit.state.boardType);
+    if (result != null) {
+      await cubit.load(boardType: cubit.state.boardType);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Task created successfully. Task id: ${result.taskId}'),
+        ),
+      );
     }
   }
-
-
 
   void _onAddColumn(BuildContext context) async {
     final nameController = TextEditingController();
@@ -398,19 +419,39 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
         backgroundColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
         title: Text(
           'Add Column',
-          style: TextStyle(color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle),
+          style: TextStyle(
+            color: isDark
+                ? AppColors.kcDarkTextPrimary
+                : AppColors.kcLightTitle,
+          ),
         ),
         content: TextField(
           controller: nameController,
-          style: TextStyle(color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle),
+          style: TextStyle(
+            color: isDark
+                ? AppColors.kcDarkTextPrimary
+                : AppColors.kcLightTitle,
+          ),
           decoration: InputDecoration(
             hintText: 'Column Name',
-            hintStyle: TextStyle(color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted),
+            hintStyle: TextStyle(
+              color: isDark
+                  ? AppColors.kcDarkTextMuted
+                  : AppColors.kcLightTextMuted,
+            ),
             enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder),
+              borderSide: BorderSide(
+                color: isDark
+                    ? AppColors.kcDarkBorderSoft
+                    : AppColors.kcLightBorder,
+              ),
             ),
             focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor),
+              borderSide: BorderSide(
+                color: isDark
+                    ? AppColors.kcDarkPrimary
+                    : AppColors.kcPrimaryColor,
+              ),
             ),
           ),
           autofocus: true,
@@ -419,14 +460,18 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             style: TextButton.styleFrom(
-              foregroundColor: isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary,
+              foregroundColor: isDark
+                  ? AppColors.kcDarkTextSecondary
+                  : AppColors.kcLightTextSecondary,
             ),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
+              backgroundColor: isDark
+                  ? AppColors.kcDarkPrimary
+                  : AppColors.kcPrimaryColor,
               foregroundColor: Colors.white,
             ),
             child: const Text('Add'),
@@ -444,10 +489,8 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
     final cubit = context.read<TaskHubCubit>();
     final result = await showDialog<bool>(
       context: context,
-      builder: (ctx) => BlocProvider.value(
-        value: cubit,
-        child: const ManageStatesDialog(),
-      ),
+      builder: (ctx) =>
+          BlocProvider.value(value: cubit, child: const ManageStatesDialog()),
     );
     if (result == true) {
       cubit.load(boardType: cubit.state.boardType);
@@ -513,13 +556,21 @@ class _HeaderBar extends StatelessWidget {
     final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
     final iconColor = isDark ? Colors.white : AppColors.kcLightTitle;
     final inputBg = isDark ? AppColors.kcDarkInput : AppColors.kcLightInput;
-    final hintColor = isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted;
-    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+    final hintColor = isDark
+        ? AppColors.kcDarkTextMuted
+        : AppColors.kcLightTextMuted;
+    final borderColor = isDark
+        ? AppColors.kcDarkBorderSoft
+        : AppColors.kcLightBorder;
 
     final titleRow = Row(
       children: [
         IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: iconColor),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 20,
+            color: iconColor,
+          ),
           onPressed: onBack,
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
@@ -538,10 +589,7 @@ class _HeaderBar extends StatelessWidget {
             ),
           ),
         ),
-        _IconSquareButton(
-          icon: Icons.more_vert_rounded,
-          onPressed: onSettings,
-        ),
+        _IconSquareButton(icon: Icons.more_vert_rounded, onPressed: onSettings),
       ],
     );
 
@@ -620,10 +668,7 @@ class _HeaderBar extends StatelessWidget {
             ],
           ],
           const SizedBox(height: 12),
-          _BoardTypeDropdown(
-            value: boardType,
-            onChanged: onBoardTypeChanged,
-          ),
+          _BoardTypeDropdown(value: boardType, onChanged: onBoardTypeChanged),
         ],
       );
     } else {
@@ -650,10 +695,7 @@ class _HeaderBar extends StatelessWidget {
               onSprintChanged: onSprintChanged,
               onManageSprints: onManageSprints,
             ),
-          _BoardTypeDropdown(
-            value: boardType,
-            onChanged: onBoardTypeChanged,
-          ),
+          _BoardTypeDropdown(value: boardType, onChanged: onBoardTypeChanged),
         ],
       );
     }
@@ -705,13 +747,19 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline_rounded, size: 48, color: isDark ? Colors.red.shade300 : AppColors.kcErrorColor),
+            Icon(
+              Icons.error_outline_rounded,
+              size: 48,
+              color: isDark ? Colors.red.shade300 : AppColors.kcErrorColor,
+            ),
             const SizedBox(height: 16),
             Text(
               message,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary,
+                color: isDark
+                    ? AppColors.kcDarkTextSecondary
+                    : AppColors.kcLightTextSecondary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -746,7 +794,9 @@ class _SprintDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+    final borderColor = isDark
+        ? AppColors.kcDarkBorderSoft
+        : AppColors.kcLightBorder;
 
     final bool hasSelectedSprint =
         selectedId == null ||
@@ -766,9 +816,13 @@ class _SprintDropdown extends StatelessWidget {
         child: DropdownButton<int?>(
           value: effectiveSelectedId,
           dropdownColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
-          iconEnabledColor: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+          iconEnabledColor: isDark
+              ? AppColors.kcDarkTextMuted
+              : AppColors.kcLightTextMuted,
           style: TextStyle(
-            color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
+            color: isDark
+                ? AppColors.kcDarkTextPrimary
+                : AppColors.kcLightTitle,
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -875,7 +929,9 @@ class _SelectedSprintDetails extends StatelessWidget {
               return Text(
                 _getDateRange(format),
                 style: TextStyle(
-                  color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextSecondary,
+                  color: isDark
+                      ? AppColors.kcDarkTextMuted
+                      : AppColors.kcLightTextSecondary,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -938,7 +994,9 @@ class _BoardTypeDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+    final borderColor = isDark
+        ? AppColors.kcDarkBorderSoft
+        : AppColors.kcLightBorder;
 
     return Container(
       height: 42,
@@ -952,9 +1010,13 @@ class _BoardTypeDropdown extends StatelessWidget {
         child: DropdownButton<TaskBoardType>(
           value: value,
           dropdownColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
-          iconEnabledColor: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+          iconEnabledColor: isDark
+              ? AppColors.kcDarkTextMuted
+              : AppColors.kcLightTextMuted,
           style: TextStyle(
-            color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
+            color: isDark
+                ? AppColors.kcDarkTextPrimary
+                : AppColors.kcLightTitle,
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -990,7 +1052,9 @@ class _DarkDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+    final borderColor = isDark
+        ? AppColors.kcDarkBorderSoft
+        : AppColors.kcLightBorder;
 
     return Container(
       height: 42,
@@ -1004,9 +1068,13 @@ class _DarkDropdown extends StatelessWidget {
         child: DropdownButton<String>(
           value: value,
           dropdownColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
-          iconEnabledColor: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextMuted,
+          iconEnabledColor: isDark
+              ? AppColors.kcDarkTextMuted
+              : AppColors.kcLightTextMuted,
           style: TextStyle(
-            color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
+            color: isDark
+                ? AppColors.kcDarkTextPrimary
+                : AppColors.kcLightTitle,
             fontWeight: FontWeight.w600,
           ),
           items: items
@@ -1036,7 +1104,9 @@ class _DarkButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+    final borderColor = isDark
+        ? AppColors.kcDarkBorderSoft
+        : AppColors.kcLightBorder;
 
     return SizedBox(
       height: 42,
@@ -1045,14 +1115,16 @@ class _DarkButton extends StatelessWidget {
         icon: Icon(icon, size: 18),
         label: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
         style: ElevatedButton.styleFrom(
-          backgroundColor: isDark ? AppColors.kcDarkInputAlt : AppColors.kcLightInput,
-          foregroundColor: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
+          backgroundColor: isDark
+              ? AppColors.kcDarkInputAlt
+              : AppColors.kcLightInput,
+          foregroundColor: isDark
+              ? AppColors.kcDarkTextPrimary
+              : AppColors.kcLightTitle,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: BorderSide(
-              color: borderColor.withValues(alpha: 0.55),
-            ),
+            side: BorderSide(color: borderColor.withValues(alpha: 0.55)),
           ),
         ),
       ),
@@ -1070,7 +1142,9 @@ class _IconSquareButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+    final borderColor = isDark
+        ? AppColors.kcDarkBorderSoft
+        : AppColors.kcLightBorder;
 
     return InkWell(
       onTap: onPressed,
@@ -1083,7 +1157,11 @@ class _IconSquareButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: borderColor.withValues(alpha: 0.5)),
         ),
-        child: Icon(icon, size: 20, color: isDark ? Colors.white : AppColors.kcLightTitle),
+        child: Icon(
+          icon,
+          size: 20,
+          color: isDark ? Colors.white : AppColors.kcLightTitle,
+        ),
       ),
     );
   }
@@ -1104,7 +1182,9 @@ class _AddColumnButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final borderColor = isDark ? AppColors.kcDarkBorderSoft : AppColors.kcLightBorder;
+    final borderColor = isDark
+        ? AppColors.kcDarkBorderSoft
+        : AppColors.kcLightBorder;
 
     return SizedBox(
       width: width,
@@ -1123,7 +1203,9 @@ class _AddColumnButton extends StatelessWidget {
                   child: Text(
                     'ADD COLUMN',
                     style: TextStyle(
-                      color: isDark ? AppColors.kcDarkTextPrimary : AppColors.kcLightTitle,
+                      color: isDark
+                          ? AppColors.kcDarkTextPrimary
+                          : AppColors.kcLightTitle,
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 1.2,
@@ -1132,7 +1214,13 @@ class _AddColumnButton extends StatelessWidget {
                 ),
                 IconButton(
                   onPressed: onManage,
-                  icon: Icon(Icons.settings_rounded, size: 20, color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextSecondary),
+                  icon: Icon(
+                    Icons.settings_rounded,
+                    size: 20,
+                    color: isDark
+                        ? AppColors.kcDarkTextMuted
+                        : AppColors.kcLightTextSecondary,
+                  ),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -1147,7 +1235,9 @@ class _AddColumnButton extends StatelessWidget {
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.kcDarkInput.withValues(alpha: 0.3) : AppColors.kcLightInput.withValues(alpha: 0.5),
+                  color: isDark
+                      ? AppColors.kcDarkInput.withValues(alpha: 0.3)
+                      : AppColors.kcLightInput.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: borderColor.withValues(alpha: 0.5),
@@ -1173,7 +1263,9 @@ class _AddColumnButton extends StatelessWidget {
                     Text(
                       'Add new state',
                       style: TextStyle(
-                        color: isDark ? AppColors.kcDarkTextMuted : AppColors.kcLightTextSecondary,
+                        color: isDark
+                            ? AppColors.kcDarkTextMuted
+                            : AppColors.kcLightTextSecondary,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),

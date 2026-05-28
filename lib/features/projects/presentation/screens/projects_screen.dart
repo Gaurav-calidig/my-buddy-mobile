@@ -208,40 +208,52 @@ class ProjectsView extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 color: inputBg,
-                border: Border.all(color: border.withValues(alpha: 0.65)),
+                border: Border.all(
+                  color: border.withValues(alpha: 0.65),
+                ),
                 borderRadius: BorderRadius.circular(8),
               ),
-           child: TextField(
-                  controller: searchController,
-                  onChanged: onSearchChanged,
-                  textAlignVertical: TextAlignVertical.center,
-                  style: TextStyle(
+              child: TextField(
+                controller: searchController,
+                onChanged: onSearchChanged,
+                textAlignVertical: TextAlignVertical.center,
+                style: TextStyle(
+                  color: isDark
+                      ? const Color(0xFFDCE8FF)
+                      : AppColors.kcLightTitle,
+                  fontSize: 15,
+                  height: 1.2,
+                ),
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  isDense: true,
+
+                  // Better icon alignment
+                  prefixIcon: Icon(
+                    Icons.search,
+                    size: 18,
                     color: isDark
-                        ? const Color(0xFFDCE8FF)
-                        : AppColors.kcLightTitle,
-                    fontSize: 15,
+                        ? const Color(0xFF7F95BE)
+                        : AppColors.kcLightTextSecondary,
                   ),
-                  decoration: InputDecoration(
-                    border: InputBorder.none,
-                    prefixIcon: Icon(
-                      Icons.search,
-                      size: 18,
-                      color: isDark
-                          ? const Color(0xFF7F95BE)
-                          : AppColors.kcLightTextSecondary,
-                    ),
-                    hintText: 'Search projects...',
-                    isDense: true,
-                    hintStyle: TextStyle(
-                      color: hintColor,
-                      fontSize: 15,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 8,
-                    ),
+                  prefixIconConstraints: const BoxConstraints(
+                    minWidth: 40,
+                    minHeight: 40,
+                  ),
+
+                  hintText: 'Search projects...',
+                  hintStyle: TextStyle(
+                    color: hintColor,
+                    fontSize: 15,
+                    height: 1.2,
+                  ),
+
+                  // Remove vertical padding
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 8,
                   ),
                 ),
+              ),
             );
 
             final createButton = isSuperAdmin

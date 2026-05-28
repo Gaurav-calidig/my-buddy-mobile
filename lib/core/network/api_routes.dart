@@ -95,6 +95,8 @@ class ApiRoutes {
       '$base/api/projects/$projectId/tasks/$taskId/links/$linkId';
   static String taskComments(int projectId, int taskId) =>
       '$base/api/projects/$projectId/tasks/$taskId/comments';
+  static String taskCommentDetail(int projectId, int taskId, int commentId) =>
+      '$base/api/projects/$projectId/tasks/$taskId/comments/$commentId';
   static String moveTask(int projectId, int taskId) =>
       '$base/api/projects/$projectId/tasks/$taskId/move';
   static String projectSprints(int projectId) =>
@@ -134,9 +136,11 @@ class ApiRoutes {
   static String get holidays => '$base/api/holidays';
   static String get userBirthdays => '$base/api/users/birthdays';
   static String get leaveRequestsStats => '$base/api/leave-requests/stats';
-  static String get leaveRequestsCalculateDays => '$base/api/leave-requests/calculate-days';
+  static String get leaveRequestsCalculateDays =>
+      '$base/api/leave-requests/calculate-days';
   static String leaveRequestById(int id) => '$base/api/leave-requests/$id';
-  static String leaveRequestCancelById(int id) => '$base/api/leave-requests/$id/cancel';
+  static String leaveRequestCancelById(int id) =>
+      '$base/api/leave-requests/$id/cancel';
   static String leaveRequestsCalendar({
     required String startDate,
     required String endDate,
@@ -147,7 +151,8 @@ class ApiRoutes {
   // User Tags
   static String get userTags => '$base/api/user-tags';
   static String userTagDetail(int tagId) => '$base/api/user-tags/$tagId';
-  static String userTagProjects(int tagId) => '$base/api/user-tags/$tagId/projects';
+  static String userTagProjects(int tagId) =>
+      '$base/api/user-tags/$tagId/projects';
   static String get userProjectTags => '$base/api/user-project-tags';
 
   // Capacity Planner
