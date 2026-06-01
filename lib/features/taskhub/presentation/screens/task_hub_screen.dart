@@ -316,8 +316,10 @@ class _TaskHubScreenState extends State<TaskHubScreen> {
           return false;
         }
       }
-      if (_taskFilter == 'Assigned to me') {
+      if (_taskFilter == 'Assigned to Me') {
         if (myId != null && t.assigneeId != myId) return false;
+      } else if (_taskFilter == 'Unassigned') {
+        if (t.assigneeId != null && t.assigneeId!.trim().isNotEmpty) return false;
       }
       return true;
     }).toList();
@@ -627,7 +629,7 @@ class _HeaderBar extends StatelessWidget {
               Expanded(
                 child: _DarkDropdown(
                   value: filterValue,
-                  items: const ['All Tasks', 'Assigned to me'],
+                  items: const ['All Tasks', 'Assigned to Me', 'Unassigned'],
                   onChanged: onFilterChanged,
                 ),
               ),
@@ -679,7 +681,7 @@ class _HeaderBar extends StatelessWidget {
         children: [
           _DarkDropdown(
             value: filterValue,
-            items: const ['All Tasks', 'Assigned to me'],
+            items: const ['All Tasks', 'Assigned to Me', 'Unassigned'],
             onChanged: onFilterChanged,
           ),
           _DarkButton(

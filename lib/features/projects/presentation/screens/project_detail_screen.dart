@@ -52,7 +52,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 (currentUser.role == 'admin' ||
                     currentUser.role == 'project_lead')) {
               showDeleted = true;
-              tabs.add('Deleted');
+              tabs.add('Deleted (${state.deletedAssets.length})');
             }
           }
 

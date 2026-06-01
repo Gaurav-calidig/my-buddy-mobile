@@ -50,34 +50,44 @@ class TypeBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isUrl = type == 'url';
-    final accentColor = ProjectTheme.getAccent(context);
+    final resolvedType = (type.toLowerCase() == 'file' || type.toLowerCase() == 'document') ? 'Document' : type;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    final bgDarkUrl = const Color(0xFF0D2340);
-    final bgLightUrl = accentColor.withValues(alpha: 0.1);
-    final bgDarkSecret = const Color(0xFF1A1040);
-    final bgLightSecret = const Color(0xFFAB8BF5).withValues(alpha: 0.1);
+    final accentColor = ProjectTheme.getAccent(context);
 
-    final secretColor = isDark ? const Color(0xFFAB8BF5) : Colors.deepPurple;
-    
+    Color badgeColor;
+    Color badgeBg;
+
+    switch (resolvedType.toLowerCase()) {
+      case 'url':
+        badgeColor = accentColor;
+        badgeBg = isDark ? const Color(0xFF0D2340) : accentColor.withValues(alpha: 0.1);
+        break;
+      case 'credential/secret':
+        badgeColor = isDark ? const Color(0xFFAB8BF5) : Colors.deepPurple;
+        badgeBg = isDark ? const Color(0xFF1A1040) : const Color(0xFFAB8BF5).withValues(alpha: 0.1);
+        break;
+      case 'document':
+        badgeColor = isDark ? Colors.tealAccent : Colors.teal;
+        badgeBg = isDark ? const Color(0xFF0D2D2A) : Colors.teal.withValues(alpha: 0.1);
+        break;
+      default: // e.g. Note
+        badgeColor = isDark ? Colors.orangeAccent : Colors.orange;
+        badgeBg = isDark ? const Color(0xFF2D1F0D) : Colors.orange.withValues(alpha: 0.1);
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: isUrl 
-            ? (isDark ? bgDarkUrl : bgLightUrl) 
-            : (isDark ? bgDarkSecret : bgLightSecret),
+        color: badgeBg,
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: isUrl
-              ? accentColor.withValues(alpha: 0.4)
-              : secretColor.withValues(alpha: 0.4),
+          color: badgeColor.withValues(alpha: 0.4),
         ),
       ),
       child: Text(
-        type,
+        resolvedType == 'url' ? 'URL' : resolvedType,
         style: TextStyle(
-          color: isUrl ? accentColor : secretColor,
+          color: badgeColor,
           fontSize: 10,
           fontWeight: FontWeight.w600,
         ),

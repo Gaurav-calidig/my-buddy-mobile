@@ -1,10 +1,8 @@
 import 'package:core/features/projects/presentation/bloc/project_detail_event.dart';
-import 'package:core/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/core/utils/date_time_utils.dart';
 import 'package:core/core/theme/date_format_cubit.dart';
-import 'package:core/core/widgets/app_progress_indicator.dart';
 import 'package:core/features/projects/domain/entities/project_asset_entity.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
 import 'package:core/features/projects/domain/entities/project_member_entity.dart';
@@ -194,13 +192,7 @@ class TeamTab extends StatelessWidget {
                           member: member,
                           currentUserRole: currentUserRole,
                           onEdit: () {
-                            context.read<ProjectDetailBloc>().add(
-                                  UpdateProjectMemberRole(
-                                    projectId: projectId,
-                                    userId: member.userId,
-                                    role: 'project_lead',
-                                  ),
-                                );
+                            _showEditRoleDialog(context, context, member);
                           },
                           onDelete: () {
                             _showDeleteConfirmation(context, member);
@@ -210,6 +202,93 @@ class TeamTab extends StatelessWidget {
                     ),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  void _showEditRoleDialog(BuildContext dialogContext, BuildContext blocContext, ProjectMemberEntity member) {
+    final roles = [
+      'admin',
+      'project_lead',
+      'client',
+      'developer',
+      'designer',
+      'mobility_dev',
+      'bd',
+      'qa',
+      'hr'
+    ];
+    String selectedRole = member.role;
+    showDialog(
+      context: dialogContext,
+      builder: (dialogCtx) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: ProjectTheme.getPanel(dialogContext),
+              title: Text('Edit Role', style: TextStyle(color: ProjectTheme.getTextPrimary(dialogContext))),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Select a new role for ${member.user.fullName}:',
+                    style: TextStyle(color: ProjectTheme.getTextSecondary(dialogContext), fontSize: 13),
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: ProjectTheme.getPanelLight(dialogContext).withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: ProjectTheme.getBorder(dialogContext)),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: selectedRole,
+                        dropdownColor: ProjectTheme.getPanel(dialogContext),
+                        isExpanded: true,
+                        items: roles.map((role) {
+                          return DropdownMenuItem(
+                            value: role,
+                            child: Text(
+                              role.replaceAll('_', ' ').split(' ').map((s) => s[0].toUpperCase() + s.substring(1)).join(' '),
+                              style: TextStyle(color: ProjectTheme.getTextPrimary(dialogContext), fontSize: 14),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() => selectedRole = val);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogCtx),
+                  child: Text('Cancel', style: TextStyle(color: ProjectTheme.getTextMuted(dialogContext))),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(dialogCtx);
+                    blocContext.read<ProjectDetailBloc>().add(
+                          UpdateProjectMemberRole(
+                            projectId: projectId,
+                            userId: member.userId,
+                            role: selectedRole,
+                          ),
+                        );
+                  },
+                  child: Text('Save', style: TextStyle(color: ProjectTheme.getAccent(dialogContext), fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
         );
       },
     );

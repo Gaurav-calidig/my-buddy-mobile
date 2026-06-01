@@ -52,7 +52,7 @@ class TaskModel extends TaskEntity {
       boardType: boardType,
       position: (json['position'] as num?)?.toInt() ?? 0,
       dueDate: json['dueDate'] != null
-          ? DateTime.tryParse(json['dueDate'].toString())
+          ? DateTime.tryParse(json['dueDate'].toString())?.toLocal()
           : null,
       sprintId: (json['sprintId'] as num?)?.toInt(),
       createdAt: json['createdAt'] != null

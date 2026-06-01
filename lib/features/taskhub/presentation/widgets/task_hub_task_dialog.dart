@@ -1178,22 +1178,35 @@ class _TaskHubTaskDialogState extends State<TaskHubTaskDialog> {
                               child: const Text('Cancel'),
                             ),
                             const SizedBox(width: 12),
-                            ElevatedButton(
-                              onPressed: _busy ? null : _createOrSave,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: isDark
-                                    ? AppColors.kcDarkPrimary
-                                    : AppColors.kcPrimaryColor,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 22,
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: Text(widget.isCreate ? 'Create' : 'Save'),
+                            ValueListenableBuilder<TextEditingValue>(
+                              valueListenable: _titleController,
+                              builder: (context, titleValue, child) {
+                                final isTitleEmpty = titleValue.text.trim().isEmpty;
+                                final canSubmit = !_busy && !isTitleEmpty;
+                                return ElevatedButton(
+                                  onPressed: canSubmit ? _createOrSave : null,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isDark
+                                        ? AppColors.kcDarkPrimary
+                                        : AppColors.kcPrimaryColor,
+                                    foregroundColor: Colors.white,
+                                    disabledBackgroundColor: (isDark
+                                            ? AppColors.kcDarkPrimary
+                                            : AppColors.kcPrimaryColor)
+                                        .withValues(alpha: 0.4),
+                                    disabledForegroundColor:
+                                        Colors.white.withValues(alpha: 0.5),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 22,
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: Text(widget.isCreate ? 'Create' : 'Save'),
+                                );
+                              },
                             ),
                           ],
                         ),

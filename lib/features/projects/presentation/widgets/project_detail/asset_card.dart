@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/features/projects/domain/entities/project_asset_entity.dart';
 import 'package:core/features/projects/presentation/bloc/project_detail_bloc.dart';
 import 'package:core/features/projects/presentation/bloc/project_detail_event.dart';
+import 'package:core/core/dependency_injection/injection_container.dart';
+import 'package:core/core/network/api_service.dart';
 import 'project_detail_constants.dart';
 import 'project_detail_common.dart';
 
@@ -31,8 +33,9 @@ class AssetCard extends StatefulWidget {
 class _AssetCardState extends State<AssetCard> {
   bool _isObscured = true;
 
-  bool get _isUrl => widget.asset.type == 'url';
-  bool get _isSecret => widget.asset.type == 'Credential/Secret';
+  bool get _isUrl => widget.asset.type.toLowerCase() == 'url';
+  bool get _isSecret => widget.asset.type.toLowerCase() == 'credential/secret';
+  bool get _isDocument => widget.asset.type.toLowerCase() == 'document' || widget.asset.type.toLowerCase() == 'file';
 
   Future<void> _launch() async {
     String url = widget.asset.value;
@@ -43,8 +46,30 @@ class _AssetCardState extends State<AssetCard> {
     if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
+  Future<void> _download() async {
+    final apiService = sl<ApiService>();
+    final url = widget.asset.value;
+    String fileName = widget.asset.name;
+    final uri = Uri.tryParse(url);
+    if (uri != null) {
+      final pathSegments = uri.pathSegments;
+      if (pathSegments.isNotEmpty) {
+        final lastSegment = pathSegments.last;
+        if (lastSegment.contains('.')) {
+          final ext = lastSegment.split('.').last;
+          if (!fileName.endsWith('.$ext')) {
+            fileName = '$fileName.$ext';
+          }
+        }
+      }
+    }
+    if (!fileName.contains('.')) {
+      fileName = '$fileName.pdf';
+    }
+    await apiService.downloadAndOpenFile(context, url: url, fileName: fileName);
+  }
+
   void _showDeleteConfirmation(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -110,22 +135,45 @@ class _AssetCardState extends State<AssetCard> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: _isUrl
-                          ? (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F2A52) : accentColor.withValues(alpha: 0.1))
-                          : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1A2A52) : Colors.deepPurple.withValues(alpha: 0.1)),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Icon(
-                      _isUrl ? Icons.link_rounded : Icons.description_outlined,
-                      color: _isUrl 
-                          ? accentColor 
-                          : (Theme.of(context).brightness == Brightness.dark ? const Color(0xFFAB8BF5) : Colors.deepPurple),
-                      size: 14,
-                    ),
+                  Builder(
+                    builder: (context) {
+                      final isDark = Theme.of(context).brightness == Brightness.dark;
+                      Color iconColor;
+                      Color iconBg;
+                      IconData iconData;
+
+                      if (_isUrl) {
+                        iconColor = accentColor;
+                        iconBg = isDark ? const Color(0xFF0F2A52) : accentColor.withValues(alpha: 0.1);
+                        iconData = Icons.link_rounded;
+                      } else if (_isSecret) {
+                        iconColor = isDark ? const Color(0xFFAB8BF5) : Colors.deepPurple;
+                        iconBg = isDark ? const Color(0xFF1A1040) : const Color(0xFFAB8BF5).withValues(alpha: 0.1);
+                        iconData = Icons.lock_rounded;
+                      } else if (_isDocument) {
+                        iconColor = isDark ? Colors.tealAccent : Colors.teal;
+                        iconBg = isDark ? const Color(0xFF0D2D2A) : Colors.teal.withValues(alpha: 0.1);
+                        iconData = Icons.description_outlined;
+                      } else {
+                        iconColor = isDark ? Colors.orangeAccent : Colors.orange;
+                        iconBg = isDark ? const Color(0xFF2D1F0D) : Colors.orange.withValues(alpha: 0.1);
+                        iconData = Icons.note_alt_outlined;
+                      }
+
+                      return Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: iconBg,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Icon(
+                          iconData,
+                          color: iconColor,
+                          size: 14,
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -238,39 +286,98 @@ class _AssetCardState extends State<AssetCard> {
                         ],
                       ),
                     )
-                  : Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _isSecret && _isObscured 
-                                ? '•' * widget.asset.value.length 
-                                : widget.asset.value,
-                            style: TextStyle(
-                              color: ProjectTheme.getTextSecondary(context),
-                              fontSize: 13,
-                              height: 1.5,
-                            ),
-                          ),
-                        ),
-                        if (_isSecret)
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _isObscured = !_isObscured;
-                              });
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 8.0),
-                              child: Icon(
-                                _isObscured ? Icons.visibility_off : Icons.visibility,
-                                color: textMuted,
-                                size: 16,
+                  : _isDocument
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            GestureDetector(
+                              onTap: _launch,
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      widget.asset.value,
+                                      style: TextStyle(
+                                        color: accentColor,
+                                        fontSize: 13,
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: accentColor,
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.open_in_new_rounded,
+                                    color: accentColor,
+                                    size: 14,
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                      ],
-                    ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: _download,
+                                icon: const Icon(Icons.download_rounded, size: 16),
+                                label: const Text(
+                                  'Download Document',
+                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(context).brightness == Brightness.dark
+                                      ? const Color(0xFF0D2D2A)
+                                      : Colors.teal.withValues(alpha: 0.1),
+                                  foregroundColor: Theme.of(context).brightness == Brightness.dark
+                                      ? Colors.tealAccent
+                                      : Colors.teal,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                    side: BorderSide(
+                                      color: (Theme.of(context).brightness == Brightness.dark
+                                          ? Colors.tealAccent
+                                          : Colors.teal).withValues(alpha: 0.3),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _isSecret && _isObscured 
+                                    ? '•' * widget.asset.value.length 
+                                    : widget.asset.value,
+                                style: TextStyle(
+                                  color: ProjectTheme.getTextSecondary(context),
+                                  fontSize: 13,
+                                  height: 1.5,
+                                ),
+                              ),
+                            ),
+                            if (_isSecret)
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _isObscured = !_isObscured;
+                                  });
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 8.0),
+                                  child: Icon(
+                                    _isObscured ? Icons.visibility_off : Icons.visibility,
+                                    color: textMuted,
+                                    size: 16,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
             ),
         ],
       ),

@@ -52,6 +52,14 @@ class MemberCard extends StatelessWidget {
     return false;
   }
 
+  bool get _canEdit {
+    if (currentUserRole == null) return false;
+    if (currentUserRole == 'admin' || currentUserRole == 'project_lead') {
+      return member.role != 'admin' && member.role != 'project_lead';
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = member.user;
@@ -148,14 +156,14 @@ class MemberCard extends StatelessWidget {
                     }
                   },
                   itemBuilder: (context) => [
-                    if (currentUserRole == 'admin') // Only admin can assign roles according to prompt restriction
+                    if (_canEdit)
                       const PopupMenuItem(
                         value: 'edit',
                         child: Row(
                           children: [
                             Icon(Icons.edit_outlined, size: 18),
                             SizedBox(width: 8),
-                            Text('Make Project Lead'),
+                            Text('Edit Role'),
                           ],
                         ),
                       ),

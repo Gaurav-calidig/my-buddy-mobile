@@ -165,11 +165,16 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
             Future<void> pickDate({
               required DateTime? initial,
               required ValueChanged<DateTime> onPicked,
+              DateTime? firstDate,
             }) async {
+              DateTime initialDate = initial ?? DateTime.now();
+              if (firstDate != null && initialDate.isBefore(firstDate)) {
+                initialDate = firstDate;
+              }
               final picked = await showDatePicker(
                 context: ctx,
-                initialDate: initial ?? DateTime.now(),
-                firstDate: DateTime(2000),
+                initialDate: initialDate,
+                firstDate: firstDate ?? DateTime(2000),
                 lastDate: DateTime(2100),
                 builder: (context, child) {
                   return Theme(
@@ -199,220 +204,222 @@ class _ManageSprintsDialogState extends State<ManageSprintsDialog> {
               ),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Manage Sprints',
-                            style: TextStyle(
-                              color: textColor,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              fontFamily: 'Outfit',
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Manage Sprints',
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                fontFamily: 'Outfit',
+                              ),
                             ),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              Icons.close,
-                              color: mutedColor,
+                            IconButton(
+                              icon: Icon(
+                                Icons.close,
+                                color: mutedColor,
+                              ),
+                              onPressed: () => Navigator.pop(ctx),
                             ),
-                            onPressed: () => Navigator.pop(ctx),
-                          ),
-                        ],
-                      ),
-                      Divider(
-                        color: borderColor,
-                        height: 1,
-                      ),
-                      Flexible(
-                        child: SingleChildScrollView(
-                          padding: const EdgeInsets.only(top: 14, bottom: 6),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                sprint == null ? 'New Sprint' : 'Edit Sprint',
-                                style: TextStyle(
-                                  color: textColor,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              field(
-                                labelText: 'Name',
-                                controller: nameController,
-                                hintText: 'Sprint name',
-                              ),
-                              const SizedBox(height: 12),
-                              field(
-                                labelText: 'Goal (optional)',
-                                controller: goalController,
-                                hintText: 'Sprint goal',
-                                minLines: 3,
-                                maxLines: 3,
-                              ),
-                              const SizedBox(height: 12),
-                              BlocBuilder<DateFormatCubit, String>(
-                                builder: (context, format) {
-                                  return Row(
-                                    children: [
-                                      Expanded(
-                                        child: field(
-                                          labelText: 'Start Date',
-                                          controller: startController,
-                                          hintText: format.toLowerCase(),
-                                          readOnly: true,
-                                          suffixIcon: Icon(
-                                            Icons.calendar_today_rounded,
-                                            size: 18,
-                                            color: mutedColor,
-                                          ),
-                                          onTap: () => pickDate(
-                                            initial: startDate,
-                                            onPicked: (d) {
-                                              setLocalState(() {
-                                                startDate = d;
-                                                startController.text = DateTimeUtils.formatDate(
-                                                  d,
-                                                  format,
-                                                );
-                                              });
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: field(
-                                          labelText: 'End Date',
-                                          controller: endController,
-                                          hintText: format.toLowerCase(),
-                                          readOnly: true,
-                                          suffixIcon: Icon(
-                                            Icons.calendar_today_rounded,
-                                            size: 18,
-                                            color: mutedColor,
-                                          ),
-                                          onTap: () => pickDate(
-                                            initial: endDate,
-                                            onPicked: (d) {
-                                              setLocalState(() {
-                                                endDate = d;
-                                                endController.text = DateTimeUtils.formatDate(
-                                                  d,
-                                                  format,
-                                                );
-                                              });
-                                            },
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 12),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  label('Status'),
-                                  const SizedBox(height: 6),
-                                  Container(
-                                    height: 44,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: inputBg,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: borderColor
-                                            .withValues(alpha: 0.55),
-                                      ),
-                                    ),
-                                    child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<String>(
-                                        value: status,
-                                        dropdownColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
-                                        iconEnabledColor: mutedColor,
-                                        style: TextStyle(
-                                          color: textColor,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                        isExpanded: true,
-                                        items: const [
-                                          DropdownMenuItem(
-                                            value: 'planned',
-                                            child: Text('Planning'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 'active',
-                                            child: Text('Active'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 'completed',
-                                            child: Text('Completed'),
-                                          ),
-                                        ],
-                                        onChanged: (v) {
-                                          if (v == null) return;
-                                          setLocalState(() => status = v);
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                              Row(
-                                children: [
-                                  ValueListenableBuilder<TextEditingValue>(
-                                    valueListenable: nameController,
-                                    builder: (context, nameValue, child) {
-                                      final name = nameValue.text.trim();
-                                      final isValid = name.isNotEmpty && startDate != null && endDate != null;
-                                      return ElevatedButton(
-                                        onPressed: isValid
-                                            ? () => Navigator.pop(ctx, true)
-                                            : null,
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
-                                          foregroundColor: Colors.white,
-                                          disabledBackgroundColor: (isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor).withValues(alpha: 0.5),
-                                          disabledForegroundColor: Colors.white.withValues(alpha: 0.7),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                          ),
-                                        ),
-                                        child: Text(
-                                          sprint == null ? 'Create' : 'Update',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  const SizedBox(width: 10),
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: secondaryTextColor,
-                                    ),
-                                    child: const Text('Cancel'),
-                                  ),
-                                ],
-                              ),
-                            ],
+                          ],
+                        ),
+                        Divider(
+                          color: borderColor,
+                          height: 1,
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          sprint == null ? 'New Sprint' : 'Edit Sprint',
+                          style: TextStyle(
+                            color: textColor,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 12),
+                        field(
+                          labelText: 'Name',
+                          controller: nameController,
+                          hintText: 'Sprint name',
+                        ),
+                        const SizedBox(height: 12),
+                        field(
+                          labelText: 'Goal (optional)',
+                          controller: goalController,
+                          hintText: 'Sprint goal',
+                          minLines: 3,
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 12),
+                        BlocBuilder<DateFormatCubit, String>(
+                          builder: (context, format) {
+                            return Row(
+                              children: [
+                                Expanded(
+                                  child: field(
+                                    labelText: 'Start Date',
+                                    controller: startController,
+                                    hintText: format.toLowerCase(),
+                                    readOnly: true,
+                                    suffixIcon: Icon(
+                                      Icons.calendar_today_rounded,
+                                      size: 18,
+                                      color: mutedColor,
+                                    ),
+                                    onTap: () => pickDate(
+                                      initial: startDate,
+                                      onPicked: (d) {
+                                        setLocalState(() {
+                                          startDate = d;
+                                          startController.text = DateTimeUtils.formatDate(
+                                            d,
+                                            format,
+                                          );
+                                          if (endDate != null && d.isAfter(endDate!)) {
+                                            endDate = null;
+                                            endController.clear();
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: field(
+                                    labelText: 'End Date',
+                                    controller: endController,
+                                    hintText: format.toLowerCase(),
+                                    readOnly: true,
+                                    suffixIcon: Icon(
+                                      Icons.calendar_today_rounded,
+                                      size: 18,
+                                      color: mutedColor,
+                                    ),
+                                    onTap: () => pickDate(
+                                      initial: endDate,
+                                      firstDate: startDate,
+                                      onPicked: (d) {
+                                        setLocalState(() {
+                                          endDate = d;
+                                          endController.text = DateTimeUtils.formatDate(
+                                            d,
+                                            format,
+                                          );
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            label('Status'),
+                            const SizedBox(height: 6),
+                            Container(
+                              height: 44,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: inputBg,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: borderColor
+                                      .withValues(alpha: 0.55),
+                                ),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<String>(
+                                  value: status,
+                                  dropdownColor: isDark ? AppColors.kcDarkCard : AppColors.kcLightCard,
+                                  iconEnabledColor: mutedColor,
+                                  style: TextStyle(
+                                    color: textColor,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                  isExpanded: true,
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 'planned',
+                                      child: Text('Planning'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'active',
+                                      child: Text('Active'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'completed',
+                                      child: Text('Completed'),
+                                    ),
+                                  ],
+                                  onChanged: (v) {
+                                    if (v == null) return;
+                                    setLocalState(() => status = v);
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            ValueListenableBuilder<TextEditingValue>(
+                              valueListenable: nameController,
+                              builder: (context, nameValue, child) {
+                                final name = nameValue.text.trim();
+                                final isValid = name.isNotEmpty &&
+                                    startDate != null &&
+                                    endDate != null &&
+                                    !endDate!.isBefore(startDate!);
+                                return ElevatedButton(
+                                  onPressed: isValid
+                                      ? () => Navigator.pop(ctx, true)
+                                      : null,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor,
+                                    foregroundColor: Colors.white,
+                                    disabledBackgroundColor: (isDark ? AppColors.kcDarkPrimary : AppColors.kcPrimaryColor).withValues(alpha: 0.5),
+                                    disabledForegroundColor: Colors.white.withValues(alpha: 0.7),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    sprint == null ? 'Create' : 'Update',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 10),
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              style: TextButton.styleFrom(
+                                foregroundColor: secondaryTextColor,
+                              ),
+                              child: const Text('Cancel'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

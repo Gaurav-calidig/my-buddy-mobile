@@ -44,9 +44,10 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
 
     return BlocBuilder<TaskHubCubit, TaskHubState>(
       builder: (context, state) {
-        // Initialize or update local columns if state changed and we are not dragging
         final incoming = state.columns;
-        if (_localColumns == null || !listEquals(_localColumns, incoming)) {
+        final isLoading = state.status == TaskHubLoadStatus.loading;
+        // Initialize or update local columns if state changed and we are not dragging
+        if (_localColumns == null || (!isLoading && !listEquals(_localColumns, incoming))) {
           _localColumns = List.from(incoming);
         }
 
@@ -57,7 +58,6 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
 
         final mq = MediaQuery.of(context);
         final width = mq.size.width < 500 ? mq.size.width - 32 : 480.0;
-        final isLoading = state.status == TaskHubLoadStatus.loading;
 
         final dialogBg = isDark ? const Color(0xFF0B1730) : AppColors.kcLightPage;
         final titleColor = isDark ? AppColors.kcDarkTitle : AppColors.kcLightTitle;
@@ -172,14 +172,21 @@ class _ManageStatesDialogState extends State<ManageStatesDialog> {
                                   ),
                                   child: Row(
                                     children: [
-                                      ReorderableDragStartListener(
-                                        index: index,
-                                        child: Icon(
+                                      if (isLoading)
+                                        Icon(
                                           Icons.drag_indicator,
-                                          color: mutedColor,
+                                          color: mutedColor.withValues(alpha: 0.5),
                                           size: 20,
+                                        )
+                                      else
+                                        ReorderableDragStartListener(
+                                          index: index,
+                                          child: Icon(
+                                            Icons.drag_indicator,
+                                            color: mutedColor,
+                                            size: 20,
+                                          ),
                                         ),
-                                      ),
                                       const SizedBox(width: 14),
                                       Expanded(
                                         child: Text(

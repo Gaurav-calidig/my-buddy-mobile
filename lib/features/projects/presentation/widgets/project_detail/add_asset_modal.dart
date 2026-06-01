@@ -50,6 +50,9 @@ class _AddAssetModalState extends State<AddAssetModal> {
       _nameController.text = widget.asset!.name;
       _valueController.text = widget.asset!.value;
       _selectedType = widget.asset!.type;
+      if (_selectedType.toLowerCase() == 'file') {
+        _selectedType = 'Document';
+      }
       _selectedEnv = widget.asset!.environment;
       
       if (widget.asset!.allowedRoles.isNotEmpty) {
@@ -185,7 +188,7 @@ class _AddAssetModalState extends State<AddAssetModal> {
                           _buildLabel('Type', textPrimary),
                           _buildDropdown(
                             value: _selectedType,
-                            items: ['Document', 'Credential/Secret', 'Note'],
+                            items: ['url', 'Document', 'Credential/Secret', 'Note'],
                             onChanged: (v) => setState(() => _selectedType = v!),
                             textPrimary: textPrimary,
                             textMuted: textMuted,
@@ -437,7 +440,7 @@ class _AddAssetModalState extends State<AddAssetModal> {
           icon: Icon(Icons.keyboard_arrow_down, color: textMuted, size: 18),
           items: items.map((i) => DropdownMenuItem(
             value: i,
-            child: Text(i, style: TextStyle(color: textPrimary, fontSize: 13)),
+            child: Text(i == 'url' ? 'URL' : i, style: TextStyle(color: textPrimary, fontSize: 13)),
           )).toList(),
           onChanged: onChanged,
         ),
