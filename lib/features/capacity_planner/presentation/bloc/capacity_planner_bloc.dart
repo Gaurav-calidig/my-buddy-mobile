@@ -4,6 +4,8 @@ import 'package:core/features/auth/domain/entities/user_entity.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
 import 'package:core/features/capacity_planner/domain/usecases/get_capacity_plans_usecase.dart';
 import 'package:core/features/capacity_planner/domain/usecases/create_capacity_plan_usecase.dart';
+import 'package:core/features/capacity_planner/domain/usecases/update_capacity_plan_usecase.dart';
+import 'package:core/features/capacity_planner/domain/usecases/delete_capacity_plan_usecase.dart';
 import 'package:core/features/projects/domain/usecases/get_all_users_usecase.dart';
 import 'package:core/features/projects/domain/usecases/get_projects_usecase.dart';
 import 'package:core/features/capacity_planner/presentation/bloc/capacity_planner_event.dart';
@@ -12,17 +14,23 @@ import 'package:core/features/capacity_planner/presentation/bloc/capacity_planne
 class CapacityPlannerBloc extends Bloc<CapacityPlannerEvent, CapacityPlannerState> {
   final GetCapacityPlansUseCase getCapacityPlansUseCase;
   final CreateCapacityPlanUseCase createCapacityPlanUseCase;
+  final UpdateCapacityPlanUseCase updateCapacityPlanUseCase;
+  final DeleteCapacityPlanUseCase deleteCapacityPlanUseCase;
   final GetAllUsersUseCase getAllUsersUseCase;
   final GetProjectsUseCase getProjectsUseCase;
 
   CapacityPlannerBloc({
     required this.getCapacityPlansUseCase,
     required this.createCapacityPlanUseCase,
+    required this.updateCapacityPlanUseCase,
+    required this.deleteCapacityPlanUseCase,
     required this.getAllUsersUseCase,
     required this.getProjectsUseCase,
   }) : super(CapacityPlannerInitial()) {
     on<LoadCapacityPlans>(_onLoadCapacityPlans);
     on<CreateCapacityPlan>(_onCreateCapacityPlan);
+    on<UpdateCapacityPlan>(_onUpdateCapacityPlan);
+    on<DeleteCapacityPlan>(_onDeleteCapacityPlan);
   }
 
   Future<void> _onLoadCapacityPlans(
@@ -30,7 +38,6 @@ class CapacityPlannerBloc extends Bloc<CapacityPlannerEvent, CapacityPlannerStat
     Emitter<CapacityPlannerState> emit,
   ) async {
     final currentState = state;
-    List<dynamic>? metadata;
     
     // Only show loading if we don't have existing plans
     if (currentState is! CapacityPlannerLoaded) {
@@ -83,4 +90,53 @@ class CapacityPlannerBloc extends Bloc<CapacityPlannerEvent, CapacityPlannerStat
       emit(CapacityPlannerError(e.toString()));
     }
   }
+
+  Future<void> _onUpdateCapacityPlan(
+    UpdateCapacityPlan event,
+    Emitter<CapacityPlannerState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! CapacityPlannerLoaded) return;
+
+    try {
+      await updateCapacityPlanUseCase(
+        planId: event.planId,
+        userId: event.userId,
+        projectId: event.projectId,
+        startDate: event.startDate,
+        endDate: event.endDate,
+        isOngoing: event.isOngoing,
+        hoursPerDay: event.hoursPerDay,
+      );
+      
+      // Reload plans after successful update
+      add(LoadCapacityPlans(
+        startDate: currentState.startDate,
+        endDate: currentState.endDate,
+      ));
+    } catch (e) {
+      emit(CapacityPlannerError(e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteCapacityPlan(
+    DeleteCapacityPlan event,
+    Emitter<CapacityPlannerState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! CapacityPlannerLoaded) return;
+
+    try {
+      await deleteCapacityPlanUseCase(event.planId);
+      
+      // Reload plans after successful deletion
+      add(LoadCapacityPlans(
+        startDate: currentState.startDate,
+        endDate: currentState.endDate,
+      ));
+    } catch (e) {
+      emit(CapacityPlannerError(e.toString()));
+    }
+  }
 }
+

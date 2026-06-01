@@ -14,4 +14,17 @@ abstract class CapacityPlannerRepository {
     required bool isOngoing,
     required String hoursPerDay,
   });
+
+  Future<void> updateCapacityPlan({
+    required int planId,
+    required String userId,
+    required int projectId,
+    required DateTime startDate,
+    required DateTime? endDate,
+    required bool isOngoing,
+    required String hoursPerDay,
+  });
+
+  Future<void> deleteCapacityPlan(int planId);
 }
+

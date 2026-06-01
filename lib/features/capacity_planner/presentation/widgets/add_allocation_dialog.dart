@@ -1,24 +1,30 @@
 import 'package:core/core/theme/app_colors.dart';
 import 'package:core/features/auth/domain/entities/user_entity.dart';
 import 'package:core/features/projects/domain/entities/project_entity.dart';
+import 'package:core/features/capacity_planner/domain/entities/capacity_plan_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class AddAllocationDialog extends StatefulWidget {
   final List<UserEntity> members;
   final List<ProjectEntity> projects;
+  final CapacityPlanEntity? initialAllocation;
   final Function(String userId, int projectId, DateTime startDate, DateTime? endDate, bool isOngoing, String hoursPerDay) onAdd;
+  final Function(int planId, String userId, int projectId, DateTime startDate, DateTime? endDate, bool isOngoing, String hoursPerDay)? onUpdate;
 
   const AddAllocationDialog({
     super.key,
     required this.members,
     required this.projects,
     required this.onAdd,
+    this.initialAllocation,
+    this.onUpdate,
   });
 
   @override
   State<AddAllocationDialog> createState() => _AddAllocationDialogState();
 }
+
 
 class _AddAllocationDialogState extends State<AddAllocationDialog> {
   UserEntity? _selectedMember;
@@ -29,6 +35,7 @@ class _AddAllocationDialogState extends State<AddAllocationDialog> {
   String _hoursPerDay = '8h';
   bool _useEndDate = false;
   DateTime? _endDate;
+  late TextEditingController _daysController;
 
   final List<String> _hourOptions = [
     '0.5h', '1h', '1.5h', '2h', '2.5h', '3h', '3.5h', '4h',
@@ -38,7 +45,55 @@ class _AddAllocationDialogState extends State<AddAllocationDialog> {
   @override
   void initState() {
     super.initState();
+    _daysController = TextEditingController(text: _numberOfDays > 0 ? _numberOfDays.toString() : '');
+    
+    if (widget.initialAllocation != null) {
+      final alloc = widget.initialAllocation!;
+      
+      // Find the corresponding member in widget.members
+      for (var member in widget.members) {
+        if (member.id == alloc.userId) {
+          _selectedMember = member;
+          break;
+        }
+      }
+      
+      // Find the corresponding project in widget.projects
+      for (var project in widget.projects) {
+        if (project.id == alloc.projectId) {
+          _selectedProject = project;
+          break;
+        }
+      }
+      
+      _startDate = alloc.startDate;
+      _isOngoing = alloc.isOngoing;
+      _endDate = alloc.endDate;
+      _useEndDate = alloc.endDate != null;
+      if (alloc.endDate != null) {
+        _numberOfDays = alloc.endDate!.difference(alloc.startDate).inDays;
+        _daysController.text = _numberOfDays.toString();
+      }
+      
+      final hrs = alloc.hoursPerDay;
+      if (hrs == hrs.toInt()) {
+        _hoursPerDay = '${hrs.toInt()}h';
+      } else {
+        _hoursPerDay = '${hrs}h';
+      }
+      // Ensure _hoursPerDay is in _hourOptions
+      if (!_hourOptions.contains(_hoursPerDay)) {
+        _hoursPerDay = '8h';
+      }
+    }
   }
+
+  @override
+  void dispose() {
+    _daysController.dispose();
+    super.dispose();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +121,7 @@ class _AddAllocationDialogState extends State<AddAllocationDialog> {
                   children: [
                     Expanded(
                       child: Text(
-                        'Add Allocation',
+                        widget.initialAllocation != null ? 'Edit Allocation' : 'Add Allocation',
                         style: TextStyle(
                           color: textColor,
                           fontSize: 20,
@@ -233,6 +288,7 @@ class _AddAllocationDialogState extends State<AddAllocationDialog> {
                       isDark: isDark,
                       fieldFillColor: fieldFillColor,
                       borderColor: borderColor,
+                      controller: _daysController,
                       keyboardType: TextInputType.number,
                       onChanged: (val) => _numberOfDays = int.tryParse(val) ?? 0,
                     ),
@@ -275,14 +331,34 @@ class _AddAllocationDialogState extends State<AddAllocationDialog> {
                     ElevatedButton(
                       onPressed: () {
                         if (_selectedMember != null && _selectedProject != null) {
-                          widget.onAdd(
-                            _selectedMember!.id,
-                            _selectedProject!.id,
-                            _startDate,
-                            _isOngoing ? null : (_useEndDate ? _endDate : _startDate.add(Duration(days: _numberOfDays))),
-                            _isOngoing,
-                            _hoursPerDay,
-                          );
+                          final calculatedEndDate = _isOngoing 
+                              ? null 
+                              : (_useEndDate 
+                                  ? (_endDate ?? _startDate.add(const Duration(days: 1))) 
+                                  : _startDate.add(Duration(days: _numberOfDays)));
+                          
+                          if (widget.initialAllocation != null) {
+                            if (widget.onUpdate != null) {
+                              widget.onUpdate!(
+                                widget.initialAllocation!.id,
+                                _selectedMember!.id,
+                                _selectedProject!.id,
+                                _startDate,
+                                calculatedEndDate,
+                                _isOngoing,
+                                _hoursPerDay,
+                              );
+                            }
+                          } else {
+                            widget.onAdd(
+                              _selectedMember!.id,
+                              _selectedProject!.id,
+                              _startDate,
+                              calculatedEndDate,
+                              _isOngoing,
+                              _hoursPerDay,
+                            );
+                          }
                           Navigator.pop(context);
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -297,7 +373,7 @@ class _AddAllocationDialogState extends State<AddAllocationDialog> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         elevation: 0,
                       ),
-                      child: const Text('Add'),
+                      child: Text(widget.initialAllocation != null ? 'Update' : 'Add'),
                     ),
                   ],
                 ),
@@ -359,10 +435,12 @@ class _AddAllocationDialogState extends State<AddAllocationDialog> {
     required bool isDark,
     required Color? fieldFillColor,
     required Color borderColor,
+    TextEditingController? controller,
     TextInputType? keyboardType,
     ValueChanged<String>? onChanged,
   }) {
     return TextField(
+      controller: controller,
       onChanged: onChanged,
       keyboardType: keyboardType,
       style: TextStyle(color: isDark ? Colors.white : Colors.black, fontSize: 14),

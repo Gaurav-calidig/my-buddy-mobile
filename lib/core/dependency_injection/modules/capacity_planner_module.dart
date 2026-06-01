@@ -3,6 +3,8 @@ import 'package:core/features/capacity_planner/data/repositories/capacity_planne
 import 'package:core/features/capacity_planner/domain/repositories/capacity_planner_repository.dart';
 import 'package:core/features/capacity_planner/domain/usecases/get_capacity_plans_usecase.dart';
 import 'package:core/features/capacity_planner/domain/usecases/create_capacity_plan_usecase.dart';
+import 'package:core/features/capacity_planner/domain/usecases/update_capacity_plan_usecase.dart';
+import 'package:core/features/capacity_planner/domain/usecases/delete_capacity_plan_usecase.dart';
 import 'package:core/features/capacity_planner/presentation/bloc/capacity_planner_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:logger/logger.dart';
@@ -21,14 +23,19 @@ void registerCapacityPlannerModule(GetIt sl) {
   // Use Cases
   sl.registerLazySingleton(() => GetCapacityPlansUseCase(sl()));
   sl.registerLazySingleton(() => CreateCapacityPlanUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateCapacityPlanUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteCapacityPlanUseCase(sl()));
 
   // Blocs
   sl.registerFactory(
     () => CapacityPlannerBloc(
       getCapacityPlansUseCase: sl(),
       createCapacityPlanUseCase: sl(),
+      updateCapacityPlanUseCase: sl(),
+      deleteCapacityPlanUseCase: sl(),
       getAllUsersUseCase: sl(),
       getProjectsUseCase: sl(),
     ),
   );
 }
+

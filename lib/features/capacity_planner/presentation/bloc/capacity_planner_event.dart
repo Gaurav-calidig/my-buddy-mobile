@@ -37,3 +37,36 @@ class CreateCapacityPlan extends CapacityPlannerEvent {
   @override
   List<Object?> get props => [userId, projectId, startDate, endDate, isOngoing, hoursPerDay];
 }
+
+class UpdateCapacityPlan extends CapacityPlannerEvent {
+  final int planId;
+  final String userId;
+  final int projectId;
+  final DateTime startDate;
+  final DateTime? endDate;
+  final bool isOngoing;
+  final String hoursPerDay;
+
+  const UpdateCapacityPlan({
+    required this.planId,
+    required this.userId,
+    required this.projectId,
+    required this.startDate,
+    this.endDate,
+    required this.isOngoing,
+    required this.hoursPerDay,
+  });
+
+  @override
+  List<Object?> get props => [planId, userId, projectId, startDate, endDate, isOngoing, hoursPerDay];
+}
+
+class DeleteCapacityPlan extends CapacityPlannerEvent {
+  final int planId;
+
+  const DeleteCapacityPlan(this.planId);
+
+  @override
+  List<Object?> get props => [planId];
+}
+

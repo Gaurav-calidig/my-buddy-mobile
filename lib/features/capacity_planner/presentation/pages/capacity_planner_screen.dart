@@ -139,6 +139,64 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
     );
   }
 
+  void _showEditAllocationDialog(
+    BuildContext context,
+    List<UserEntity> users,
+    List<ProjectEntity> projects,
+    CapacityPlanEntity allocation,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AddAllocationDialog(
+        members: users,
+        projects: projects,
+        initialAllocation: allocation,
+        onAdd: (_, __, ___, ____, _____, ______) {},
+        onUpdate: (planId, userId, projectId, startDate, endDate, isOngoing, hoursPerDay) {
+          context.read<CapacityPlannerBloc>().add(
+            UpdateCapacityPlan(
+              planId: planId,
+              userId: userId,
+              projectId: projectId,
+              startDate: startDate,
+              endDate: endDate,
+              isOngoing: isOngoing,
+              hoursPerDay: hoursPerDay,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context, int planId) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Allocation'),
+        content: const Text('Are you sure you want to delete this allocation?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<CapacityPlannerBloc>().add(
+                DeleteCapacityPlan(planId),
+              );
+              Navigator.pop(dialogContext);
+            },
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildContent(
     BuildContext context,
     CapacityPlannerLoaded state,
@@ -759,16 +817,34 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
                                           ),
                                         ),
                                       ),
-                                      Icon(
-                                        Icons.edit_outlined,
-                                        color: mutedColor,
-                                        size: 14,
+                                      GestureDetector(
+                                        onTap: () {
+                                          _showEditAllocationDialog(
+                                            context,
+                                            state.users,
+                                            state.projects,
+                                            p,
+                                          );
+                                        },
+                                        child: Icon(
+                                          Icons.edit_outlined,
+                                          color: mutedColor,
+                                          size: 14,
+                                        ),
                                       ),
                                       const SizedBox(width: 8),
-                                      Icon(
-                                        Icons.delete_outline,
-                                        color: Colors.red.withValues(alpha: 0.7),
-                                        size: 14,
+                                      GestureDetector(
+                                        onTap: () {
+                                          _showDeleteConfirmationDialog(
+                                            context,
+                                            p.id,
+                                          );
+                                        },
+                                        child: Icon(
+                                          Icons.delete_outline,
+                                          color: Colors.red.withValues(alpha: 0.7),
+                                          size: 14,
+                                        ),
                                       ),
                                     ],
                                   ),

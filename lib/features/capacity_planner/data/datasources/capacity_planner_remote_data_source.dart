@@ -17,6 +17,18 @@ abstract class CapacityPlannerRemoteDataSource {
     required bool isOngoing,
     required String hoursPerDay,
   });
+
+  Future<void> updateCapacityPlan({
+    required int planId,
+    required String userId,
+    required int projectId,
+    required DateTime startDate,
+    required DateTime? endDate,
+    required bool isOngoing,
+    required String hoursPerDay,
+  });
+
+  Future<void> deleteCapacityPlan(int planId);
 }
 
 class CapacityPlannerRemoteDataSourceImpl implements CapacityPlannerRemoteDataSource {
@@ -86,4 +98,52 @@ class CapacityPlannerRemoteDataSourceImpl implements CapacityPlannerRemoteDataSo
       rethrow;
     }
   }
+
+  @override
+  Future<void> updateCapacityPlan({
+    required int planId,
+    required String userId,
+    required int projectId,
+    required DateTime startDate,
+    required DateTime? endDate,
+    required bool isOngoing,
+    required String hoursPerDay,
+  }) async {
+    try {
+      final formattedStartDate = "${startDate.year}-${startDate.month.toString().padLeft(2, '0')}-${startDate.day.toString().padLeft(2, '0')}";
+      final formattedEndDate = endDate != null 
+          ? "${endDate.year}-${endDate.month.toString().padLeft(2, '0')}-${endDate.day.toString().padLeft(2, '0')}"
+          : null;
+
+      final data = {
+        "userId": userId,
+        "projectId": projectId,
+        "startDate": formattedStartDate,
+        "endDate": formattedEndDate,
+        "isOngoing": isOngoing,
+        "hoursPerDay": hoursPerDay.replaceAll('h', ''),
+      };
+
+      await apiService.put(
+        ApiRoutes.capacityPlanDetail(planId),
+        data,
+      );
+    } catch (e) {
+      logger.e('Error updating capacity plan', error: e);
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteCapacityPlan(int planId) async {
+    try {
+      await apiService.delete(
+        ApiRoutes.capacityPlanDetail(planId),
+      );
+    } catch (e) {
+      logger.e('Error deleting capacity plan', error: e);
+      rethrow;
+    }
+  }
 }
+

@@ -157,4 +157,6 @@ class ApiRoutes {
 
   // Capacity Planner
   static String get capacityPlans => '$base/api/capacity-plans';
+  static String capacityPlanDetail(int planId) => '$base/api/capacity-plans/$planId';
 }
+
