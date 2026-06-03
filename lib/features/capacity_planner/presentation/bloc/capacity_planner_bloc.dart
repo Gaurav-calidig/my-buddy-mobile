@@ -71,6 +71,8 @@ class CapacityPlannerBloc extends Bloc<CapacityPlannerEvent, CapacityPlannerStat
     final currentState = state;
     if (currentState is! CapacityPlannerLoaded) return;
 
+    emit(CapacityPlannerLoading());
+
     try {
       await createCapacityPlanUseCase(
         userId: event.userId,
@@ -97,6 +99,8 @@ class CapacityPlannerBloc extends Bloc<CapacityPlannerEvent, CapacityPlannerStat
   ) async {
     final currentState = state;
     if (currentState is! CapacityPlannerLoaded) return;
+
+    emit(CapacityPlannerLoading());
 
     try {
       await updateCapacityPlanUseCase(
@@ -125,6 +129,8 @@ class CapacityPlannerBloc extends Bloc<CapacityPlannerEvent, CapacityPlannerStat
   ) async {
     final currentState = state;
     if (currentState is! CapacityPlannerLoaded) return;
+
+    emit(CapacityPlannerLoading());
 
     try {
       await deleteCapacityPlanUseCase(event.planId);

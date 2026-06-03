@@ -182,14 +182,40 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
           ),
           TextButton(
             onPressed: () {
-              context.read<CapacityPlannerBloc>().add(
-                DeleteCapacityPlan(planId),
-              );
-              Navigator.pop(dialogContext);
+              Navigator.pop(dialogContext); // Close first dialog
+              _showSecondDeleteConfirmationDialog(context, planId); // Show second confirmation
             },
             child: const Text(
               'Delete',
               style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSecondDeleteConfirmationDialog(BuildContext context, int planId) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Confirm Permanent Deletion'),
+        content: const Text('This action cannot be undone. Are you absolutely sure you want to permanently delete this allocation?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<CapacityPlannerBloc>().add(
+                DeleteCapacityPlan(planId),
+              );
+              Navigator.pop(dialogContext); // Close second dialog
+            },
+            child: const Text(
+              'Permanently Delete',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -803,67 +829,72 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          p.project.name.toUpperCase(),
-                                          style: TextStyle(
-                                            color: p.project.isBillable
-                                                ? const Color(0xFF10B981)
-                                                : const Color(0xFFF59E0B),
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          _showEditAllocationDialog(
-                                            context,
-                                            state.users,
-                                            state.projects,
-                                            p,
-                                          );
-                                        },
-                                        child: Icon(
-                                          Icons.edit_outlined,
-                                          color: mutedColor,
-                                          size: 14,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      GestureDetector(
-                                        onTap: () {
-                                          _showDeleteConfirmationDialog(
-                                            context,
-                                            p.id,
-                                          );
-                                        },
-                                        child: Icon(
-                                          Icons.delete_outline,
-                                          color: Colors.red.withValues(alpha: 0.7),
-                                          size: 14,
-                                        ),
-                                      ),
-                                    ],
+                                  Text(
+                                    p.project.name.toUpperCase(),
+                                    style: TextStyle(
+                                      color: p.project.isBillable
+                                          ? const Color(0xFF10B981)
+                                          : const Color(0xFFF59E0B),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   const SizedBox(height: 8),
                                   Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Icon(
-                                        Icons.access_time_filled,
-                                        color: textColor.withValues(alpha: 0.7),
-                                        size: 14,
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.access_time_filled,
+                                            color: textColor.withValues(alpha: 0.7),
+                                            size: 14,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            p.hoursPerDay == p.hoursPerDay.toInt()
+                                                ? '${p.hoursPerDay.toInt()}h'
+                                                : '${p.hoursPerDay}h',
+                                            style: TextStyle(
+                                              color: textColor,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${p.hoursPerDay.toInt()} hours',
-                                        style: TextStyle(
-                                          color: textColor,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                      Row(
+                                        children: [
+                                          GestureDetector(
+                                            onTap: () {
+                                              _showEditAllocationDialog(
+                                                context,
+                                                state.users,
+                                                state.projects,
+                                                p,
+                                              );
+                                            },
+                                            child: Icon(
+                                              Icons.edit_outlined,
+                                              color: mutedColor,
+                                              size: 14,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          GestureDetector(
+                                            onTap: () {
+                                              _showDeleteConfirmationDialog(
+                                                context,
+                                                p.id,
+                                              );
+                                            },
+                                            child: Icon(
+                                              Icons.delete_outline,
+                                              color: Colors.red.withValues(alpha: 0.7),
+                                              size: 14,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
@@ -2560,4 +2591,5 @@ class _CapacityPlannerScreenState extends State<CapacityPlannerScreen> {
       ),
     );
   }
+
 }

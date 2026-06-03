@@ -124,7 +124,7 @@ class CapacityPlannerRemoteDataSourceImpl implements CapacityPlannerRemoteDataSo
         "hoursPerDay": hoursPerDay.replaceAll('h', ''),
       };
 
-      await apiService.put(
+      await apiService.patch(
         ApiRoutes.capacityPlanDetail(planId),
         data,
       );
