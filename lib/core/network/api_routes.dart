@@ -147,6 +147,21 @@ class ApiRoutes {
   }) =>
       '$base/api/leave-requests/calendar?startDate=$startDate&endDate=$endDate';
   static String get compOffRequests => '$base/api/comp-off-requests';
+  static String allLeaveRequests({required String status}) =>
+      '$base/api/leave-requests/all/?status=$status';
+  static String allCompOffRequests({required String status}) =>
+      '$base/api/comp-off-requests/all/?status=$status';
+  static String leaveRequestApprove(int id) =>
+      '$base/api/leave-requests/$id/approve';
+  static String leaveRequestReject(int id) =>
+      '$base/api/leave-requests/$id/reject';
+  static String compOffRequestApprove(int id) =>
+      '$base/api/comp-off-requests/$id/approve';
+  static String compOffRequestReject(int id) =>
+      '$base/api/comp-off-requests/$id/reject';
+  static String leaveRequestDelete(int id) =>
+      '$base/api/leave-requests/$id';
+
 
   // User Tags
   static String get userTags => '$base/api/user-tags';

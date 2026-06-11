@@ -145,3 +145,54 @@ class AttendanceCalendarViewModeChanged extends AttendanceEvent {
 class AttendanceTodayRequested extends AttendanceEvent {
   const AttendanceTodayRequested();
 }
+
+class AttendanceApprovalsRequested extends AttendanceEvent {
+  const AttendanceApprovalsRequested();
+}
+
+class AttendanceLeaveApproved extends AttendanceEvent {
+  const AttendanceLeaveApproved({required this.leaveId, required this.note});
+
+  final int leaveId;
+  final String note;
+
+  @override
+  List<Object?> get props => <Object?>[leaveId, note];
+}
+
+class AttendanceLeaveRejected extends AttendanceEvent {
+  const AttendanceLeaveRejected({required this.leaveId, required this.note});
+
+  final int leaveId;
+  final String note;
+
+  @override
+  List<Object?> get props => <Object?>[leaveId, note];
+}
+
+class AttendanceCompOffApproved extends AttendanceEvent {
+  const AttendanceCompOffApproved({required this.compOffId});
+
+  final int compOffId;
+
+  @override
+  List<Object?> get props => <Object?>[compOffId];
+}
+
+class AttendanceCompOffRejected extends AttendanceEvent {
+  const AttendanceCompOffRejected({required this.compOffId});
+
+  final int compOffId;
+
+  @override
+  List<Object?> get props => <Object?>[compOffId];
+}
+
+class AttendanceApprovedLeaveDeleted extends AttendanceEvent {
+  const AttendanceApprovedLeaveDeleted({required this.leaveId});
+
+  final int leaveId;
+
+  @override
+  List<Object?> get props => <Object?>[leaveId];
+}

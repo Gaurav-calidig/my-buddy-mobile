@@ -1,3 +1,31 @@
+class LeaveRequestUserEntity {
+  const LeaveRequestUserEntity({
+    required this.id,
+    required this.firstName,
+    required this.lastName,
+    required this.email,
+    this.profileImageUrl,
+  });
+
+  final String id;
+  final String firstName;
+  final String lastName;
+  final String email;
+  final String? profileImageUrl;
+
+  String get fullName => '$firstName $lastName'.trim();
+
+  factory LeaveRequestUserEntity.fromJson(Map<String, dynamic> json) {
+    return LeaveRequestUserEntity(
+      id: (json['id'] ?? '').toString(),
+      firstName: (json['firstName'] ?? '').toString(),
+      lastName: (json['lastName'] ?? '').toString(),
+      email: (json['email'] ?? '').toString(),
+      profileImageUrl: json['profileImageUrl']?.toString(),
+    );
+  }
+}
+
 class LeaveTypeEntity {
   const LeaveTypeEntity({
     required this.id,
@@ -66,6 +94,7 @@ class LeaveRequestEntity {
     required this.updatedAt,
     required this.leaveType,
     required this.reviewedBy,
+    this.user,
   });
 
   final int id;
@@ -85,12 +114,14 @@ class LeaveRequestEntity {
   final DateTime updatedAt;
   final LeaveTypeEntity? leaveType;
   final LeaveReviewerEntity? reviewedBy;
+  final LeaveRequestUserEntity? user;
 
   factory LeaveRequestEntity.fromJson(Map<String, dynamic> json) {
     final String totalRaw = (json['totalDays'] ?? '').toString();
     final double total = double.tryParse(totalRaw) ?? 0;
     final dynamic leaveTypeRaw = json['leaveType'];
     final dynamic reviewerRaw = json['reviewedBy'];
+    final dynamic userRaw = json['user'];
 
     return LeaveRequestEntity(
       id: (json['id'] as num?)?.toInt() ?? 0,
@@ -110,6 +141,7 @@ class LeaveRequestEntity {
       updatedAt: DateTime.tryParse((json['updatedAt'] ?? '').toString()) ?? DateTime.fromMillisecondsSinceEpoch(0),
       leaveType: leaveTypeRaw is Map<String, dynamic> ? LeaveTypeEntity.fromJson(leaveTypeRaw) : null,
       reviewedBy: reviewerRaw is Map<String, dynamic> ? LeaveReviewerEntity.fromJson(reviewerRaw) : null,
+      user: userRaw is Map<String, dynamic> ? LeaveRequestUserEntity.fromJson(userRaw) : null,
     );
   }
 }

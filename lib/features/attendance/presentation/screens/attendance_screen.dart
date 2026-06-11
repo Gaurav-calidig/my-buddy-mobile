@@ -5,6 +5,7 @@ import 'package:core/features/attendance/presentation/bloc/attendance_bloc.dart'
 import 'package:core/features/attendance/presentation/bloc/attendance_event.dart';
 import 'package:core/features/attendance/presentation/bloc/attendance_state.dart';
 import 'package:core/features/attendance/domain/entities/leave_request_entity.dart';
+import 'package:core/features/attendance/presentation/widgets/ams_approvals_tab.dart';
 import 'package:core/features/attendance/presentation/widgets/ams_calendar.dart';
 import 'package:core/features/attendance/presentation/widgets/ams_comp_off_tab.dart';
 import 'package:core/features/attendance/presentation/widgets/ams_filter_tabs.dart';
@@ -12,6 +13,8 @@ import 'package:core/features/attendance/presentation/widgets/ams_apply_leave_ta
 import 'package:core/features/attendance/presentation/widgets/ams_my_leaves_tab.dart';
 import 'package:core/features/attendance/presentation/widgets/ams_stat_card.dart';
 import 'package:core/features/attendance/presentation/widgets/ams_summary_card.dart';
+import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:core/features/auth/presentation/bloc/auth_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -154,6 +157,16 @@ class AttendanceScreen extends StatelessWidget {
 
             final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
 
+            // Determine if user is HR based on portalRole
+            final authState = context.read<AuthBloc>().state;
+            final bool isHr = authState is AuthSuccess &&
+                (authState.user.portalRole.toLowerCase() == 'hr' ||
+                 authState.user.portalRole.toLowerCase() == 'super_admin');
+
+            final List<String> tabLabels = isHr
+                ? const <String>['Calendar', 'Apply Leave', 'Approvals', 'Team Leaves', 'Allocations', 'Manage']
+                : const <String>['My Leaves', 'Apply Leave', 'Comp Off', 'Calendar'];
+
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
               child: Column(
@@ -186,9 +199,15 @@ class AttendanceScreen extends StatelessWidget {
                   AmsSummaryCard(summary: state.summary),
                   const SizedBox(height: 16),
                   AmsFilterTabs(
-                    items: const <String>['My Leaves', 'Apply Leave', 'Comp Off', 'Calendar'],
+                    items: tabLabels,
                     selectedIndex: state.selectedFilterIndex,
-                    onTap: (int index) => context.read<AttendanceBloc>().add(AttendanceFilterChanged(index)),
+                    onTap: (int index) {
+                      context.read<AttendanceBloc>().add(AttendanceFilterChanged(index));
+                      // Trigger approvals fetch when HR user selects the Approvals tab (index 2)
+                      if (isHr && index == 2 && state.pendingLeaveRequests.isEmpty && state.approvedLeaveRequests.isEmpty && state.pendingCompOffRequests.isEmpty && !state.approvalsLoading) {
+                        context.read<AttendanceBloc>().add(const AttendanceApprovalsRequested());
+                      }
+                    },
                   ),
                   const SizedBox(height: 10),
                   if (state.error != null)
@@ -215,98 +234,193 @@ class AttendanceScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                  if (state.selectedFilterIndex == 0)
-                    AmsMyLeavesTab(
-                      isLoading: state.leavesLoading,
-                      items: state.leaveRequests,
-                      fiscalYears: state.fiscalYears,
-                      selectedFiscalYear: state.selectedFiscalYear,
-                      onFiscalYearChanged: (String fy) => context.read<AttendanceBloc>().add(AttendanceFiscalYearChanged(fy)),
-                      actionInProgressId: state.leaveActionInProgressId,
-                      onEdit: (LeaveRequestEntity leave) => _openEditLeaveDialog(context, leave),
-                      onCancel: (id) => context.read<AttendanceBloc>().add(AttendanceLeaveCancelRequested(id)),
-                    )
-                  else if (state.selectedFilterIndex == 1)
-                    AmsApplyLeaveTab(
-                      leaveTypes: _leaveTypes(state),
-                      isSubmitting: state.leaveSubmitInProgress,
-                      isCalculatingDays: state.leaveDaysCalculationInProgress,
-                      calculatedTotalDays: state.calculatedTotalDays,
-                      calculatedHolidayCount: state.calculatedHolidayCount,
-                      calculatedWeekendCount: state.calculatedWeekendCount,
-                      prefill: _leavePrefill(state),
-                      onCalculateDays: ({
-                        required String startDate,
-                        required String startHalf,
-                        required String endDate,
-                        required String endHalf,
-                      }) {
-                        context.read<AttendanceBloc>().add(
-                              AttendanceLeaveDaysCalculationRequested(
-                                startDate: startDate,
-                                startHalf: startHalf,
-                                endDate: endDate,
-                                endHalf: endHalf,
-                              ),
-                            );
-                      },
-                      onClearCalculatedDays: () =>
-                          context.read<AttendanceBloc>().add(const AttendanceLeaveDaysCalculationCleared()),
-                      onSubmit: ({
-                        int? leaveId,
-                        required int leaveTypeId,
-                        required String startDate,
-                        required String startHalf,
-                        required String endDate,
-                        required String endHalf,
-                        required String reason,
-                      }) {
-                        context.read<AttendanceBloc>().add(
-                              AttendanceLeaveSubmitted(
-                                leaveId: leaveId,
-                                leaveTypeId: leaveTypeId,
-                                startDate: startDate,
-                                startHalf: startHalf,
-                                endDate: endDate,
-                                endHalf: endHalf,
-                                reason: reason,
-                              ),
-                            );
-                      },
-                    )
-                  else if (state.selectedFilterIndex == 2)
-                    AmsCompOffTab(
-                      isSubmitting: state.compOffSubmitInProgress,
-                      history: state.compOffHistory,
-                      onSubmit: ({
-                        required String workedDate,
-                        required String leaveDays,
-                        required String reason,
-                      }) {
-                        context.read<AttendanceBloc>().add(
-                              AttendanceCompOffSubmitted(
-                                workedDate: workedDate,
-                                leaveDays: leaveDays,
-                                reason: reason,
-                              ),
-                            );
-                      },
-                    )
-                  else if (state.selectedFilterIndex == 3)
-                    AmsCalendar(
-                      month: state.month,
-                      days: state.days,
-                      legend: state.legend,
-                      isLoading: state.calendarLoading,
-                      viewMode: state.calendarViewMode,
-                      onPrev: () => context.read<AttendanceBloc>().add(const AttendanceMonthChanged(-1)),
-                      onNext: () => context.read<AttendanceBloc>().add(const AttendanceMonthChanged(1)),
-                      onViewModeChanged: (AmsCalendarViewMode mode) =>
-                          context.read<AttendanceBloc>().add(AttendanceCalendarViewModeChanged(mode)),
-                      onToday: () => context.read<AttendanceBloc>().add(const AttendanceTodayRequested()),
-                    )
-                  else
-                    const SizedBox.shrink(),
+                  if (!isHr) ...[
+                    // ─── Standard employee tabs ───
+                    if (state.selectedFilterIndex == 0)
+                      AmsMyLeavesTab(
+                        isLoading: state.leavesLoading,
+                        items: state.leaveRequests,
+                        fiscalYears: state.fiscalYears,
+                        selectedFiscalYear: state.selectedFiscalYear,
+                        onFiscalYearChanged: (String fy) => context.read<AttendanceBloc>().add(AttendanceFiscalYearChanged(fy)),
+                        actionInProgressId: state.leaveActionInProgressId,
+                        onEdit: (LeaveRequestEntity leave) => _openEditLeaveDialog(context, leave),
+                        onCancel: (id) => context.read<AttendanceBloc>().add(AttendanceLeaveCancelRequested(id)),
+                      )
+                    else if (state.selectedFilterIndex == 1)
+                      AmsApplyLeaveTab(
+                        leaveTypes: _leaveTypes(state),
+                        isSubmitting: state.leaveSubmitInProgress,
+                        isCalculatingDays: state.leaveDaysCalculationInProgress,
+                        calculatedTotalDays: state.calculatedTotalDays,
+                        calculatedHolidayCount: state.calculatedHolidayCount,
+                        calculatedWeekendCount: state.calculatedWeekendCount,
+                        prefill: _leavePrefill(state),
+                        onCalculateDays: ({
+                          required String startDate,
+                          required String startHalf,
+                          required String endDate,
+                          required String endHalf,
+                        }) {
+                          context.read<AttendanceBloc>().add(
+                                AttendanceLeaveDaysCalculationRequested(
+                                  startDate: startDate,
+                                  startHalf: startHalf,
+                                  endDate: endDate,
+                                  endHalf: endHalf,
+                                ),
+                              );
+                        },
+                        onClearCalculatedDays: () =>
+                            context.read<AttendanceBloc>().add(const AttendanceLeaveDaysCalculationCleared()),
+                        onSubmit: ({
+                          int? leaveId,
+                          required int leaveTypeId,
+                          required String startDate,
+                          required String startHalf,
+                          required String endDate,
+                          required String endHalf,
+                          required String reason,
+                        }) {
+                          context.read<AttendanceBloc>().add(
+                                AttendanceLeaveSubmitted(
+                                  leaveId: leaveId,
+                                  leaveTypeId: leaveTypeId,
+                                  startDate: startDate,
+                                  startHalf: startHalf,
+                                  endDate: endDate,
+                                  endHalf: endHalf,
+                                  reason: reason,
+                                ),
+                              );
+                        },
+                      )
+                    else if (state.selectedFilterIndex == 2)
+                      AmsCompOffTab(
+                        isSubmitting: state.compOffSubmitInProgress,
+                        history: state.compOffHistory,
+                        onSubmit: ({
+                          required String workedDate,
+                          required String leaveDays,
+                          required String reason,
+                        }) {
+                          context.read<AttendanceBloc>().add(
+                                AttendanceCompOffSubmitted(
+                                  workedDate: workedDate,
+                                  leaveDays: leaveDays,
+                                  reason: reason,
+                                ),
+                              );
+                        },
+                      )
+                    else if (state.selectedFilterIndex == 3)
+                      AmsCalendar(
+                        month: state.month,
+                        days: state.days,
+                        legend: state.legend,
+                        isLoading: state.calendarLoading,
+                        viewMode: state.calendarViewMode,
+                        onPrev: () => context.read<AttendanceBloc>().add(const AttendanceMonthChanged(-1)),
+                        onNext: () => context.read<AttendanceBloc>().add(const AttendanceMonthChanged(1)),
+                        onViewModeChanged: (AmsCalendarViewMode mode) =>
+                            context.read<AttendanceBloc>().add(AttendanceCalendarViewModeChanged(mode)),
+                        onToday: () => context.read<AttendanceBloc>().add(const AttendanceTodayRequested()),
+                      )
+                    else
+                      const SizedBox.shrink(),
+                  ] else ...[
+                    // ─── HR tabs ───
+                    if (state.selectedFilterIndex == 0)
+                      AmsCalendar(
+                        month: state.month,
+                        days: state.days,
+                        legend: state.legend,
+                        isLoading: state.calendarLoading,
+                        viewMode: state.calendarViewMode,
+                        onPrev: () => context.read<AttendanceBloc>().add(const AttendanceMonthChanged(-1)),
+                        onNext: () => context.read<AttendanceBloc>().add(const AttendanceMonthChanged(1)),
+                        onViewModeChanged: (AmsCalendarViewMode mode) =>
+                            context.read<AttendanceBloc>().add(AttendanceCalendarViewModeChanged(mode)),
+                        onToday: () => context.read<AttendanceBloc>().add(const AttendanceTodayRequested()),
+                      )
+                    else if (state.selectedFilterIndex == 1)
+                      AmsApplyLeaveTab(
+                        leaveTypes: _leaveTypes(state),
+                        isSubmitting: state.leaveSubmitInProgress,
+                        isCalculatingDays: state.leaveDaysCalculationInProgress,
+                        calculatedTotalDays: state.calculatedTotalDays,
+                        calculatedHolidayCount: state.calculatedHolidayCount,
+                        calculatedWeekendCount: state.calculatedWeekendCount,
+                        prefill: _leavePrefill(state),
+                        onCalculateDays: ({
+                          required String startDate,
+                          required String startHalf,
+                          required String endDate,
+                          required String endHalf,
+                        }) {
+                          context.read<AttendanceBloc>().add(
+                                AttendanceLeaveDaysCalculationRequested(
+                                  startDate: startDate,
+                                  startHalf: startHalf,
+                                  endDate: endDate,
+                                  endHalf: endHalf,
+                                ),
+                              );
+                        },
+                        onClearCalculatedDays: () =>
+                            context.read<AttendanceBloc>().add(const AttendanceLeaveDaysCalculationCleared()),
+                        onSubmit: ({
+                          int? leaveId,
+                          required int leaveTypeId,
+                          required String startDate,
+                          required String startHalf,
+                          required String endDate,
+                          required String endHalf,
+                          required String reason,
+                        }) {
+                          context.read<AttendanceBloc>().add(
+                                AttendanceLeaveSubmitted(
+                                  leaveId: leaveId,
+                                  leaveTypeId: leaveTypeId,
+                                  startDate: startDate,
+                                  startHalf: startHalf,
+                                  endDate: endDate,
+                                  endHalf: endHalf,
+                                  reason: reason,
+                                ),
+                              );
+                        },
+                      )
+                    else if (state.selectedFilterIndex == 2)
+                      AmsApprovalsTab(
+                        isLoading: state.approvalsLoading,
+                        pendingLeaves: state.pendingLeaveRequests,
+                        pendingCompOffs: state.pendingCompOffRequests,
+                        approvedLeaves: state.approvedLeaveRequests,
+                        actionInProgressId: state.approvalActionInProgressId,
+                        onApproveLeave: (int id, String note) =>
+                            context.read<AttendanceBloc>().add(AttendanceLeaveApproved(leaveId: id, note: note)),
+                        onRejectLeave: (int id, String note) =>
+                            context.read<AttendanceBloc>().add(AttendanceLeaveRejected(leaveId: id, note: note)),
+                        onApproveCompOff: (int id) =>
+                            context.read<AttendanceBloc>().add(AttendanceCompOffApproved(compOffId: id)),
+                        onRejectCompOff: (int id) =>
+                            context.read<AttendanceBloc>().add(AttendanceCompOffRejected(compOffId: id)),
+                        onDeleteApprovedLeave: (int id) =>
+                            context.read<AttendanceBloc>().add(AttendanceApprovedLeaveDeleted(leaveId: id)),
+                      )
+                    else if (state.selectedFilterIndex == 3)
+                      // Team Leaves - placeholder
+                      _buildPlaceholderTab('Team Leaves', 'Coming soon', isDark)
+                    else if (state.selectedFilterIndex == 4)
+                      // Allocations - placeholder
+                      _buildPlaceholderTab('Allocations', 'Coming soon', isDark)
+                    else if (state.selectedFilterIndex == 5)
+                      // Manage - placeholder
+                      _buildPlaceholderTab('Manage', 'Coming soon', isDark)
+                    else
+                      const SizedBox.shrink(),
+                  ],
                 ],
               ),
             );
@@ -351,5 +465,31 @@ class AttendanceScreen extends StatelessWidget {
     final String mm = d.month.toString().padLeft(2, '0');
     final String dd = d.day.toString().padLeft(2, '0');
     return '${d.year}-$mm-$dd';
+  }
+
+  static Widget _buildPlaceholderTab(String title, String subtitle, bool isDark) {
+    final cardBg = isDark ? AppColors.kcDarkCard : AppColors.kcLightCard;
+    final borderColor = isDark ? AppColors.kcDarkBorderStrong : AppColors.kcLightBorder;
+    final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+    final mutedColor = isDark ? AppColors.kcDarkTextFaint : AppColors.kcLightTextMuted;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        children: <Widget>[
+          Icon(Icons.construction_outlined, size: 32, color: mutedColor),
+          const SizedBox(height: 8),
+          Text(title, style: TextStyle(color: titleColor, fontWeight: FontWeight.w700, fontSize: 16)),
+          const SizedBox(height: 4),
+          Text(subtitle, style: TextStyle(color: mutedColor, fontSize: 13)),
+        ],
+      ),
+    );
   }
 }

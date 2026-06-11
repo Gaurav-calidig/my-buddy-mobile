@@ -1,4 +1,5 @@
 import 'package:core/features/attendance/domain/entities/attendance_entities.dart';
+import 'package:core/features/attendance/domain/entities/comp_off_request_entity.dart';
 import 'package:core/features/attendance/domain/entities/leave_request_entity.dart';
 import 'package:equatable/equatable.dart';
 
@@ -32,6 +33,11 @@ class AttendanceState extends Equatable {
     required this.successMessage,
     this.calendarViewMode = AmsCalendarViewMode.monthly,
     this.error,
+    required this.pendingLeaveRequests,
+    required this.pendingCompOffRequests,
+    required this.approvedLeaveRequests,
+    required this.approvalsLoading,
+    this.approvalActionInProgressId,
   });
 
   factory AttendanceState.initial() {
@@ -39,7 +45,7 @@ class AttendanceState extends Equatable {
       isLoading: true,
       title: 'Attendance Management',
       month: DateTime(2026, 4),
-      selectedFilterIndex: 3,
+      selectedFilterIndex: 0,
       stats: const <AmsStatEntity>[],
       summary: const AmsLeaveSummaryEntity(
         allocated: 0,
@@ -66,6 +72,11 @@ class AttendanceState extends Equatable {
       calculatedWeekendCount: null,
       prefillLeave: null,
       successMessage: null,
+      pendingLeaveRequests: const <LeaveRequestEntity>[],
+      pendingCompOffRequests: const <CompOffRequestEntity>[],
+      approvedLeaveRequests: const <LeaveRequestEntity>[],
+      approvalsLoading: false,
+      approvalActionInProgressId: null,
     );
   }
 
@@ -95,6 +106,11 @@ class AttendanceState extends Equatable {
   final String? successMessage;
   final AmsCalendarViewMode calendarViewMode;
   final String? error;
+  final List<LeaveRequestEntity> pendingLeaveRequests;
+  final List<CompOffRequestEntity> pendingCompOffRequests;
+  final List<LeaveRequestEntity> approvedLeaveRequests;
+  final bool approvalsLoading;
+  final int? approvalActionInProgressId;
 
   AttendanceState copyWith({
     bool? isLoading,
@@ -128,6 +144,12 @@ class AttendanceState extends Equatable {
     AmsCalendarViewMode? calendarViewMode,
     String? error,
     bool clearError = false,
+    List<LeaveRequestEntity>? pendingLeaveRequests,
+    List<CompOffRequestEntity>? pendingCompOffRequests,
+    List<LeaveRequestEntity>? approvedLeaveRequests,
+    bool? approvalsLoading,
+    int? approvalActionInProgressId,
+    bool clearApprovalActionInProgressId = false,
   }) {
     return AttendanceState(
       isLoading: isLoading ?? this.isLoading,
@@ -156,6 +178,11 @@ class AttendanceState extends Equatable {
       successMessage: clearSuccessMessage ? null : (successMessage ?? this.successMessage),
       calendarViewMode: calendarViewMode ?? this.calendarViewMode,
       error: clearError ? null : (error ?? this.error),
+      pendingLeaveRequests: pendingLeaveRequests ?? this.pendingLeaveRequests,
+      pendingCompOffRequests: pendingCompOffRequests ?? this.pendingCompOffRequests,
+      approvedLeaveRequests: approvedLeaveRequests ?? this.approvedLeaveRequests,
+      approvalsLoading: approvalsLoading ?? this.approvalsLoading,
+      approvalActionInProgressId: clearApprovalActionInProgressId ? null : (approvalActionInProgressId ?? this.approvalActionInProgressId),
     );
   }
 
@@ -187,5 +214,10 @@ class AttendanceState extends Equatable {
         successMessage,
         calendarViewMode,
         error,
+        pendingLeaveRequests,
+        pendingCompOffRequests,
+        approvedLeaveRequests,
+        approvalsLoading,
+        approvalActionInProgressId,
       ];
 }

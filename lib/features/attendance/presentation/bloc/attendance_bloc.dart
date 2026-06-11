@@ -1,5 +1,6 @@
 import 'package:core/features/attendance/domain/entities/attendance_entities.dart';
 import 'package:core/features/attendance/domain/entities/attendance_leave_stats_entity.dart';
+import 'package:core/features/attendance/domain/entities/comp_off_request_entity.dart';
 import 'package:core/features/attendance/domain/entities/leave_request_entity.dart';
 import 'package:core/features/attendance/domain/usecases/get_attendance_leave_stats_usecase.dart';
 import 'package:core/core/network/api_routes.dart';
@@ -33,6 +34,12 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     on<AttendanceMessageCleared>(_onMessageCleared);
     on<AttendanceCalendarViewModeChanged>(_onCalendarViewModeChanged);
     on<AttendanceTodayRequested>(_onTodayRequested);
+    on<AttendanceApprovalsRequested>(_onApprovalsRequested);
+    on<AttendanceLeaveApproved>(_onLeaveApproved);
+    on<AttendanceLeaveRejected>(_onLeaveRejected);
+    on<AttendanceCompOffApproved>(_onCompOffApproved);
+    on<AttendanceCompOffRejected>(_onCompOffRejected);
+    on<AttendanceApprovedLeaveDeleted>(_onApprovedLeaveDeleted);
   }
 
   final ApiService _apiService;
@@ -327,7 +334,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
       await _apiService.post(ApiRoutes.leaveRequestCancelById(event.leaveId), <String, dynamic>{});
       final List<LeaveRequestEntity> next = state.leaveRequests.map((LeaveRequestEntity e) {
         if (e.id != event.leaveId) return e;
-        return LeaveRequestEntity(
+      return LeaveRequestEntity(
           id: e.id,
           userId: e.userId,
           leaveTypeId: e.leaveTypeId,
@@ -345,6 +352,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
           updatedAt: DateTime.now(),
           leaveType: e.leaveType,
           reviewedBy: e.reviewedBy,
+          user: e.user,
         );
       }).toList(growable: false);
       emit(
@@ -645,5 +653,143 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
       if (endHalf == 'second_half') return '2nd half';
     }
     return null;
+  }
+
+  Future<void> _onApprovalsRequested(
+    AttendanceApprovalsRequested event,
+    Emitter<AttendanceState> emit,
+  ) async {
+    emit(state.copyWith(approvalsLoading: true, clearError: true));
+    try {
+      final pendingResp = await _apiService.get(ApiRoutes.allLeaveRequests(status: 'pending'));
+      final approvedResp = await _apiService.get(ApiRoutes.allLeaveRequests(status: 'approved'));
+      final compOffResp = await _apiService.get(ApiRoutes.allCompOffRequests(status: 'pending'));
+
+      final List<LeaveRequestEntity> pendingLeaves = _parseLeaveList(pendingResp.data);
+      final List<LeaveRequestEntity> approvedLeaves = _parseLeaveList(approvedResp.data);
+      final List<CompOffRequestEntity> pendingCompOffs = _parseCompOffList(compOffResp.data);
+
+      emit(state.copyWith(
+        approvalsLoading: false,
+        pendingLeaveRequests: pendingLeaves,
+        approvedLeaveRequests: approvedLeaves,
+        pendingCompOffRequests: pendingCompOffs,
+      ));
+    } catch (e) {
+      emit(state.copyWith(approvalsLoading: false, error: e.toString()));
+    }
+  }
+
+  Future<void> _onLeaveApproved(
+    AttendanceLeaveApproved event,
+    Emitter<AttendanceState> emit,
+  ) async {
+    emit(state.copyWith(approvalActionInProgressId: event.leaveId, clearError: true, clearSuccessMessage: true));
+    try {
+      await _apiService.post(ApiRoutes.leaveRequestApprove(event.leaveId), <String, dynamic>{
+        'reviewerNote': event.note,
+      });
+      emit(state.copyWith(
+        clearApprovalActionInProgressId: true,
+        successMessage: 'Leave request approved.',
+      ));
+      add(const AttendanceApprovalsRequested());
+    } catch (e) {
+      emit(state.copyWith(clearApprovalActionInProgressId: true, error: e.toString()));
+    }
+  }
+
+  Future<void> _onLeaveRejected(
+    AttendanceLeaveRejected event,
+    Emitter<AttendanceState> emit,
+  ) async {
+    emit(state.copyWith(approvalActionInProgressId: event.leaveId, clearError: true, clearSuccessMessage: true));
+    try {
+      await _apiService.post(ApiRoutes.leaveRequestReject(event.leaveId), <String, dynamic>{
+        'reviewerNote': event.note,
+      });
+      emit(state.copyWith(
+        clearApprovalActionInProgressId: true,
+        successMessage: 'Leave request rejected.',
+      ));
+      add(const AttendanceApprovalsRequested());
+    } catch (e) {
+      emit(state.copyWith(clearApprovalActionInProgressId: true, error: e.toString()));
+    }
+  }
+
+  Future<void> _onCompOffApproved(
+    AttendanceCompOffApproved event,
+    Emitter<AttendanceState> emit,
+  ) async {
+    emit(state.copyWith(approvalActionInProgressId: event.compOffId, clearError: true, clearSuccessMessage: true));
+    try {
+      await _apiService.post(ApiRoutes.compOffRequestApprove(event.compOffId), <String, dynamic>{});
+      emit(state.copyWith(
+        clearApprovalActionInProgressId: true,
+        successMessage: 'Comp off request approved.',
+      ));
+      add(const AttendanceApprovalsRequested());
+    } catch (e) {
+      emit(state.copyWith(clearApprovalActionInProgressId: true, error: e.toString()));
+    }
+  }
+
+  Future<void> _onCompOffRejected(
+    AttendanceCompOffRejected event,
+    Emitter<AttendanceState> emit,
+  ) async {
+    emit(state.copyWith(approvalActionInProgressId: event.compOffId, clearError: true, clearSuccessMessage: true));
+    try {
+      await _apiService.post(ApiRoutes.compOffRequestReject(event.compOffId), <String, dynamic>{});
+      emit(state.copyWith(
+        clearApprovalActionInProgressId: true,
+        successMessage: 'Comp off request rejected.',
+      ));
+      add(const AttendanceApprovalsRequested());
+    } catch (e) {
+      emit(state.copyWith(clearApprovalActionInProgressId: true, error: e.toString()));
+    }
+  }
+
+  Future<void> _onApprovedLeaveDeleted(
+    AttendanceApprovedLeaveDeleted event,
+    Emitter<AttendanceState> emit,
+  ) async {
+    emit(state.copyWith(approvalActionInProgressId: event.leaveId, clearError: true, clearSuccessMessage: true));
+    try {
+      await _apiService.delete(ApiRoutes.leaveRequestDelete(event.leaveId));
+      final List<LeaveRequestEntity> next = state.approvedLeaveRequests
+          .where((LeaveRequestEntity e) => e.id != event.leaveId)
+          .toList(growable: false);
+      emit(state.copyWith(
+        approvedLeaveRequests: next,
+        clearApprovalActionInProgressId: true,
+        successMessage: 'Approved leave deleted.',
+      ));
+    } catch (e) {
+      emit(state.copyWith(clearApprovalActionInProgressId: true, error: e.toString()));
+    }
+  }
+
+  List<LeaveRequestEntity> _parseLeaveList(dynamic data) {
+    final List<dynamic> list = data is List
+        ? data
+        : (data is Map && data['data'] is List ? data['data'] as List : <dynamic>[]);
+    return list
+        .whereType<Map>()
+        .map((m) => LeaveRequestEntity.fromJson(m.cast<String, dynamic>()))
+        .toList(growable: false)
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+  }
+
+  List<CompOffRequestEntity> _parseCompOffList(dynamic data) {
+    final List<dynamic> list = data is List
+        ? data
+        : (data is Map && data['data'] is List ? data['data'] as List : <dynamic>[]);
+    return list
+        .whereType<Map>()
+        .map((m) => CompOffRequestEntity.fromJson(m.cast<String, dynamic>()))
+        .toList(growable: false);
   }
 }
