@@ -56,12 +56,16 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             }
           }
 
-          final bgColor = ProjectTheme.getBg(context);
-          final panelColor = ProjectTheme.getPanel(context);
-          final borderColor = ProjectTheme.getBorder(context);
-          final textPrimary = ProjectTheme.getTextPrimary(context);
-          final textMuted = ProjectTheme.getTextMuted(context);
-          final accentColor = ProjectTheme.getAccent(context);
+          final isMember = authState is AuthSuccess &&
+              authState.user.portalRole != 'super_admin' &&
+              authState.user.portalRole != 'admin';
+
+          final bgColor = isMember ? Colors.white : ProjectTheme.getBg(context);
+          final panelColor = isMember ? Colors.white : ProjectTheme.getPanel(context);
+          final borderColor = isMember ? const Color(0xFFE2E8F0) : ProjectTheme.getBorder(context);
+          final textPrimary = isMember ? const Color(0xFF1E1E2D) : ProjectTheme.getTextPrimary(context);
+          final textMuted = isMember ? const Color(0xFF94A3B8) : ProjectTheme.getTextMuted(context);
+          final accentColor = isMember ? const Color(0xFF1E1E2D) : ProjectTheme.getAccent(context);
 
           return DefaultTabController(
             length: tabs.length,

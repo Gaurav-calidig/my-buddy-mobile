@@ -10,6 +10,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:core/core/utils/date_time_utils.dart';
 import 'package:core/core/theme/date_format_cubit.dart';
+import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:core/features/auth/presentation/bloc/auth_state.dart';
+import 'package:core/features/dsr/domain/entities/dsr_project_entity.dart';
+import 'package:core/features/dsr/presentation/screens/dsr_filter_screen.dart';
+import 'package:go_router/go_router.dart';
 
 class MyDsrScreen extends StatefulWidget {
   const MyDsrScreen({super.key});
@@ -229,35 +234,123 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
         );
   }
 
+  Map<String, dynamic>? _activeFilters;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final authState = context.read<AuthBloc>().state;
+    final isMember = authState is AuthSuccess && authState.user.portalRole == 'member';
 
-    return Scaffold(
-      drawer: const TemplateFeatureDrawer(),
-      appBar: const CustomAppBar(title: 'DSR'),
-      body: BlocBuilder<DsrBloc, DsrState>(
-        builder: (BuildContext context, DsrState state) {
-          final DateTime selectedDate = state.selectedDate ?? _todayKey;
-          final bool showTabLoader = state.isLoading;
-          final List<String> projectNames = state.projects.map((p) => p.name).toList(growable: false);
-          if (_selectedProject == null && projectNames.isNotEmpty) {
-            _selectedProject = projectNames.first;
+    return BlocBuilder<DsrBloc, DsrState>(
+      builder: (BuildContext context, DsrState state) {
+        final DateTime selectedDate = state.selectedDate ?? _todayKey;
+        final bool showTabLoader = state.isLoading;
+        final List<String> projectNames = state.projects.map((p) => p.name).toList(growable: false);
+        if (_selectedProject == null && projectNames.isNotEmpty) {
+          _selectedProject = projectNames.first;
+        }
+
+        final DateTime dateKey = _dayKey(selectedDate);
+        final List<DsrEntryEntity> addTabEntries = state.entriesByDate[dateKey] ?? <DsrEntryEntity>[];
+        final double addTabTotalHours = addTabEntries.fold<double>(0, (double sum, DsrEntryEntity entry) => sum + entry.hours);
+
+        final DateTime today = _todayKey;
+        final DateTime yesterday = today.subtract(const Duration(days: 1));
+        
+        List<MapEntry<DateTime, List<DsrEntryEntity>>> historyGroups = state.entriesByDate.entries.toList()
+          ..sort((a, b) => b.key.compareTo(a.key));
+
+        if (_activeFilters != null) {
+          final projectId = _activeFilters!['projectId'] as int?;
+          final status = _activeFilters!['status'] as String?;
+          final startDate = _activeFilters!['startDate'] as DateTime?;
+          final endDate = _activeFilters!['endDate'] as DateTime?;
+
+          final String? projectName = projectId != null
+              ? state.projects.firstWhere((p) => p.id == projectId, orElse: () => DsrProjectEntity(id: projectId, name: '')).name
+              : null;
+
+          final List<MapEntry<DateTime, List<DsrEntryEntity>>> filteredGroups = [];
+          for (final group in historyGroups) {
+            final date = group.key;
+            if (startDate != null && date.isBefore(startDate)) continue;
+            if (endDate != null && date.isAfter(endDate)) continue;
+
+            final filteredEntries = group.value.where((entry) {
+              if (projectName != null && entry.project != projectName) return false;
+              if (status != null && entry.status.toLowerCase().replaceAll('_', ' ') != status.toLowerCase()) return false;
+              return true;
+            }).toList();
+
+            if (filteredEntries.isNotEmpty) {
+              filteredGroups.add(MapEntry(date, filteredEntries));
+            }
           }
+          historyGroups = filteredGroups;
+        }
 
-          final DateTime dateKey = _dayKey(selectedDate);
-          final List<DsrEntryEntity> addTabEntries = state.entriesByDate[dateKey] ?? <DsrEntryEntity>[];
-          final double addTabTotalHours = addTabEntries.fold<double>(0, (double sum, DsrEntryEntity entry) => sum + entry.hours);
+        final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
+        final subTitleColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
 
-          final DateTime today = _todayKey;
-          final DateTime yesterday = today.subtract(const Duration(days: 1));
-          final List<MapEntry<DateTime, List<DsrEntryEntity>>> historyGroups = state.entriesByDate.entries.toList()..sort((a, b) => b.key.compareTo(a.key));
-
-          final titleColor = isDark ? Colors.white : AppColors.kcLightTitle;
-          final subTitleColor = isDark ? AppColors.kcDarkTextSecondary : AppColors.kcLightTextSecondary;
-
-          return LayoutBuilder(
+        return Scaffold(
+          drawer: isMember ? null : const TemplateFeatureDrawer(),
+          appBar: isMember
+              ? AppBar(
+                  backgroundColor: Colors.white,
+                  elevation: 0,
+                  leading: IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1E1E2D), size: 18),
+                    onPressed: () => context.pop(),
+                  ),
+                  title: const Text(
+                    'DSR',
+                    style: TextStyle(
+                      color: Color(0xFF1E1E2D),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  centerTitle: false,
+                  actions: [
+                    IconButton(
+                      icon: Icon(
+                        _activeFilters != null ? Icons.filter_alt : Icons.filter_alt_outlined,
+                        color: _activeFilters != null ? const Color(0xFF1D4ED8) : const Color(0xFF1E1E2D),
+                      ),
+                      onPressed: () async {
+                        final result = await Navigator.of(context).push<Map<String, dynamic>>(
+                          MaterialPageRoute(
+                            builder: (_) => DsrFilterScreen(
+                              projects: state.projects,
+                              currentFilters: _activeFilters,
+                            ),
+                          ),
+                        );
+                        if (result != null) {
+                          setState(() {
+                            if (result.values.every((v) => v == null)) {
+                              _activeFilters = null;
+                            } else {
+                              _activeFilters = result;
+                            }
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  bottom: PreferredSize(
+                    preferredSize: const Size.fromHeight(1.0),
+                    child: Container(
+                      color: const Color(0xFFE2E8F0),
+                      height: 1.0,
+                    ),
+                  ),
+                )
+              : const CustomAppBar(title: 'DSR'),
+          body: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
               return Container(
                 width: double.infinity,
@@ -381,9 +474,9 @@ class _MyDsrScreenState extends State<MyDsrScreen> {
                 ),
               );
             },
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

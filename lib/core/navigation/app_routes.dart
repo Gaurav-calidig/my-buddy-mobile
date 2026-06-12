@@ -26,6 +26,16 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String brandingLab = '/branding-lab';
 
+  // Member portal role routes
+  static const String memberHome = '/member';
+  static const String leaves = '/leaves';
+  static const String leaveDetail = '/leave-detail';
+  static const String createLeaveRequest = '/create-leave-request';
+  static const String holidays = '/holidays';
+  static const String teamCanvas = '/team-canvas';
+  static const String tripDetail = '/trip-detail';
+  static const String profile = '/profile';
+
   // Payment routes
   static const String payment = '/payment';
   static const String savedCards = '/payment/saved-cards';

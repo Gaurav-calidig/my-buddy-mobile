@@ -35,6 +35,22 @@ class ProjectsTable extends StatelessWidget {
 
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
+        final isMember = authState is AuthSuccess &&
+            authState.user.portalRole != 'super_admin' &&
+            authState.user.portalRole != 'admin';
+
+        if (isMember) {
+          return ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: projects.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) {
+              return MemberProjectListItem(project: projects[index]);
+            },
+          );
+        }
+
         final isSuperAdmin =
             authState is AuthSuccess && authState.user.portalRole == 'super_admin';
         final actionWidth = isSuperAdmin ? 250.0 : 170.0;
@@ -413,3 +429,188 @@ class ProjectTableRow extends StatelessWidget {
     }
   }
 }
+
+class MemberProjectListItem extends StatelessWidget {
+  final ProjectEntity project;
+
+  const MemberProjectListItem({super.key, required this.project});
+
+  @override
+  Widget build(BuildContext context) {
+    final initials = project.prefix.isNotEmpty
+        ? project.prefix.toUpperCase()
+        : (project.name.isNotEmpty ? project.name[0].toUpperCase() : 'P');
+
+    final List<Color> avatarColors = [
+      const Color(0xFF3B82F6),
+      const Color(0xFF10B981),
+      const Color(0xFF8B5CF6),
+      const Color(0xFFF59E0B),
+      const Color(0xFFEF4444),
+      const Color(0xFFEC4899),
+    ];
+    final avatarColor = avatarColors[project.id % avatarColors.length];
+
+    Color statusBgColor = const Color(0xFFDCFCE7);
+    Color statusTextColor = const Color(0xFF15803D);
+    String statusText = 'Active';
+
+    if (project.isArchived) {
+      statusBgColor = const Color(0xFFFEE2E2);
+      statusTextColor = const Color(0xFFB91C1C);
+      statusText = 'Closed';
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x05000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            context.push(AppRoutes.projectDetail, extra: project);
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor: avatarColor.withValues(alpha: 0.1),
+                      child: Text(
+                        initials,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: avatarColor,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            project.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1E1E2D),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          BlocBuilder<DateFormatCubit, String>(
+                            builder: (context, format) {
+                              return Text(
+                                'Created on ${DateTimeUtils.formatDate(project.createdAt, format)}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF64748B),
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: statusBgColor,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: Text(
+                        statusText,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: statusTextColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  project.description,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: Color(0xFF64748B),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'My Role: Developer',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1D4ED8),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        const Icon(Icons.people_outline, size: 14, color: Color(0xFF94A3B8)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${project.memberCount} members',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Icon(Icons.lock_outline_rounded, size: 14, color: Color(0xFF94A3B8)),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${project.assetCount} assets',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+

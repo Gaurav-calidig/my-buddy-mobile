@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:core/features/auth/presentation/bloc/auth_state.dart';
 import 'package:core/features/projects/domain/entities/project_member_entity.dart';
 import 'project_detail_constants.dart';
 
@@ -19,6 +22,27 @@ class MemberCard extends StatelessWidget {
   });
 
   Color _roleColor(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    final isMember = authState is AuthSuccess &&
+        authState.user.portalRole != 'super_admin' &&
+        authState.user.portalRole != 'admin';
+
+    if (isMember) {
+      switch (member.role.toLowerCase()) {
+        case 'admin':
+        case 'owner':
+          return Colors.white;
+        case 'developer':
+          return Colors.white;
+        case 'designer':
+          return Colors.white;
+        case 'project_lead':
+          return Colors.white;
+        default:
+          return const Color(0xFF1E1E2D);
+      }
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (member.role) {
       case 'admin':
@@ -31,6 +55,27 @@ class MemberCard extends StatelessWidget {
   }
 
   Color _roleBg(BuildContext context) {
+    final authState = context.read<AuthBloc>().state;
+    final isMember = authState is AuthSuccess &&
+        authState.user.portalRole != 'super_admin' &&
+        authState.user.portalRole != 'admin';
+
+    if (isMember) {
+      switch (member.role.toLowerCase()) {
+        case 'admin':
+        case 'owner':
+          return const Color(0xFFEF4444);
+        case 'developer':
+          return const Color(0xFF3B82F6);
+        case 'designer':
+          return const Color(0xFF8B5CF6);
+        case 'project_lead':
+          return const Color(0xFF64748B);
+        default:
+          return const Color(0xFFF1F5F9);
+      }
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (member.role) {
       case 'admin':

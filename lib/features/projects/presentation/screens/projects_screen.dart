@@ -7,9 +7,18 @@ import 'package:core/features/projects/presentation/bloc/project_event.dart';
 import 'package:core/features/projects/presentation/bloc/project_state.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:core/features/auth/presentation/bloc/auth_state.dart';
+import 'package:core/features/auth/presentation/bloc/auth_event.dart';
 import 'package:core/features/projects/presentation/widgets/project_modal.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
+import 'package:core/core/config/feature_flags.dart';
+import 'package:core/core/constants/pref_keys.dart';
+import 'package:core/core/utils/shared_pref.dart';
+import 'package:core/core/navigation/app_routes.dart';
+import 'package:core/features/auth/domain/entities/user_entity.dart';
 
 import 'package:core/features/projects/presentation/widgets/project_card.dart';
 import 'package:core/features/projects/presentation/widgets/project_list_item.dart';
@@ -64,35 +73,451 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     }).toList(growable: false);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final pageBg = isDark ? const Color(0xFF0E1A34) : AppColors.kcLightPage;
+  Widget _buildMemberBody(
+    BuildContext context,
+    UserEntity user,
+    ProjectState state,
+    UserTagState tagState,
+  ) {
+    final allProjects = state is ProjectLoaded ? state.projects : <ProjectEntity>[];
+    final projects = _filterProjects(allProjects, tagState);
 
-    return BlocBuilder<UserTagBloc, UserTagState>(
-      builder: (context, tagState) {
-        return BlocBuilder<ProjectBloc, ProjectState>(
-          builder: (context, state) {
-            return Scaffold(
-              drawer: const TemplateFeatureDrawer(),
-              appBar: const CustomAppBar(title: 'Projects'),
-              body: Container(
-                color: pageBg,
-                child: ProjectsView(
-                  searchController: _searchController,
-                  showArchived: _showArchived,
-                  isListView: _isListView,
-                  selectedTagId: _selectedTagId,
-                  onSearchChanged: (_) => setState(() {}),
-                  onArchivedChanged: (val) => setState(() => _showArchived = val),
-                  onViewChanged: (isList) => setState(() => _isListView = isList),
-                  onTagSelected: (tagId) => setState(() => _selectedTagId = tagId),
-                  state: state,
-                  tagState: tagState,
-                  filterProjects: (all) => _filterProjects(all, tagState),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(context, user),
+          const SizedBox(height: 16),
+          Text(
+            'Total (${projects.length})',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildMemberControlsRow(context),
+          const SizedBox(height: 12),
+          _buildMemberTagFilterList(tagState),
+          const SizedBox(height: 16),
+          Expanded(
+            child: _buildMemberContent(state, tagState, projects),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, UserEntity user) {
+    final fullName = user.fullName;
+    final avatarInitial = user.firstName.isNotEmpty
+        ? user.firstName[0].toUpperCase()
+        : 'M';
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          'Projects',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1E1E2D),
+          ),
+        ),
+        Row(
+          children: [
+            IconButton(
+              icon: const Icon(
+                Icons.notifications_outlined,
+                color: Color(0xFF1E1E2D),
+                size: 24,
+              ),
+              onPressed: () => context.push(AppRoutes.notificationInbox),
+            ),
+            const SizedBox(width: 8),
+            _buildProfileDropdown(context, fullName, avatarInitial),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileDropdown(BuildContext context, String fullName, String avatarInitial) {
+    return PopupMenuButton<String>(
+      color: Colors.white,
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      onSelected: (value) {
+        if (value == 'settings') {
+          context.push(AppRoutes.settings);
+        } else if (value == 'logout') {
+          _logout(context);
+        }
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(
+          value: 'settings',
+          child: Row(
+            children: [
+              Icon(Icons.settings_outlined, color: Color(0xFF1E1E2D), size: 20),
+              SizedBox(width: 12),
+              Text(
+                'Settings',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF1E1E2D),
                 ),
               ),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(height: 1),
+        const PopupMenuItem<String>(
+          value: 'logout',
+          child: Row(
+            children: [
+              Icon(Icons.logout_outlined, color: Color(0xFFEF4444), size: 20),
+              SizedBox(width: 12),
+              Text(
+                'Logout',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFFEF4444),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 14,
+              backgroundColor: const Color(0xFF1E1E2D),
+              child: Text(
+                avatarInitial,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  fullName,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1E1E2D),
+                  ),
+                ),
+                const Text(
+                  'Team Member',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.keyboard_arrow_down,
+              size: 16,
+              color: Color(0xFF64748B),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _logout(BuildContext context) async {
+    await SharedPref().delete(PrefKeys.user);
+    await SharedPref().delete(PrefKeys.token);
+    if (FeatureFlags.enableFirebase) {
+      await FirebaseAuth.instance.signOut();
+    }
+    if (context.mounted) {
+      context.read<AuthBloc>().add(const AuthStatusChecked());
+      context.go(AppRoutes.login);
+    }
+  }
+
+  Widget _buildMemberControlsRow(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (_) => setState(() {}),
+              textAlignVertical: TextAlignVertical.center,
+              style: const TextStyle(
+                color: Color(0xFF1E1E2D),
+                fontSize: 15,
+                height: 1.2,
+              ),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+                prefixIcon: Icon(
+                  Icons.search,
+                  size: 18,
+                  color: Color(0xFF64748B),
+                ),
+                prefixIconConstraints: BoxConstraints(
+                  minWidth: 40,
+                  minHeight: 40,
+                ),
+                hintText: 'Search projects...',
+                hintStyle: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 15,
+                  height: 1.2,
+                ),
+                contentPadding: EdgeInsets.symmetric(horizontal: 8),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: Checkbox(
+                value: _showArchived,
+                onChanged: (bool? value) {
+                  setState(() => _showArchived = value ?? false);
+                },
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                side: const BorderSide(
+                  color: Color(0xFFCBD5E1),
+                  width: 1.2,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            const Text(
+              'Archived',
+              style: TextStyle(
+                color: Color(0xFF64748B),
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(width: 8),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _memberViewToggle(
+              icon: Icons.grid_view_rounded,
+              active: !_isListView,
+              onTap: () => setState(() => _isListView = false),
+            ),
+            const SizedBox(width: 4),
+            _memberViewToggle(
+              icon: Icons.menu,
+              active: _isListView,
+              onTap: () => setState(() => _isListView = true),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _memberViewToggle({
+    required IconData icon,
+    required bool active,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: active ? const Color(0xFF1E1E2D) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: active ? const Color(0xFF1E1E2D) : const Color(0xFFE2E8F0),
+          ),
+        ),
+        child: Icon(
+          icon,
+          size: 16,
+          color: active ? Colors.white : const Color(0xFF64748B),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMemberTagFilterList(UserTagState tagState) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: [
+          const Icon(Icons.sell_outlined, size: 16, color: Color(0xFF64748B)),
+          const SizedBox(width: 12),
+          _MemberTagChip(
+            label: 'All',
+            isSelected: _selectedTagId == null,
+            onTap: () => setState(() => _selectedTagId = null),
+          ),
+          ...tagState.tags.map((tag) => Padding(
+            padding: const EdgeInsets.only(left: 10),
+            child: _MemberTagChip(
+              label: tag.name,
+              color: tag.color,
+              isSelected: _selectedTagId == tag.id,
+              onTap: () => setState(() => _selectedTagId = tag.id),
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMemberContent(
+    ProjectState state,
+    UserTagState tagState,
+    List<ProjectEntity> projects,
+  ) {
+    if (state is ProjectLoading || state is ProjectInitial) {
+      return const Center(
+        child: CircularProgressIndicator(color: Color(0xFF1E1E2D)),
+      );
+    } else if (state is ProjectError) {
+      return Center(
+        child: Text(
+          'Error: ${state.message}',
+          style: const TextStyle(color: Colors.redAccent),
+        ),
+      );
+    } else if (state is ProjectLoaded) {
+      if (projects.isEmpty) {
+        return const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.folder_open_outlined, size: 48, color: Color(0xFF94A3B8)),
+              SizedBox(height: 12),
+              Text(
+                'No projects found',
+                style: TextStyle(fontSize: 16, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+        );
+      }
+
+      if (_isListView) {
+        return ProjectsTable(
+          projects: projects,
+          tagState: tagState,
+          panel: Colors.white,
+          border: const Color(0xFFE2E8F0),
+        );
+      } else {
+        return ProjectsCards(
+          projects: projects,
+          panel: Colors.white,
+          border: const Color(0xFFE2E8F0),
+        );
+      }
+    }
+    return const SizedBox();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AuthBloc, AuthState>(
+      builder: (context, authState) {
+        final user = authState is AuthSuccess ? authState.user : null;
+        final isMember = user != null &&
+            user.portalRole != 'super_admin' &&
+            user.portalRole != 'admin';
+
+        if (isMember) {
+          return BlocBuilder<UserTagBloc, UserTagState>(
+            builder: (context, tagState) {
+              return BlocBuilder<ProjectBloc, ProjectState>(
+                builder: (context, state) {
+                  return Scaffold(
+                    backgroundColor: Colors.white,
+                    body: SafeArea(
+                      child: _buildMemberBody(context, user, state, tagState),
+                    ),
+                  );
+                },
+              );
+            },
+          );
+        }
+
+        // Original view for admin/super_admin
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+        final pageBg = isDark ? const Color(0xFF0E1A34) : AppColors.kcLightPage;
+
+        return BlocBuilder<UserTagBloc, UserTagState>(
+          builder: (context, tagState) {
+            return BlocBuilder<ProjectBloc, ProjectState>(
+              builder: (context, state) {
+                return Scaffold(
+                  drawer: const TemplateFeatureDrawer(),
+                  appBar: const CustomAppBar(title: 'Projects'),
+                  body: Container(
+                    color: pageBg,
+                    child: ProjectsView(
+                      searchController: _searchController,
+                      showArchived: _showArchived,
+                      isListView: _isListView,
+                      selectedTagId: _selectedTagId,
+                      onSearchChanged: (_) => setState(() {}),
+                      onArchivedChanged: (val) => setState(() => _showArchived = val),
+                      onViewChanged: (isList) => setState(() => _isListView = isList),
+                      onTagSelected: (tagId) => setState(() => _selectedTagId = tagId),
+                      state: state,
+                      tagState: tagState,
+                      filterProjects: (all) => _filterProjects(all, tagState),
+                    ),
+                  ),
+                );
+              },
             );
           },
         );
@@ -636,3 +1061,72 @@ class _TagChip extends StatelessWidget {
     }
   }
 }
+
+class _MemberTagChip extends StatelessWidget {
+  final String label;
+  final String? color;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _MemberTagChip({
+    required this.label,
+    this.color,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tagColor = color != null ? _getHexColor(color!) : const Color(0xFF1E1E2D);
+    final bgColor = isSelected ? tagColor : const Color(0xFFF1F5F9);
+    final textColor = isSelected ? Colors.white : const Color(0xFF64748B);
+    final borderColor = isSelected ? tagColor : const Color(0xFFE2E8F0);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (color != null && !isSelected) ...[
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: tagColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getHexColor(String hex) {
+    try {
+      if (hex.startsWith('#')) hex = hex.substring(1);
+      if (hex.length == 6) hex = 'FF$hex';
+      return Color(int.parse(hex, radix: 16));
+    } catch (e) {
+      return Colors.grey;
+    }
+  }
+}
+

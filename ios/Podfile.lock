@@ -1247,7 +1247,7 @@ PODS:
   - file_picker (0.0.1):
     - DKImagePickerController/PhotoGallery
     - Flutter
-  - file_saver (0.3.1):
+  - file_saver (0.0.1):
     - Flutter
   - Firebase/Auth (12.9.0):
     - Firebase/CoreOnly
@@ -1912,7 +1912,7 @@ SPEC CHECKSUMS:
   DKImagePickerController: 946cec48c7873164274ecc4624d19e3da4c1ef3c
   DKPhotoGallery: b3834fecb755ee09a593d7c9e389d8b5d6deed60
   file_picker: a0560bc09d61de87f12d246fc47d2119e6ef37be
-  file_saver: 33b08000e02d10789a0acf35b9decf5bce5ca9de
+  file_saver: 6cdbcddd690cb02b0c1a0c225b37cd805c2bf8b6
   Firebase: 065f2bb395062046623036d8e6dc857bc2521d56
   firebase_auth: eeb19010b5aa7c83cc85f23b6c4f009ea28461f1
   firebase_core: 8e6f58412ca227827c366b92e7cee047a2148c60

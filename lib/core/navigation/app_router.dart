@@ -38,6 +38,15 @@ import 'package:core/features/onboarding/presentation/screens/flutter_onboarding
 import 'package:core/features/splash/presentation/screens/splash_screen.dart';
 import 'package:core/features/splash/presentation/screens/update_required_screen.dart';
 import 'package:core/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:core/features/dashboard/presentation/screens/member_shell_screen.dart';
+import 'package:core/features/dashboard/presentation/screens/holidays_screen.dart';
+import 'package:core/features/dashboard/presentation/screens/team_canvas_screen.dart';
+import 'package:core/features/dashboard/presentation/screens/trip_detail_screen.dart';
+import 'package:core/features/attendance/presentation/screens/create_leave_request_screen.dart';
+import 'package:core/features/attendance/presentation/screens/leave_detail_screen.dart';
+import 'package:core/features/attendance/presentation/bloc/attendance_bloc.dart';
+import 'package:core/features/attendance/presentation/bloc/attendance_event.dart';
+import 'package:core/features/attendance/domain/entities/leave_request_entity.dart';
 import 'package:core/features/attendance/presentation/attendance_page.dart';
 import 'package:core/features/dsr/presentation/dsr_page.dart';
 import 'package:core/features/workmanager/screen/workmanager_test_screen.dart';
@@ -70,6 +79,47 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.updateRequired,
         builder: (_, state) => const UpdateRequiredScreen(),
+      ),
+      // Member portal role shell with bottom navigation
+      GoRoute(
+        path: AppRoutes.memberHome,
+        builder: (_, state) => const MemberShellScreen(),
+      ),
+      // Member-specific sub-routes (pushed on top of shell)
+      GoRoute(
+        path: AppRoutes.holidays,
+        builder: (_, state) => const HolidaysScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.teamCanvas,
+        builder: (_, state) => const TeamCanvasScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.createLeaveRequest,
+        builder: (context, state) {
+          final prefill = state.extra as Map<String, dynamic>?;
+          return BlocProvider<AttendanceBloc>(
+            create: (_) => sl<AttendanceBloc>()..add(const AttendanceStarted()),
+            child: CreateLeaveRequestScreen(prefill: prefill),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.leaveDetail,
+        builder: (context, state) {
+          final leave = state.extra as LeaveRequestEntity;
+          return BlocProvider<AttendanceBloc>(
+            create: (_) => sl<AttendanceBloc>()..add(const AttendanceStarted()),
+            child: LeaveDetailScreen(leave: leave),
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.tripDetail,
+        builder: (context, state) {
+          final trip = state.extra as Map<String, dynamic>;
+          return TripDetailScreen(trip: trip);
+        },
       ),
       GoRoute(
         path: AppRoutes.dashboard,

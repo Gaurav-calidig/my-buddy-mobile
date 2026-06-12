@@ -5,9 +5,11 @@ import 'package:core/core/widgets/overlay_loader.dart';
 import 'package:core/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:core/features/auth/presentation/bloc/auth_event.dart';
 import 'package:core/features/auth/presentation/bloc/auth_state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:logger/logger.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -22,8 +24,16 @@ class LoginScreen extends StatelessWidget {
           listener: (context, state) {
             if (state is AuthSuccess) {
               AppUtils.showToast('Login Successful');
-              // Navigate securely to dashboard
-              context.go(AppRoutes.dashboard);
+              if (kDebugMode) {
+                print('User: ${state.user.fullName}, Role: ${state.user.portalRole}');
+              }
+              // Route based on portal role
+              if (state.user.portalRole != 'super_admin' &&
+                  state.user.portalRole != 'admin') {
+                context.go(AppRoutes.memberHome);
+              } else {
+                context.go(AppRoutes.dashboard);
+              }
             } else if (state is AuthFailure) {
               AppUtils.showToast('Error: ${state.error}');
             }
